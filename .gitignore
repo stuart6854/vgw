@@ -1,0 +1,19 @@
+# Project/Solution Artifacts
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+
+# CMake Artifacts
+cmake-build-*/
+
+# Build Artifacts
+**/bin
+*.spv
+
+# Package Manager Artifacts
+conan.lock
+conanbuildinfo.premake.lua
+conanbuildinfo.txt
+conaninfo.txt
+graph_info.json

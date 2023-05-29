@@ -1,0 +1,19 @@
+#version 450
+
+layout (local_size_x_id = 1) in;
+
+layout(set = 0, binding = 0) readonly buffer InBuffer
+{
+    int data[];
+} inBuffer;
+
+layout(set = 0, binding = 1) buffer OutBuffer
+{
+    int data[];
+} outBuffer;
+
+void main()
+{
+    uint gId = gl_GlobalInvocationID.x;
+    outBuffer.data[gId] = inBuffer.data[gId] * inBuffer.data[gId];
+}

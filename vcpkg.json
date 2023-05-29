@@ -1,0 +1,15 @@
+{
+  "name": "vgw",
+  "version-string": "1.0.0",
+  "builtin-baseline": "d9bbc753dd067c1c54fb914c4146fe895b50e9c7",
+  "dependencies": [
+    {
+      "name": "vulkan-memory-allocator-hpp",
+      "version>=": "3.0.1#2"
+    },
+    {
+      "name": "spirv-reflect",
+      "version>=": "1.3.204.1"
+    }
+  ]
+}
