@@ -1,8 +1,11 @@
 #include "vgw/device.hpp"
 
 #include "device_helpers.hpp"
+#include "vgw/buffer.hpp"
 #include "vgw/context.hpp"
+#include "vgw/pipelines.hpp"
 #include "vgw/swap_chain.hpp"
+#include "vgw/command_buffer.hpp"
 #include "vgw/synchronization.hpp"
 
 #include <vulkan/vulkan_hash.hpp>

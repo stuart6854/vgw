@@ -1,9 +1,6 @@
 #pragma once
 
 #include "base.hpp"
-#include "command_buffer.hpp"
-#include "buffer.hpp"
-#include "pipelines.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
@@ -14,6 +11,9 @@
 namespace VGW_NAMESPACE
 {
     class Context;
+    class CommandBuffer;
+    class PipelineLibrary;
+    class Buffer;
     class SwapChain;
     class Fence;
 
@@ -60,7 +60,8 @@ namespace VGW_NAMESPACE
          * @param poolFlags The flags of the pool to allocate from.
          * @return Vector of `count` number of `CommandBuffer`.
          */
-        auto create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags) -> std::vector<std::unique_ptr<CommandBuffer>>;
+        auto create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)
+            -> std::vector<std::unique_ptr<CommandBuffer>>;
 
         /**
          * Create buffer.

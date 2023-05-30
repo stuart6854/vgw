@@ -1,6 +1,7 @@
 #include "vgw/command_buffer.hpp"
 
 #include "vgw/device.hpp"
+#include "vgw/buffer.hpp"
 #include "vgw/pipelines.hpp"
 
 namespace VGW_NAMESPACE

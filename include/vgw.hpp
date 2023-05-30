@@ -6,5 +6,6 @@
 #include "vgw/synchronization.hpp"
 #include "vgw/command_buffer.hpp"
 #include "vgw/swap_chain.hpp"
+#include "vgw/pipelines.hpp"
 #include "vgw/buffer.hpp"
 #include "vgw/utility.hpp"

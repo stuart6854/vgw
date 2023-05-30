@@ -2,6 +2,8 @@
 
 #include "vgw/device.hpp"
 #include "vgw/buffer.hpp"
+#include "vgw/structs.hpp"
+#include "vgw/command_buffer.hpp"
 #include "vgw/synchronization.hpp"
 
 #include <fstream>
