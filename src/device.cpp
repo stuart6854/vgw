@@ -121,11 +121,26 @@ namespace VGW_NAMESPACE
 
 #pragma endregion
 
+        m_dynamicRenderingSupported =
+            std::ranges::find(enabledExtensions, std::string_view(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)) != enabledExtensions.end();
+
+        void* nextFeature{ nullptr };
+        vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures{ true };
+        if (m_dynamicRenderingSupported)
+        {
+            if (nextFeature)
+            {
+                dynamicRenderingFeatures.setPNext(nextFeature);
+            }
+            nextFeature = &dynamicRenderingFeatures;
+        }
+
         vk::PhysicalDeviceFeatures enabledFeatures;
         enabledFeatures.setFillModeNonSolid(true);
         enabledFeatures.setWideLines(true);
 
-        vk::DeviceCreateInfo deviceCreateInfo{ vk::DeviceCreateFlags(), queueCreateInfoVec, {}, enabledExtensions, &enabledFeatures };
+        vk::DeviceCreateInfo deviceCreateInfo{ vk::DeviceCreateFlags(), queueCreateInfoVec, {},
+                                               enabledExtensions,       &enabledFeatures,   nextFeature };
         m_device = m_physicalDevice.createDeviceUnique(deviceCreateInfo);
         if (!m_device)
         {

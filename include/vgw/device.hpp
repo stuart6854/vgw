@@ -121,6 +121,9 @@ namespace VGW_NAMESPACE
         Context* m_context{ nullptr };
         vk::PhysicalDevice m_physicalDevice;
         vk::UniqueDevice m_device;
+
+        bool m_dynamicRenderingSupported;
+
         vma::UniqueAllocator m_allocator;
         std::vector<vk::Queue> m_queues;
         vk::UniqueDescriptorPool m_descriptorPool;
