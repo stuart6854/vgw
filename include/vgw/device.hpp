@@ -14,6 +14,7 @@
 namespace VGW_NAMESPACE
 {
     class Context;
+    class SwapChain;
     class Fence;
 
     struct DeviceInfo
@@ -50,6 +51,8 @@ namespace VGW_NAMESPACE
         void destroy();
 
 #pragma region Resource Creation
+
+        auto create_swap_chain(vk::SurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync) -> std::unique_ptr<SwapChain>;
 
         /**
          * Allocate `count` number of command buffers from a command pool created with `poolFlags` flags.
@@ -101,6 +104,8 @@ namespace VGW_NAMESPACE
 #pragma endregion
 
         void submit(std::uint32_t queueIndex, CommandBuffer& commandBuffer, Fence* outFence);
+
+        void present(std::uint32_t queueIndex, SwapChain& swapChain);
 
         /* Operators */
 

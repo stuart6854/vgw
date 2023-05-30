@@ -1,7 +1,6 @@
 #include "vgw/context.hpp"
 
 #include "context_helpers.hpp"
-#include "vgw/device.hpp"
 
 #include <ranges>
 #include <format>
@@ -227,6 +226,16 @@ namespace VGW_NAMESPACE
     auto Context::create_device(const vgw::DeviceInfo& deviceInfo) -> std::unique_ptr<Device>
     {
         return std::make_unique<Device>(*this, deviceInfo);
+    }
+
+    auto Context::windowHwnd(void* platformSurfaceHandle) const -> vk::UniqueSurfaceKHR
+    {
+#if _WIN32
+        vk::Win32SurfaceCreateInfoKHR surfaceInfo{};
+        surfaceInfo.setHinstance(GetModuleHandle(nullptr));
+        surfaceInfo.setHwnd(static_cast<HWND>(platformSurfaceHandle));
+        return m_instance.createWin32SurfaceKHRUnique(surfaceInfo);
+#endif
     }
 
     void Context::is_invariant() const

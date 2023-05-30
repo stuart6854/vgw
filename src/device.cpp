@@ -2,6 +2,7 @@
 
 #include "device_helpers.hpp"
 #include "vgw/context.hpp"
+#include "vgw/swap_chain.hpp"
 #include "vgw/synchronization.hpp"
 
 #include <vulkan/vulkan_hash.hpp>
@@ -209,6 +210,12 @@ namespace VGW_NAMESPACE
         }
     }
 
+    auto Device::create_swap_chain(vk::SurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync)
+        -> std::unique_ptr<SwapChain>
+    {
+        return std::make_unique<SwapChain>(*this, surface, width, height, vsync);
+    }
+
     auto Device::create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)
         -> std::vector<std::unique_ptr<CommandBuffer>>
     {
@@ -381,6 +388,23 @@ namespace VGW_NAMESPACE
         vk::SubmitInfo submitInfo{};
         submitInfo.setCommandBuffers(cmd);
         queue.submit(submitInfo, outFence ? outFence->get_fence() : nullptr);
+    }
+
+    void Device::present(std::uint32_t queueIndex, SwapChain& swapChain)
+    {
+        is_invariant();
+        VGW_ASSERT(swapChain.is_valid());
+
+        auto queue = m_queues.at(queueIndex);
+        VGW_ASSERT(queue);
+
+        std::vector swapChains = { swapChain.get_swap_chain() };
+        const auto imageIndex = swapChain.get_image_index();
+        vk::PresentInfoKHR presentInfo{};
+        presentInfo.setSwapchains(swapChains);
+        presentInfo.setImageIndices(imageIndex);
+        presentInfo.setWaitSemaphores({});
+        queue.presentKHR(presentInfo);
     }
 
     auto Device::operator=(Device&& rhs) noexcept -> Device&

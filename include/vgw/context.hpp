@@ -80,6 +80,8 @@ namespace VGW_NAMESPACE
 
         auto create_device(const vgw::DeviceInfo& deviceInfo) -> std::unique_ptr<Device>;
 
+        auto windowHwnd(void* platformSurfaceHandle) const -> vk::UniqueSurfaceKHR;
+
         /* Operators */
 
         auto operator=(const Context&) -> Context& = delete;
