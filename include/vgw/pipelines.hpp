@@ -15,17 +15,14 @@ namespace VGW_NAMESPACE
     {
     public:
         Pipeline() = default;
-        Pipeline(Device& device,
-                 vk::PipelineLayout layout,
-                 vk::Pipeline pipeline,
-                 vk::PipelineBindPoint bindPoint,
-                 ShaderReflectionData reflectionData);
+        Pipeline(Device& device, vk::PipelineLayout layout, vk::PipelineBindPoint bindPoint, ShaderReflectionData reflectionData);
         Pipeline(const Pipeline&) = delete;
         Pipeline(Pipeline&& other) noexcept;
         virtual ~Pipeline() = default;
 
         /* Getters */
 
+        auto get_device() const -> Device* { return m_device; }
         auto get_layout() const -> vk::PipelineLayout { return m_layout; }
         auto get_pipeline() const -> vk::Pipeline { return m_pipeline; }
         auto get_bind_point() const -> vk::PipelineBindPoint { return m_bindPoint; }
@@ -76,7 +73,10 @@ namespace VGW_NAMESPACE
     {
     public:
         GraphicsPipeline() = default;
-        GraphicsPipeline(Device& device, vk::PipelineLayout layout, vk::Pipeline pipeline, const ShaderReflectionData& reflectionData);
+        GraphicsPipeline(Device& device,
+                         const GraphicsPipelineInfo& pipelineInfo,
+                         vk::PipelineLayout layout,
+                         const ShaderReflectionData& reflectionData);
         GraphicsPipeline(const GraphicsPipeline&) = delete;
         GraphicsPipeline(GraphicsPipeline&& other) noexcept;
         ~GraphicsPipeline() override;
@@ -110,6 +110,9 @@ namespace VGW_NAMESPACE
 
     private:
         static auto reflect_shader_stage(const std::vector<std::uint32_t>& code, vk::ShaderStageFlagBits shaderStage)
+            -> ShaderReflectionData;
+
+        static auto merge_reflection_data(const ShaderReflectionData& reflectionDataA, const ShaderReflectionData& reflectionDataB)
             -> ShaderReflectionData;
 
     private:

@@ -35,6 +35,7 @@ namespace VGW_NAMESPACE
     struct ShaderReflectionData
     {
         std::vector<vk::VertexInputAttributeDescription> inputAttributes;
+        std::uint32_t inputAttributesStride;
         std::vector<DescriptorSet> descriptorSets;
         std::vector<vk::PushConstantRange> pushConstantBlocks;
     };
