@@ -71,24 +71,24 @@ namespace VGW_NAMESPACE
     void copy_to_buffer_blocking(Device& device, Buffer& dstBuffer, std::size_t size, const char* data, std::uint32_t queueIndex)
     {
         auto uploadBuffer = device.create_staging_buffer(size);
-        auto* mappedPtr = uploadBuffer.map();
+        auto* mappedPtr = uploadBuffer->map();
         std::memcpy(mappedPtr, data, size);
-        uploadBuffer.unmap();
+        uploadBuffer->unmap();
 
         auto cmd = std::move(device.create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
-        cmd.begin();
+        cmd->begin();
         CopyToBuffer copyToBuffer{
-            .srcBuffer = &uploadBuffer,
+            .srcBuffer = uploadBuffer.get(),
             .srcOffset = 0,
             .dstBuffer = &dstBuffer,
             .dstOffset = 0,
             .size = size,
         };
-        cmd.copy_to_buffer(copyToBuffer);
-        cmd.end();
+        cmd->copy_to_buffer(copyToBuffer);
+        cmd->end();
 
         Fence fence;
-        device.submit(0, cmd, &fence);
+        device.submit(0, *cmd, &fence);
         fence.wait();
     }
 }

@@ -209,7 +209,8 @@ namespace VGW_NAMESPACE
         }
     }
 
-    auto Device::create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags) -> std::vector<CommandBuffer>
+    auto Device::create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)
+        -> std::vector<std::unique_ptr<CommandBuffer>>
     {
         is_invariant();
         VGW_ASSERT(count >= 1);
@@ -231,11 +232,11 @@ namespace VGW_NAMESPACE
         allocInfo.setCommandBufferCount(count);
         auto allocatedCommandBuffers = m_device->allocateCommandBuffers(allocInfo);
 
-        std::vector<CommandBuffer> commandBuffers;
+        std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
         commandBuffers.reserve(count);
         for (auto i = 0; i < count; ++i)
         {
-            commandBuffers.emplace_back(*this, commandPool, allocatedCommandBuffers[i]);
+            commandBuffers.emplace_back(std::make_unique<CommandBuffer>(*this, commandPool, allocatedCommandBuffers[i]));
         }
 
         return commandBuffers;
@@ -244,24 +245,14 @@ namespace VGW_NAMESPACE
     auto Device::create_buffer(std::uint64_t size,
                                vk::BufferUsageFlags usage,
                                vma::MemoryUsage memoryUsage,
-                               vma::AllocationCreateFlags allocationFlags) -> Buffer
+                               vma::AllocationCreateFlags allocationCreateFlags) -> std::unique_ptr<Buffer>
     {
         is_invariant();
 
-        vk::BufferCreateInfo bufferInfo{};
-        bufferInfo.setSize(size);
-        bufferInfo.setUsage(usage);
-
-        vma::AllocationCreateInfo allocInfo{};
-        allocInfo.setUsage(memoryUsage);
-        allocInfo.setFlags(allocationFlags);
-
-        auto [buffer, allocation] = m_allocator->createBuffer(bufferInfo, allocInfo);
-
-        return Buffer(*this, buffer, allocation, bufferInfo, allocInfo);
+        return std::make_unique<Buffer>(*this, size, usage, memoryUsage, allocationCreateFlags);
     }
 
-    auto Device::create_staging_buffer(std::uint64_t size) -> Buffer
+    auto Device::create_staging_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
     {
         return create_buffer(size,
                              vk::BufferUsageFlagBits::eTransferSrc,
@@ -269,13 +260,13 @@ namespace VGW_NAMESPACE
                              vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
     }
 
-    auto Device::create_storage_buffer(std::uint64_t size) -> Buffer
+    auto Device::create_storage_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
     {
         return create_buffer(
             size, vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags());
     }
 
-    auto Device::create_uniform_buffer(std::uint64_t size) -> Buffer
+    auto Device::create_uniform_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
     {
         return create_buffer(size,
                              vk::BufferUsageFlagBits::eUniformBuffer,
@@ -283,13 +274,13 @@ namespace VGW_NAMESPACE
                              vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
     }
 
-    auto Device::create_vertex_buffer(std::uint64_t size) -> Buffer
+    auto Device::create_vertex_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
     {
         return create_buffer(
             size, vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags());
     }
 
-    auto Device::create_index_buffer(std::uint64_t size) -> Buffer
+    auto Device::create_index_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
     {
         return create_buffer(
             size, vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags());
@@ -308,7 +299,7 @@ namespace VGW_NAMESPACE
     }
 
     auto Device::create_descriptor_sets(std::uint32_t count, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
-        -> std::vector<vk::DescriptorSet>
+        -> std::vector<vk::UniqueDescriptorSet>
     {
         vk::DescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.setBindings(bindings);
@@ -318,12 +309,12 @@ namespace VGW_NAMESPACE
         vk::DescriptorSetAllocateInfo allocInfo{};
         allocInfo.setDescriptorPool(m_descriptorPool.get());
         allocInfo.setSetLayouts(setLayouts);
-        return m_device->allocateDescriptorSets(allocInfo);
+        return m_device->allocateDescriptorSetsUnique(allocInfo);
     }
 
-    auto Device::create_pipeline_library() -> PipelineLibrary
+    auto Device::create_pipeline_library() -> std::unique_ptr<PipelineLibrary>
     {
-        return PipelineLibrary(*this);
+        return std::make_unique<PipelineLibrary>(*this);
     }
 
     void Device::bind_buffer(vk::DescriptorSet set,

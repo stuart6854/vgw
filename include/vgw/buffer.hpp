@@ -16,10 +16,10 @@ namespace VGW_NAMESPACE
     public:
         Buffer() = default;
         explicit Buffer(Device& device,
-                        vk::Buffer buffer,
-                        vma::Allocation allocation,
-                        const vk::BufferCreateInfo& bufferInfo,
-                        const vma::AllocationCreateInfo& allocInfo);
+                        std::uint64_t size,
+                        vk::BufferUsageFlags usage,
+                        vma::MemoryUsage memoryUsage,
+                        vma::AllocationCreateFlags allocationCreateFlags);
         Buffer(const Buffer&) = delete;
         Buffer(Buffer&& other) noexcept;
         ~Buffer();
@@ -43,8 +43,6 @@ namespace VGW_NAMESPACE
         void set_allocation_flags(vma::AllocationCreateFlags allocationFlags);
 
         /* Methods */
-
-        void destroy();
 
         void resize(std::size_t newSize);
 

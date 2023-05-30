@@ -1,23 +1,17 @@
 #include "vgw/buffer.hpp"
 
 #include "vgw/device.hpp"
-#include "vulkan-memory-allocator-hpp/vk_mem_alloc_handles.hpp"
 
 namespace VGW_NAMESPACE
 {
     Buffer::Buffer(Device& device,
-                   vk::Buffer buffer,
-                   vma::Allocation allocation,
-                   const vk::BufferCreateInfo& bufferInfo,
-                   const vma::AllocationCreateInfo& allocInfo)
-        : m_device(&device),
-          m_buffer(buffer),
-          m_allocation(allocation),
-          m_size(bufferInfo.size),
-          m_usage(bufferInfo.usage),
-          m_memoryUsage(allocInfo.usage),
-          m_allocationFlags(allocInfo.flags)
+                   std::uint64_t size,
+                   vk::BufferUsageFlags usage,
+                   vma::MemoryUsage memoryUsage,
+                   vma::AllocationCreateFlags allocationCreateFlags)
+        : m_device(&device), m_size(size), m_usage(usage), m_memoryUsage(memoryUsage), m_allocationFlags(allocationCreateFlags)
     {
+        resize(m_size);
     }
 
     Buffer::Buffer(Buffer&& other) noexcept
@@ -33,7 +27,8 @@ namespace VGW_NAMESPACE
 
     Buffer::~Buffer()
     {
-        destroy();
+        auto allocator = m_device->get_allocator();
+        allocator.destroyBuffer(m_buffer, m_allocation);
     }
 
     bool Buffer::is_valid() const
@@ -56,25 +51,25 @@ namespace VGW_NAMESPACE
         m_allocationFlags = allocationFlags;
     }
 
-    void Buffer::destroy()
-    {
-        if (is_valid())
-        {
-            auto allocator = m_device->get_allocator();
-            allocator.destroyBuffer(m_buffer, m_allocation);
-            m_buffer = nullptr;
-            m_allocation = nullptr;
-        }
-    }
-
     void Buffer::resize(std::size_t newSize)
     {
-        is_invariant();
-
-        destroy();
+        auto allocator = m_device->get_allocator();
+        if (m_buffer)
+        {
+            allocator.destroyBuffer(m_buffer, m_allocation);
+        }
 
         m_size = newSize;
-        *this = m_device->create_buffer(newSize, m_usage, m_memoryUsage, m_allocationFlags);
+
+        vk::BufferCreateInfo bufferInfo{};
+        bufferInfo.setSize(m_size);
+        bufferInfo.setUsage(m_usage);
+
+        vma::AllocationCreateInfo allocInfo{};
+        allocInfo.setUsage(m_memoryUsage);
+        allocInfo.setFlags(m_allocationFlags);
+
+        std::tie(m_buffer, m_allocation) = m_device->get_allocator().createBuffer(bufferInfo, allocInfo);
 
         is_invariant();
     }

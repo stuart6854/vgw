@@ -224,9 +224,9 @@ namespace VGW_NAMESPACE
         log(LogLevel::eError, msg, sourceLocation);
     }
 
-    auto Context::create_device(const DeviceInfo& deviceInfo) -> Device
+    auto Context::create_device(const vgw::DeviceInfo& deviceInfo) -> std::unique_ptr<Device>
     {
-        return Device(*this, deviceInfo);
+        return std::make_unique<Device>(*this, deviceInfo);
     }
 
     void Context::is_invariant() const
@@ -277,4 +277,8 @@ namespace VGW_NAMESPACE
         return false;
     }
 
+    auto create_context(const vgw::ContextInfo& contextInfo) -> std::unique_ptr<Context>
+    {
+        return std::make_unique<Context>(contextInfo);
+    }
 }

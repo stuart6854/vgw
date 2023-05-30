@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 
+#include <memory>
 #include <unordered_map>
 
 namespace VGW_NAMESPACE
@@ -56,33 +57,33 @@ namespace VGW_NAMESPACE
          * @param poolFlags The flags of the pool to allocate from.
          * @return Vector of `count` number of `CommandBuffer`.
          */
-        auto create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags) -> std::vector<CommandBuffer>;
+        auto create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags) -> std::vector<std::unique_ptr<CommandBuffer>>;
 
         /**
          * Create buffer.
          * @param size
          * @param usage
          * @param memoryUsage
-         * @param allocationFlags
+         * @param allocationCreateFlags
          * @return
          */
         auto create_buffer(std::uint64_t size,
                            vk::BufferUsageFlags usage,
                            vma::MemoryUsage memoryUsage,
-                           vma::AllocationCreateFlags allocationFlags) -> Buffer;
+                           vma::AllocationCreateFlags allocationCreateFlags) -> std::unique_ptr<Buffer>;
 
-        auto create_staging_buffer(std::uint64_t size) -> Buffer;
-        auto create_storage_buffer(std::uint64_t size) -> Buffer;
-        auto create_uniform_buffer(std::uint64_t size) -> Buffer;
-        auto create_vertex_buffer(std::uint64_t size) -> Buffer;
-        auto create_index_buffer(std::uint64_t size) -> Buffer;
+        auto create_staging_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
+        auto create_storage_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
+        auto create_uniform_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
+        auto create_vertex_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
+        auto create_index_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
 
         auto get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout;
 
         auto create_descriptor_sets(std::uint32_t count, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
-            -> std::vector<vk::DescriptorSet>;
+            -> std::vector<vk::UniqueDescriptorSet>;
 
-        auto create_pipeline_library() -> PipelineLibrary;
+        auto create_pipeline_library() -> std::unique_ptr<PipelineLibrary>;
 
 #pragma endregion
 

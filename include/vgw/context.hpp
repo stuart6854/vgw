@@ -5,6 +5,7 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include <memory>
 #include <functional>
 #include <string_view>
 #include <source_location>
@@ -77,7 +78,7 @@ namespace VGW_NAMESPACE
         void log_warn(const std::string_view& msg, const std::source_location& sourceLocation = std::source_location::current()) const;
         void log_error(const std::string_view& msg, const std::source_location& sourceLocation = std::source_location::current()) const;
 
-        auto create_device(const vgw::DeviceInfo& deviceInfo) -> Device;
+        auto create_device(const vgw::DeviceInfo& deviceInfo) -> std::unique_ptr<Device>;
 
         /* Operators */
 
@@ -98,4 +99,6 @@ namespace VGW_NAMESPACE
         vk::DebugUtilsMessengerCreateInfoEXT m_debugUtilsCallbackCreateInfo;
         vk::DebugUtilsMessengerEXT m_debugCallback;
     };
+
+    auto create_context(const vgw::ContextInfo& contextInfo) -> std::unique_ptr<Context>;
 }

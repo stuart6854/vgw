@@ -35,14 +35,14 @@ int main(int argc, char** argv)
         .enableSurfaces = false,
         .enableDebug = true,
     };
-    auto context = vgw::Context(contextInfo);
-    if (!context.is_valid())
+    auto context = vgw::create_context(contextInfo);
+    if (!context->is_valid())
     {
         throw std::runtime_error("Failed to create graphics context!");
     }
 
-    context.set_log_level(vgw::LogLevel::eDebug);
-    context.set_log_callback(LogCallback);
+    context->set_log_level(vgw::LogLevel::eDebug);
+    context->set_log_callback(LogCallback);
 
     vgw::DeviceInfo deviceInfo{
         .wantedQueues = {
@@ -55,13 +55,13 @@ int main(int argc, char** argv)
             {vk::DescriptorType::eStorageBuffer, 2},
         },
     };
-    auto device = vgw::Device(context, deviceInfo);
-    if (!device.is_valid())
+    auto device = context->create_device(deviceInfo);
+    if (!device->is_valid())
     {
         throw std::runtime_error("Failed to create graphics device!");
     }
 
-    auto pipelineLibrary = device.create_pipeline_library();
+    auto pipelineLibrary = device->create_pipeline_library();
 
     // Create compute pipeline
     auto computeCode = vgw::read_shader_code("compute.comp").value();
@@ -69,65 +69,66 @@ int main(int argc, char** argv)
     vgw::ComputePipelineInfo computePipelineInfo{
         .computeCode = compiledComputeCode,
     };
-    auto* computePipeline = pipelineLibrary.create_compute_pipeline(computePipelineInfo);
+    auto* computePipeline = pipelineLibrary->create_compute_pipeline(computePipelineInfo);
 
     // Create input storage buffer
     const auto NumElements = 10u;
-    auto inBuffer = device.create_buffer(sizeof(std::int32_t) * NumElements,
+    auto inBuffer = device->create_buffer(sizeof(std::int32_t) * NumElements,
                                          vk::BufferUsageFlagBits::eStorageBuffer,
                                          vma::MemoryUsage::eAuto,
                                          vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
-    auto* mappedPtr = static_cast<std::int32_t*>(inBuffer.map());
+    auto* mappedPtr = static_cast<std::int32_t*>(inBuffer->map());
     for (auto i = 0; i < NumElements; ++i)
     {
         mappedPtr[i] = i;
     }
-    inBuffer.unmap();
+    inBuffer->unmap();
 
     // Create output storage buffer
-    auto outBuffer = device.create_buffer(sizeof(std::int32_t) * NumElements,
+    auto outBuffer = device->create_buffer(sizeof(std::int32_t) * NumElements,
                                           vk::BufferUsageFlagBits::eStorageBuffer,
                                           vma::MemoryUsage::eAuto,
                                           vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
 
-    auto descriptorSet = device.create_descriptor_sets(1,
-                                                       {
-                                                           { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
-                                                           { 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
-                                                       })[0];
+    auto descriptorSet =
+        std::move(device->create_descriptor_sets(1,
+                                                {
+                                                    { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
+                                                    { 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
+                                                })[0]);
 
-    device.bind_buffer(descriptorSet, 0, vk::DescriptorType::eStorageBuffer, &inBuffer, 0, inBuffer.get_size());
-    device.bind_buffer(descriptorSet, 1, vk::DescriptorType::eStorageBuffer, &outBuffer, 0, outBuffer.get_size());
+    device->bind_buffer(descriptorSet.get(), 0, vk::DescriptorType::eStorageBuffer, inBuffer.get(), 0, inBuffer->get_size());
+    device->bind_buffer(descriptorSet.get(), 1, vk::DescriptorType::eStorageBuffer, outBuffer.get(), 0, outBuffer->get_size());
 
-    device.flush_descriptor_writes();
+    device->flush_descriptor_writes();
 
-    auto mainCmd = std::move(device.create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
-    mainCmd.begin();
-    mainCmd.bind_pipeline(computePipeline);
-    mainCmd.bind_descriptor_sets(0, { descriptorSet });
-    mainCmd.dispatch(NumElements, 1, 1);
-    mainCmd.end();
+    auto mainCmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
+    mainCmd->begin();
+    mainCmd->bind_pipeline(computePipeline);
+    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
+    mainCmd->dispatch(NumElements, 1, 1);
+    mainCmd->end();
 
     vgw::Fence fence;
-    device.submit(0, mainCmd, &fence);
+    device->submit(0, *mainCmd, &fence);
     fence.wait();
     fence.reset();
 
     // Print storage buffer contents
-    mappedPtr = static_cast<std::int32_t*>(inBuffer.map());
+    mappedPtr = static_cast<std::int32_t*>(inBuffer->map());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
     std::cout << std::endl;
-    inBuffer.unmap();
-    mappedPtr = static_cast<std::int32_t*>(outBuffer.map());
+    inBuffer->unmap();
+    mappedPtr = static_cast<std::int32_t*>(outBuffer->map());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
     std::cout << std::endl;
-    outBuffer.unmap();
+    outBuffer->unmap();
 
     return 0;
 }
