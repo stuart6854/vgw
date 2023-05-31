@@ -127,10 +127,10 @@ int main(int argc, char** argv)
         cmd->transition_image(attachmentTransition);
 
         cmd->begin_render_pass(*renderPass);
-
+        cmd->bind_pipeline(trianglePipeline);
+        cmd->draw(3, 1, 0, 0);
         cmd->end_render_pass();
 
-        cmd->bind_pipeline(trianglePipeline);
         vgw::TransitionImage presentTransition{
             .image = swapChain->get_current_image(),
             .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,

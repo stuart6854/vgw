@@ -137,6 +137,24 @@ namespace VGW_NAMESPACE
         m_commandBuffer.endRendering();
     }
 
+    void CommandBuffer::draw(std::uint32_t vertexCount, std::uint32_t instanceCount, std::uint32_t firstVertex, std::uint32_t firstInstance)
+    {
+        is_invariant();
+        VGW_ASSERT(vertexCount >= 1);
+        VGW_ASSERT(instanceCount >= 1);
+
+        m_commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
+    void CommandBuffer::draw_indexed(std::uint32_t indexCount, std::uint32_t instanceCount, std::uint32_t firstIndex, std::int32_t vertexOffset, std::uint32_t firstInstance)
+    {
+        is_invariant();
+        VGW_ASSERT(indexCount >= 1);
+        VGW_ASSERT(instanceCount >= 1);
+
+        m_commandBuffer.drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+    }
+
     void CommandBuffer::dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ)
     {
         is_invariant();

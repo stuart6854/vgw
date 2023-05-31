@@ -49,6 +49,13 @@ namespace VGW_NAMESPACE
         void begin_render_pass(RenderPass& renderPass);
         void end_render_pass();
 
+        void draw(std::uint32_t vertexCount, std::uint32_t instanceCount, std::uint32_t firstVertex, std::uint32_t firstInstance);
+        void draw_indexed(std::uint32_t indexCount,
+                          std::uint32_t instanceCount,
+                          std::uint32_t firstIndex,
+                          std::int32_t vertexOffset,
+                          std::uint32_t firstInstance);
+
         void dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ);
 
         /* Operators */
