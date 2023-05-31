@@ -6,6 +6,7 @@
 #include "vgw/context.hpp"
 #include "vgw/pipelines.hpp"
 #include "vgw/swap_chain.hpp"
+#include "vgw/render_pass.hpp"
 #include "vgw/command_buffer.hpp"
 #include "vgw/synchronization.hpp"
 
@@ -349,6 +350,11 @@ namespace VGW_NAMESPACE
     auto Device::create_pipeline_library() -> std::unique_ptr<PipelineLibrary>
     {
         return std::make_unique<PipelineLibrary>(*this);
+    }
+
+    auto Device::create_render_pass(const RenderPassInfo& renderPassInfo) -> std::unique_ptr<RenderPass>
+    {
+        return std::make_unique<RenderPass>(*this, renderPassInfo);
     }
 
     void Device::bind_buffer(vk::DescriptorSet set,

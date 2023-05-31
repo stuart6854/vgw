@@ -19,6 +19,10 @@ namespace VGW_NAMESPACE
 
     class Image;
     struct ImageInfo;
+
+    class RenderPass;
+    struct RenderPassInfo;
+
     struct DeviceInfo
     {
         std::vector<vk::QueueFlags> wantedQueues;
@@ -92,6 +96,8 @@ namespace VGW_NAMESPACE
             -> std::vector<vk::UniqueDescriptorSet>;
 
         auto create_pipeline_library() -> std::unique_ptr<PipelineLibrary>;
+
+        auto create_render_pass(const RenderPassInfo& renderPassInfo) -> std::unique_ptr<RenderPass>;
 
 #pragma endregion
 

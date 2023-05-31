@@ -9,6 +9,7 @@ namespace VGW_NAMESPACE
 {
     class Device;
     class Image;
+    class RenderPass;
     class Pipeline;
 
     class CommandBuffer
@@ -44,6 +45,9 @@ namespace VGW_NAMESPACE
 
         void bind_pipeline(Pipeline* pipeline);
         void bind_descriptor_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& descriptorSets);
+
+        void begin_render_pass(RenderPass& renderPass);
+        void end_render_pass();
 
         void dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ);
 

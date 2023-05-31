@@ -4,6 +4,7 @@
 #include "vgw/buffer.hpp"
 #include "vgw/image.hpp"
 #include "vgw/pipelines.hpp"
+#include "vgw/render_pass.hpp"
 
 namespace VGW_NAMESPACE
 {
@@ -120,6 +121,20 @@ namespace VGW_NAMESPACE
         VGW_ASSERT(!descriptorSets.empty());
 
         m_commandBuffer.bindDescriptorSets(m_boundPipeline->get_bind_point(), m_boundPipeline->get_layout(), firstSet, descriptorSets, {});
+    }
+
+    void CommandBuffer::begin_render_pass(RenderPass& renderPass)
+    {
+        is_invariant();
+
+        m_commandBuffer.beginRendering(renderPass.get_rendering_info());
+    }
+
+    void CommandBuffer::end_render_pass()
+    {
+        is_invariant();
+
+        m_commandBuffer.endRendering();
     }
 
     void CommandBuffer::dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ)

@@ -94,6 +94,16 @@ int main(int argc, char** argv)
     };
     auto* trianglePipeline = pipelineLibrary->create_graphics_pipeline(graphicsPipelineInfo);
 
+    vgw::RenderPassInfo renderPassInfo{
+        .colorAttachments = { {
+            vk::Format::eR8G8B8A8Unorm,
+            1.0f,
+            { 1, 0.3f, 0.4f, 1.0f },
+        } },
+    };
+    auto renderPass = device->create_render_pass(renderPassInfo);
+    renderPass->resize(WINDOW_WIDTH, WINDOW_HEIGHT);
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -115,6 +125,11 @@ int main(int argc, char** argv)
             .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
         };
         cmd->transition_image(attachmentTransition);
+
+        cmd->begin_render_pass(*renderPass);
+
+        cmd->end_render_pass();
+
         cmd->bind_pipeline(trianglePipeline);
         vgw::TransitionImage presentTransition{
             .image = swapChain->get_current_image(),
