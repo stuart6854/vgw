@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "image.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -9,7 +10,6 @@
 namespace VGW_NAMESPACE
 {
     class Device;
-    class Image;
 
     class SwapChain
     {

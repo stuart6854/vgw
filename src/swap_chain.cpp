@@ -1,7 +1,6 @@
 #include "vgw/swap_chain.hpp"
 
 #include "vgw/device.hpp"
-#include "vgw/image.hpp"
 
 namespace VGW_NAMESPACE
 {
