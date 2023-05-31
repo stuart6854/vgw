@@ -326,7 +326,7 @@ namespace VGW_NAMESPACE
 
         std::uint32_t varCount{ 0 };
 
-        if (shaderStage != vk::ShaderStageFlagBits::eCompute)
+        if (shaderStage == vk::ShaderStageFlagBits::eVertex)
         {
             result = module.EnumerateInputVariables(&varCount, nullptr);
             VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
@@ -335,6 +335,10 @@ namespace VGW_NAMESPACE
             VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
             for (const auto& inputVar : inputVariables)
             {
+                if (inputVar->name == nullptr)
+                {
+                    continue;
+                }
                 auto attribute = outReflectionData.inputAttributes.emplace_back();
                 attribute.setBinding(0);
                 attribute.setLocation(inputVar->location);
