@@ -142,16 +142,16 @@ namespace VGW_NAMESPACE
 
         vk::PipelineRasterizationStateCreateInfo rasterisation_state{};
         rasterisation_state.setPolygonMode(vk::PolygonMode::eFill);  // TODO: Optional.
-        rasterisation_state.setCullMode(pipelineInfo.cullMode);      // TODO: Optional.
-        rasterisation_state.setFrontFace(pipelineInfo.frontFace);    // TODO: Optional.
-        rasterisation_state.setLineWidth(pipelineInfo.lineWidth);    // TODO: Optional.
+        rasterisation_state.setCullMode(pipelineInfo.cullMode);
+        rasterisation_state.setFrontFace(pipelineInfo.frontFace);
+        rasterisation_state.setLineWidth(pipelineInfo.lineWidth);
 
         vk::PipelineMultisampleStateCreateInfo multisample_state{};
         multisample_state.setRasterizationSamples(vk::SampleCountFlagBits::e1);  // #TODO: Optional.
 
         vk::PipelineDepthStencilStateCreateInfo depth_stencil_state{};
-        depth_stencil_state.setDepthTestEnable(pipelineInfo.depthTest);      // #TODO: Optional.
-        depth_stencil_state.setDepthWriteEnable(pipelineInfo.depthWrite);    // #TODO: Optional.
+        depth_stencil_state.setDepthTestEnable(pipelineInfo.depthTest);
+        depth_stencil_state.setDepthWriteEnable(pipelineInfo.depthWrite);
         depth_stencil_state.setDepthCompareOp(vk::CompareOp::eLessOrEqual);  // #TODO: Optional.
         depth_stencil_state.setStencilTestEnable(false);                     // #TODO: Optional.
 
@@ -172,12 +172,11 @@ namespace VGW_NAMESPACE
         vk::PipelineDynamicStateCreateInfo dynamic_state{};
         dynamic_state.setDynamicStates(dynamicStates);
 
-        std::vector<vk::Format> colorAttachmentFormats{ vk::Format::eB8G8R8A8Srgb };  // #TODO: Optional.
         vk::PipelineRenderingCreateInfo rendering_info{};
-        rendering_info.setColorAttachmentFormats(colorAttachmentFormats);
+        rendering_info.setColorAttachmentFormats(pipelineInfo.colorAttachmentFormats);
         if (pipelineInfo.depthTest)
         {
-            rendering_info.setDepthAttachmentFormat(vk::Format::eD16Unorm);  // #TODO: Optional.
+            rendering_info.setDepthAttachmentFormat(pipelineInfo.depthStencilFormat);
         }
 
         vk::GraphicsPipelineCreateInfo vk_pipeline_info{};

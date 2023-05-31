@@ -26,6 +26,9 @@ namespace VGW_NAMESPACE
         float lineWidth{ 1.0f };
         bool depthTest;
         bool depthWrite;
+
+        std::vector<vk::Format> colorAttachmentFormats;
+        vk::Format depthStencilFormat;
     };
 
     struct DescriptorSet

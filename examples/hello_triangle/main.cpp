@@ -91,6 +91,7 @@ int main(int argc, char** argv)
         .lineWidth = 1.0f,
         .depthTest = false,
         .depthWrite = false,
+        .colorAttachmentFormats = { vk::Format::eR8G8B8A8Unorm },
     };
     auto* trianglePipeline = pipelineLibrary->create_graphics_pipeline(graphicsPipelineInfo);
 
