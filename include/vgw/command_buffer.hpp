@@ -8,6 +8,7 @@
 namespace VGW_NAMESPACE
 {
     class Device;
+    class Image;
     class Pipeline;
 
     class CommandBuffer
@@ -38,6 +39,8 @@ namespace VGW_NAMESPACE
         void end();
 
         void copy_to_buffer(const CopyToBuffer& copyToBuffer);
+
+        void transition_image(const TransitionImage& transitionImage);
 
         void bind_pipeline(Pipeline* pipeline);
         void bind_descriptor_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& descriptorSets);

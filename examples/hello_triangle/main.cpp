@@ -94,18 +94,43 @@ int main(int argc, char** argv)
     };
     auto* trianglePipeline = pipelineLibrary->create_graphics_pipeline(graphicsPipelineInfo);
 
-    // Record command buffer
-    auto mainCmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
-    mainCmd->begin();
-    mainCmd->bind_pipeline(trianglePipeline);
-    mainCmd->end();
-
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
+        vk::UniqueSemaphore imageAcquireSemaphore{};
+        swapChain->acquire_next_image(&imageAcquireSemaphore);
+
+        // Record command buffer
+        auto cmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
+        cmd->begin();
+        vgw::TransitionImage attachmentTransition{
+            .image = swapChain->get_current_image(),
+            .oldLayout = vk::ImageLayout::eUndefined,
+            .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .srcAccess = vk::AccessFlagBits2::eNone,
+            .dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+            .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
+            .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+        };
+        cmd->transition_image(attachmentTransition);
+        cmd->bind_pipeline(trianglePipeline);
+        vgw::TransitionImage presentTransition{
+            .image = swapChain->get_current_image(),
+            .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .newLayout = vk::ImageLayout::ePresentSrcKHR,
+            .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+            .dstAccess = vk::AccessFlagBits2::eNone,
+            .srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            .dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe,
+            .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+        };
+        cmd->transition_image(presentTransition);
+        cmd->end();
+
         vgw::Fence fence;
-        device->submit(0, *mainCmd, &fence);
+        device->submit(0, *cmd, &fence);
         fence.wait();
 
         swapChain->present(0);

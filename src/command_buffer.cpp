@@ -2,6 +2,7 @@
 
 #include "vgw/device.hpp"
 #include "vgw/buffer.hpp"
+#include "vgw/image.hpp"
 #include "vgw/pipelines.hpp"
 
 namespace VGW_NAMESPACE
@@ -78,6 +79,27 @@ namespace VGW_NAMESPACE
         vk::BufferCopy2 region{ copyToBuffer.srcOffset, copyToBuffer.dstOffset, copyToBuffer.size };
         vk::CopyBufferInfo2 copyBufferInfo{ copyToBuffer.srcBuffer->get_buffer(), copyToBuffer.dstBuffer->get_buffer(), region };
         m_commandBuffer.copyBuffer2(copyBufferInfo);
+    }
+
+    void CommandBuffer::transition_image(const TransitionImage& transitionImage)
+    {
+        is_invariant();
+        VGW_ASSERT(m_recordingStarted && !m_recordingEnded);
+        VGW_ASSERT(transitionImage.image);
+
+        vk::ImageMemoryBarrier2 barrier{};
+        barrier.setImage(transitionImage.image->get_image());
+        barrier.setOldLayout(transitionImage.oldLayout);
+        barrier.setNewLayout(transitionImage.newLayout);
+        barrier.setSrcAccessMask(transitionImage.srcAccess);
+        barrier.setDstAccessMask(transitionImage.dstAccess);
+        barrier.setSrcStageMask(transitionImage.srcStage);
+        barrier.setDstStageMask(transitionImage.dstStage);
+        barrier.setSubresourceRange(transitionImage.subresourceRange);
+
+        vk::DependencyInfo dependencyInfo{};
+        dependencyInfo.setImageMemoryBarriers(barrier);
+        m_commandBuffer.pipelineBarrier2(dependencyInfo);
     }
 
     void CommandBuffer::bind_pipeline(Pipeline* pipeline)
