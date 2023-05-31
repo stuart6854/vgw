@@ -125,6 +125,9 @@ namespace VGW_NAMESPACE
             std::ranges::find(enabledExtensions, std::string_view(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)) != enabledExtensions.end();
 
         void* nextFeature{ nullptr };
+        vk::PhysicalDeviceSynchronization2Features synchronization2Features{ true };
+        nextFeature = &synchronization2Features;
+
         vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeatures{ true };
         if (m_dynamicRenderingSupported)
         {
