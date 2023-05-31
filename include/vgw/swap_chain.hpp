@@ -4,9 +4,12 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include <memory>
+
 namespace VGW_NAMESPACE
 {
     class Device;
+    class Image;
 
     class SwapChain
     {
@@ -21,8 +24,12 @@ namespace VGW_NAMESPACE
 
         bool is_valid() const;
 
+        auto get_device() const -> Device* { return m_device; }
+
         auto get_swap_chain() const -> vk::SwapchainKHR { return m_swapChain.get(); }
         auto get_image_index() const -> std::uint32_t { return m_imageIndex; }
+
+        auto get_current_image() const -> Image* { return m_images[m_imageIndex].get(); }
 
         /* Methods */
 
@@ -44,5 +51,7 @@ namespace VGW_NAMESPACE
 
         vk::UniqueSwapchainKHR m_swapChain;
         std::uint32_t m_imageIndex;
+
+        std::vector<std::unique_ptr<Image>> m_images;
     };
 }

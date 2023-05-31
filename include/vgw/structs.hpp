@@ -8,6 +8,7 @@
 namespace VGW_NAMESPACE
 {
     class Buffer;
+    class Image;
 
     struct ComputePipelineInfo
     {
@@ -47,6 +48,18 @@ namespace VGW_NAMESPACE
         Buffer* dstBuffer;
         std::uint64_t dstOffset;
         std::uint64_t size;
+    };
+
+    struct TransitionImage
+    {
+        Image* image;
+        vk::ImageLayout oldLayout;
+        vk::ImageLayout newLayout;
+        vk::AccessFlags2 srcAccess;
+        vk::AccessFlags2 dstAccess;
+        vk::PipelineStageFlags2 srcStage;
+        vk::PipelineStageFlags2 dstStage;
+        vk::ImageSubresourceRange subresourceRange;
     };
 }
 
