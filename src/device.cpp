@@ -1,6 +1,7 @@
 #include "vgw/device.hpp"
 
 #include "device_helpers.hpp"
+#include "vgw/image.hpp"
 #include "vgw/buffer.hpp"
 #include "vgw/context.hpp"
 #include "vgw/pipelines.hpp"
@@ -312,6 +313,11 @@ namespace VGW_NAMESPACE
     {
         return create_buffer(
             size, vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags());
+    }
+
+    auto Device::create_image(const ImageInfo& imageInfo) -> std::unique_ptr<Image>
+    {
+        return std::make_unique<Image>(*this, imageInfo);
     }
 
     auto Device::get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout

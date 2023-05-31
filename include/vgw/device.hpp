@@ -17,6 +17,8 @@ namespace VGW_NAMESPACE
     class SwapChain;
     class Fence;
 
+    class Image;
+    struct ImageInfo;
     struct DeviceInfo
     {
         std::vector<vk::QueueFlags> wantedQueues;
@@ -81,6 +83,8 @@ namespace VGW_NAMESPACE
         auto create_uniform_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
         auto create_vertex_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
         auto create_index_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
+
+        auto create_image(const ImageInfo& imageInfo) -> std::unique_ptr<Image>;
 
         auto get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout;
 
