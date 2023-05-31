@@ -33,6 +33,7 @@ namespace VGW_NAMESPACE
         m_colorAttachments.clear();
         m_depthStencilAttachment = vk::RenderingAttachmentInfo{};
 
+        ImageViewInfo viewInfo{ .viewType = vk::ImageViewType::e2D, .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } };
         for (const auto& attachmentInfo : m_renderPassInfo.colorAttachments)
         {
             ImageInfo imageInfo{
@@ -46,7 +47,7 @@ namespace VGW_NAMESPACE
             m_colorImages.push_back(m_device->create_image(imageInfo));
 
             auto& attachment = m_colorAttachments.emplace_back();
-            attachment.setImageView({});
+            attachment.setImageView(m_colorImages.back()->get_view(viewInfo));
             attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
             attachment.setLoadOp(vk::AttachmentLoadOp::eClear);
             attachment.setStoreOp(vk::AttachmentStoreOp::eStore);
@@ -55,6 +56,17 @@ namespace VGW_NAMESPACE
 
         if (m_renderPassInfo.depthStencilAttachment.format != vk::Format::eUndefined)
         {
+            vk::ImageAspectFlags depthStencilAspect{};
+            if (m_renderPassInfo.useDepth)
+            {
+                depthStencilAspect |= vk::ImageAspectFlagBits::eDepth;
+            }
+            if (m_renderPassInfo.useStencil)
+            {
+                depthStencilAspect |= vk::ImageAspectFlagBits::eStencil;
+            }
+            viewInfo.subresourceRange.setAspectMask(depthStencilAspect);
+
             ImageInfo imageInfo{
                 .width = std::uint32_t(float(m_currentResolution.width) * m_renderPassInfo.depthStencilAttachment.resolutionScale),
                 .height = std::uint32_t(float(m_currentResolution.height) * m_renderPassInfo.depthStencilAttachment.resolutionScale),
@@ -65,7 +77,7 @@ namespace VGW_NAMESPACE
             };
             m_depthStencilImage = m_device->create_image(imageInfo);
 
-            m_depthStencilAttachment.setImageView({});
+            m_depthStencilAttachment.setImageView(m_depthStencilImage->get_view(viewInfo));
             m_depthStencilAttachment.setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal);
             m_depthStencilAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
             m_depthStencilAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);
@@ -90,5 +102,4 @@ namespace VGW_NAMESPACE
     {
         VGW_ASSERT(m_device);
     }
-
 }
