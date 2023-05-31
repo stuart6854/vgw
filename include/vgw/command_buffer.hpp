@@ -49,6 +49,9 @@ namespace VGW_NAMESPACE
         void begin_render_pass(RenderPass& renderPass);
         void end_render_pass();
 
+        void set_viewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
+        void set_scissor(std::int32_t x, std::int32_t y, std::uint32_t width, std::uint32_t height);
+
         void draw(std::uint32_t vertexCount, std::uint32_t instanceCount, std::uint32_t firstVertex, std::uint32_t firstInstance);
         void draw_indexed(std::uint32_t indexCount,
                           std::uint32_t instanceCount,

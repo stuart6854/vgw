@@ -127,6 +127,8 @@ int main(int argc, char** argv)
         cmd->transition_image(attachmentTransition);
 
         cmd->begin_render_pass(*renderPass);
+        cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         cmd->bind_pipeline(trianglePipeline);
         cmd->draw(3, 1, 0, 0);
         cmd->end_render_pass();

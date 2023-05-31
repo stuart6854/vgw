@@ -137,6 +137,22 @@ namespace VGW_NAMESPACE
         m_commandBuffer.endRendering();
     }
 
+    void CommandBuffer::set_viewport(float x, float y, float width, float height, float minDepth, float maxDepth)
+    {
+        is_invariant();
+
+        vk::Viewport viewport{ x, height, width, -height, minDepth, maxDepth };
+        m_commandBuffer.setViewport(0, viewport);
+    }
+
+    void CommandBuffer::set_scissor(std::int32_t x, std::int32_t y, std::uint32_t width, std::uint32_t height)
+    {
+        is_invariant();
+
+        vk::Rect2D scissor{ { x, y }, { width, height } };
+        m_commandBuffer.setScissor(0, scissor);
+    }
+
     void CommandBuffer::draw(std::uint32_t vertexCount, std::uint32_t instanceCount, std::uint32_t firstVertex, std::uint32_t firstInstance)
     {
         is_invariant();
@@ -146,7 +162,11 @@ namespace VGW_NAMESPACE
         m_commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
-    void CommandBuffer::draw_indexed(std::uint32_t indexCount, std::uint32_t instanceCount, std::uint32_t firstIndex, std::int32_t vertexOffset, std::uint32_t firstInstance)
+    void CommandBuffer::draw_indexed(std::uint32_t indexCount,
+                                     std::uint32_t instanceCount,
+                                     std::uint32_t firstIndex,
+                                     std::int32_t vertexOffset,
+                                     std::uint32_t firstInstance)
     {
         is_invariant();
         VGW_ASSERT(indexCount >= 1);
