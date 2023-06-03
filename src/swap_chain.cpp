@@ -4,10 +4,10 @@
 
 namespace VGW_NAMESPACE
 {
-    SwapChain::SwapChain(Device& device, vk::SurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync)
-        : m_device(&device), m_surface(surface), m_extent(width, height), m_vsync(vsync)
+    SwapChain::SwapChain(Device& device, const SwapChainInfo& swapChainInfo)
+        : m_device(&device), m_surface(swapChainInfo.surface), m_extent(swapChainInfo.width, swapChainInfo.height), m_vsync(swapChainInfo.vsync)
     {
-        resize(width, height, vsync);
+        resize(m_extent.width, m_extent.height, m_vsync);
     }
 
     SwapChain::SwapChain(SwapChain&& other) noexcept {}

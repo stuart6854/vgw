@@ -233,10 +233,9 @@ namespace VGW_NAMESPACE
         }
     }
 
-    auto Device::create_swap_chain(vk::SurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync)
-        -> std::unique_ptr<SwapChain>
+    auto Device::create_swap_chain(const SwapChainInfo& swapChainInfo) -> std::unique_ptr<SwapChain>
     {
-        return std::make_unique<SwapChain>(*this, surface, width, height, vsync);
+        return std::make_unique<SwapChain>(*this, swapChainInfo);
     }
 
     auto Device::create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)

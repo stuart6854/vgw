@@ -73,7 +73,13 @@ int main(int argc, char** argv)
         throw std::runtime_error("Failed to create graphics device!");
     }
 
-    auto swapChain = device->create_swap_chain(surface.get(), WINDOW_WIDTH, WINDOW_HEIGHT, true);
+    vgw::SwapChainInfo swapChainInfo{
+        .surface = surface.get(),
+        .width = WINDOW_WIDTH,
+        .height = WINDOW_HEIGHT,
+        .vsync = true,
+    };
+    auto swapChain = device->create_swap_chain(swapChainInfo);
 
     auto pipelineLibrary = device->create_pipeline_library();
 

@@ -11,11 +11,19 @@ namespace VGW_NAMESPACE
 {
     class Device;
 
+    struct SwapChainInfo
+    {
+        vk::SurfaceKHR surface;
+        std::uint32_t width;
+        std::uint32_t height;
+        bool vsync;
+    };
+
     class SwapChain
     {
     public:
         SwapChain() = default;
-        SwapChain(Device& device, vk::SurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync);
+        SwapChain(Device& device, const SwapChainInfo& swapChainInfo);
         SwapChain(const SwapChain&) = delete;
         SwapChain(SwapChain&& other) noexcept;
         ~SwapChain();

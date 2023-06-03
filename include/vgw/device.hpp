@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "swap_chain.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
@@ -58,7 +59,7 @@ namespace VGW_NAMESPACE
 
 #pragma region Resource Creation
 
-        auto create_swap_chain(vk::SurfaceKHR surface, std::uint32_t width, std::uint32_t height, bool vsync) -> std::unique_ptr<SwapChain>;
+        auto create_swap_chain(const vgw::SwapChainInfo& swapChainInfo) -> std::unique_ptr<SwapChain>;
 
         /**
          * Allocate `count` number of command buffers from a command pool created with `poolFlags` flags.
