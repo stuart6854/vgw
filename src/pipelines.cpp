@@ -295,14 +295,7 @@ namespace VGW_NAMESPACE
 
         std::size_t pipelineHash{ 0 };
         hash_combine(pipelineHash, layoutHash);
-        hash_combine(pipelineHash, pipelineInfo.vertexCode);
-        hash_combine(pipelineHash, pipelineInfo.fragmentCode);
-        hash_combine(pipelineHash, pipelineInfo.topology);
-        hash_combine(pipelineHash, pipelineInfo.frontFace);
-        hash_combine(pipelineHash, pipelineInfo.cullMode);
-        hash_combine(pipelineHash, pipelineInfo.lineWidth);
-        hash_combine(pipelineHash, pipelineInfo.depthTest);
-        hash_combine(pipelineHash, pipelineInfo.depthWrite);
+        hash_combine(pipelineHash, pipelineInfo);
 
         if (m_computePipelineMap.contains(pipelineHash))
         {

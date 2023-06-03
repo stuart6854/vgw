@@ -137,4 +137,37 @@ namespace std
             return seed;
         }
     };
+
+    template <>
+    struct hash<std::vector<vk::Format>>
+    {
+        std::size_t operator()(const std::vector<vk::Format>& formats) const
+        {
+            std::size_t seed = formats.size();
+            for (const auto& format : formats)
+            {
+                vgw::hash_combine(seed, format);
+            }
+            return seed;
+        }
+    };
+
+    template <>
+    struct hash<vgw::GraphicsPipelineInfo>
+    {
+        std::size_t operator()(const vgw::GraphicsPipelineInfo& pipelineInfo) const
+        {
+            std::size_t seed{ 0 };
+            vgw::hash_combine(seed, pipelineInfo.vertexCode);
+            vgw::hash_combine(seed, pipelineInfo.fragmentCode);
+            vgw::hash_combine(seed, pipelineInfo.topology);
+            vgw::hash_combine(seed, pipelineInfo.frontFace);
+            vgw::hash_combine(seed, pipelineInfo.cullMode);
+            vgw::hash_combine(seed, pipelineInfo.lineWidth);
+            vgw::hash_combine(seed, pipelineInfo.depthTest);
+            vgw::hash_combine(seed, pipelineInfo.depthWrite);
+            vgw::hash_combine(seed, pipelineInfo.colorAttachmentFormats);
+            return seed;
+        }
+    };
 }
