@@ -58,7 +58,7 @@ namespace VGW_NAMESPACE
         viewCreateInfo.setFormat(m_format);
         viewCreateInfo.setSubresourceRange(viewInfo.subresourceRange);
 
-        m_viewMap[viewHash] = m_device->get_device().createImageViewUnique(viewCreateInfo);
+        m_viewMap[viewHash] = m_device->get_device().createImageViewUnique(viewCreateInfo).value;
         return m_viewMap.at(viewHash).get();
     }
 
@@ -107,7 +107,7 @@ namespace VGW_NAMESPACE
         vma::AllocationCreateInfo allocInfo{};
         allocInfo.setUsage(vma::MemoryUsage::eAuto);
 
-        std::tie(m_image, m_allocation) = m_device->get_allocator().createImage(imageInfo, allocInfo);
+        std::tie(m_image, m_allocation) = m_device->get_allocator().createImage(imageInfo, allocInfo).value;
     }
 
     void Image::is_invariant()

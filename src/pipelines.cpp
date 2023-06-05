@@ -89,7 +89,7 @@ namespace VGW_NAMESPACE
     {
         vk::ShaderModuleCreateInfo vertex_module_info{};
         vertex_module_info.setCode(pipelineInfo.vertexCode);
-        auto vertex_module = get_device()->get_device().createShaderModuleUnique(vertex_module_info);
+        auto vertex_module = get_device()->get_device().createShaderModuleUnique(vertex_module_info).value;
         vk::PipelineShaderStageCreateInfo vertex_stage_info{};
         vertex_stage_info.setStage(vk::ShaderStageFlagBits::eVertex);
         vertex_stage_info.setModule(vertex_module.get());
@@ -97,7 +97,7 @@ namespace VGW_NAMESPACE
 
         vk::ShaderModuleCreateInfo fragment_module_info{};
         fragment_module_info.setCode(pipelineInfo.fragmentCode);
-        auto fragment_module = get_device()->get_device().createShaderModuleUnique(fragment_module_info);
+        auto fragment_module = get_device()->get_device().createShaderModuleUnique(fragment_module_info).value;
         vk::PipelineShaderStageCreateInfo fragment_stage_info{};
         fragment_stage_info.setStage(vk::ShaderStageFlagBits::eFragment);
         fragment_stage_info.setModule(fragment_module.get());
@@ -230,7 +230,7 @@ namespace VGW_NAMESPACE
             vk::PipelineLayoutCreateInfo layoutCreateInfo{};
             layoutCreateInfo.setSetLayouts(setLayouts);
             layoutCreateInfo.setPushConstantRanges(computeStageReflectionData.pushConstantBlocks);
-            m_pipelineLayoutMap[layoutHash] = m_device->get_device().createPipelineLayoutUnique(layoutCreateInfo);
+            m_pipelineLayoutMap[layoutHash] = m_device->get_device().createPipelineLayoutUnique(layoutCreateInfo).value;
         }
         pipelineLayout = m_pipelineLayoutMap.at(layoutHash).get();
 
@@ -245,7 +245,7 @@ namespace VGW_NAMESPACE
 
         vk::ShaderModuleCreateInfo moduleCreateInfo{};
         moduleCreateInfo.setCode(pipelineInfo.computeCode);
-        auto shaderModule = m_device->get_device().createShaderModuleUnique(moduleCreateInfo);
+        auto shaderModule = m_device->get_device().createShaderModuleUnique(moduleCreateInfo).value;
 
         vk::PipelineShaderStageCreateInfo shaderStageCreateInfo{};
         shaderStageCreateInfo.setStage(vk::ShaderStageFlagBits::eCompute);
@@ -289,7 +289,7 @@ namespace VGW_NAMESPACE
             vk::PipelineLayoutCreateInfo layoutCreateInfo{};
             layoutCreateInfo.setSetLayouts(setLayouts);
             layoutCreateInfo.setPushConstantRanges(mergedReflectionData.pushConstantBlocks);
-            m_pipelineLayoutMap[layoutHash] = m_device->get_device().createPipelineLayoutUnique(layoutCreateInfo);
+            m_pipelineLayoutMap[layoutHash] = m_device->get_device().createPipelineLayoutUnique(layoutCreateInfo).value;
         }
         pipelineLayout = m_pipelineLayoutMap.at(layoutHash).get();
 

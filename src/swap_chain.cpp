@@ -38,7 +38,7 @@ namespace VGW_NAMESPACE
         swapChainCreateInfo.setPresentMode(vk::PresentModeKHR::eMailbox);
         swapChainCreateInfo.setClipped(VK_TRUE);
         swapChainCreateInfo.setOldSwapchain(m_swapChain.get());
-        m_swapChain = m_device->get_device().createSwapchainKHRUnique(swapChainCreateInfo);
+        m_swapChain = m_device->get_device().createSwapchainKHRUnique(swapChainCreateInfo).value;
 
         ImageInfo imageInfo{
             .width = m_extent.width,
@@ -48,7 +48,7 @@ namespace VGW_NAMESPACE
             .format = surfaceFormat.format,
             .usage = vk::ImageUsageFlagBits::eColorAttachment,
         };
-        auto swapChainImages = m_device->get_device().getSwapchainImagesKHR(m_swapChain.get());
+        auto swapChainImages = m_device->get_device().getSwapchainImagesKHR(m_swapChain.get()).value;
         m_images.resize(swapChainImages.size());
         for (auto i = 0; i < m_images.size(); ++i)
         {
@@ -64,7 +64,7 @@ namespace VGW_NAMESPACE
         if (outSemaphore != nullptr)
         {
             vk::SemaphoreCreateInfo semaphoreInfo{};
-            *outSemaphore = m_device->get_device().createSemaphoreUnique(semaphoreInfo);
+            *outSemaphore = m_device->get_device().createSemaphoreUnique(semaphoreInfo).value;
             semaphore = outSemaphore->get();
         }
 

@@ -32,7 +32,7 @@ namespace VGW_NAMESPACE
         auto instance = m_context->get_instance();
         std::uint32_t x{ 0 };
         vkEnumeratePhysicalDevices(instance, &x, nullptr);
-        const auto& availablePhysicalDevices = instance.enumeratePhysicalDevices();
+        const auto& availablePhysicalDevices = instance.enumeratePhysicalDevices().value;
         if (availablePhysicalDevices.empty())
         {
             return;
@@ -146,7 +146,7 @@ namespace VGW_NAMESPACE
 
         vk::DeviceCreateInfo deviceCreateInfo{ vk::DeviceCreateFlags(), queueCreateInfoVec, {},
                                                enabledExtensions,       &enabledFeatures,   nextFeature };
-        m_device = m_physicalDevice.createDeviceUnique(deviceCreateInfo);
+        m_device = m_physicalDevice.createDeviceUnique(deviceCreateInfo).value;
         if (!m_device)
         {
             m_context->log_error("Failed to create vk::Device!", std::source_location::current());
@@ -170,7 +170,7 @@ namespace VGW_NAMESPACE
         allocatorInfo.setPhysicalDevice(m_physicalDevice);
         allocatorInfo.setDevice(m_device.get());
         allocatorInfo.setVulkanApiVersion(VK_API_VERSION_1_3);
-        m_allocator = vma::createAllocatorUnique(allocatorInfo);
+        m_allocator = vma::createAllocatorUnique(allocatorInfo).value;
         if (!m_allocator)
         {
             m_context->log_error("Failed to create vma::Allocator!", std::source_location::current());
@@ -181,7 +181,7 @@ namespace VGW_NAMESPACE
         poolCreateInfo.setMaxSets(deviceInfo.maxDescriptorSets);
         poolCreateInfo.setPoolSizes(deviceInfo.descriptorPoolSizes);
         poolCreateInfo.setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet);
-        m_descriptorPool = m_device->createDescriptorPoolUnique(poolCreateInfo);
+        m_descriptorPool = m_device->createDescriptorPoolUnique(poolCreateInfo).value;
 
         is_invariant();
     }
@@ -250,7 +250,7 @@ namespace VGW_NAMESPACE
         {
             vk::CommandPoolCreateInfo commandPoolInfo{};
             commandPoolInfo.setFlags(poolFlags);
-            m_commandPoolMap[poolFlagsHash] = m_device->createCommandPoolUnique(commandPoolInfo);
+            m_commandPoolMap[poolFlagsHash] = m_device->createCommandPoolUnique(commandPoolInfo).value;
         }
 
         const auto commandPool = m_commandPoolMap.at(poolFlagsHash).get();
@@ -259,7 +259,7 @@ namespace VGW_NAMESPACE
         allocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
         allocInfo.setCommandPool(commandPool);
         allocInfo.setCommandBufferCount(count);
-        auto allocatedCommandBuffers = m_device->allocateCommandBuffers(allocInfo);
+        auto allocatedCommandBuffers = m_device->allocateCommandBuffers(allocInfo).value;
 
         std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;
         commandBuffers.reserve(count);
@@ -328,7 +328,7 @@ namespace VGW_NAMESPACE
             return m_descriptorSetLayoutMap.at(setLayoutHash).get();
         }
 
-        m_descriptorSetLayoutMap[setLayoutHash] = m_device->createDescriptorSetLayoutUnique(layoutInfo);
+        m_descriptorSetLayoutMap[setLayoutHash] = m_device->createDescriptorSetLayoutUnique(layoutInfo).value;
         return m_descriptorSetLayoutMap.at(setLayoutHash).get();
     }
 
@@ -343,7 +343,7 @@ namespace VGW_NAMESPACE
         vk::DescriptorSetAllocateInfo allocInfo{};
         allocInfo.setDescriptorPool(m_descriptorPool.get());
         allocInfo.setSetLayouts(setLayouts);
-        return m_device->allocateDescriptorSetsUnique(allocInfo);
+        return m_device->allocateDescriptorSetsUnique(allocInfo).value;
     }
 
     auto Device::create_pipeline_library() -> std::unique_ptr<PipelineLibrary>
@@ -407,7 +407,7 @@ namespace VGW_NAMESPACE
         if (outFence != nullptr)
         {
             vk::FenceCreateInfo fenceInfo{};
-            auto fence = m_device->createFence(fenceInfo);
+            auto fence = m_device->createFence(fenceInfo).value;
             *outFence = Fence(*this, fence);
         }
         VGW_ASSERT(outFence == nullptr || outFence->is_valid());

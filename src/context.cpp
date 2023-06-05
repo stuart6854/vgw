@@ -122,7 +122,7 @@ namespace VGW_NAMESPACE
             instanceInfo.setPNext(&m_debugUtilsCallbackCreateInfo);
         }
 
-        m_instance = vk::createInstance(instanceInfo);
+        m_instance = vk::createInstance(instanceInfo).value;
         if (!m_instance)
         {
             log_error("Failed to create vk::Instance!");
@@ -133,7 +133,7 @@ namespace VGW_NAMESPACE
 
         if (m_debugCallbackSupported)
         {
-            m_debugCallback = m_instance.createDebugUtilsMessengerEXT(m_debugUtilsCallbackCreateInfo);
+            m_debugCallback = m_instance.createDebugUtilsMessengerEXT(m_debugUtilsCallbackCreateInfo).value;
             if (!m_debugCallback)
             {
                 log_error("Failed to create Vulkan debug messenger!");
@@ -156,7 +156,7 @@ namespace VGW_NAMESPACE
         {
             m_instance.destroy(m_debugCallback);
             m_debugUtilsCallbackCreateInfo.setPUserData(this);
-            m_debugCallback = m_instance.createDebugUtilsMessengerEXT(m_debugUtilsCallbackCreateInfo);
+            m_debugCallback = m_instance.createDebugUtilsMessengerEXT(m_debugUtilsCallbackCreateInfo).value;
             if (!m_debugCallback)
             {
                 log_error("Failed to create Vulkan debug messenger!");
@@ -234,7 +234,7 @@ namespace VGW_NAMESPACE
         vk::Win32SurfaceCreateInfoKHR surfaceInfo{};
         surfaceInfo.setHinstance(GetModuleHandle(nullptr));
         surfaceInfo.setHwnd(static_cast<HWND>(platformSurfaceHandle));
-        return m_instance.createWin32SurfaceKHRUnique(surfaceInfo);
+        return m_instance.createWin32SurfaceKHRUnique(surfaceInfo).value;
 #endif
     }
 
@@ -255,7 +255,7 @@ namespace VGW_NAMESPACE
         {
             m_instance.destroy(m_debugCallback);
             m_debugUtilsCallbackCreateInfo.setPUserData(this);
-            m_debugCallback = m_instance.createDebugUtilsMessengerEXT(m_debugUtilsCallbackCreateInfo);
+            m_debugCallback = m_instance.createDebugUtilsMessengerEXT(m_debugUtilsCallbackCreateInfo).value;
             if (!m_debugCallback)
             {
                 log_error("Failed to create Vulkan debug messenger!");

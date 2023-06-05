@@ -4,7 +4,7 @@ namespace VGW_NAMESPACE
 {
     bool is_device_extension_supported(vk::PhysicalDevice physicalDevice, const char* extensionName)
     {
-        auto supportedExtensions = physicalDevice.enumerateDeviceExtensionProperties();
+        auto supportedExtensions = physicalDevice.enumerateDeviceExtensionProperties().value;
         for (const auto& extension : supportedExtensions)
         {
             if (std::strcmp(extension.extensionName, extensionName) == 0)

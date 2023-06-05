@@ -79,7 +79,7 @@ namespace VGW_NAMESPACE
         is_invariant();
 
         auto allocator = m_device->get_allocator();
-        void* mapped = allocator.mapMemory(m_allocation);
+        void* mapped = allocator.mapMemory(m_allocation).value;
         return mapped;
     }
 
