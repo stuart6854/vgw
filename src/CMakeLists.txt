@@ -18,4 +18,4 @@ target_include_directories(${VGW_TARGET_NAME} PRIVATE "." PUBLIC "../include")
 
 target_link_libraries(${VGW_TARGET_NAME} PUBLIC Vulkan::Vulkan unofficial::VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp Vulkan::shaderc_combined unofficial::spirv-reflect::spirv-reflect)
 
-set_target_properties(${VGW_TARGET_NAME} PROPERTIES CXX_STANDARD 20)
+set_target_properties(${VGW_TARGET_NAME} PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON)
