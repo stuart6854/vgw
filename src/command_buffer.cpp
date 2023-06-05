@@ -55,7 +55,7 @@ namespace VGW_NAMESPACE
         VGW_ASSERT(!m_recordingStarted);
 
         vk::CommandBufferBeginInfo beginInfo{};
-        m_commandBuffer.begin(beginInfo);
+        VGW_UNUSED(m_commandBuffer.begin(beginInfo));
         m_recordingStarted = true;
     }
 
@@ -65,7 +65,7 @@ namespace VGW_NAMESPACE
         VGW_ASSERT(m_recordingStarted);
         VGW_ASSERT(!m_recordingEnded);
 
-        m_commandBuffer.end();
+        VGW_UNUSED(m_commandBuffer.end());
         m_recordingEnded = true;
     }
 

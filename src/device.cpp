@@ -419,7 +419,8 @@ namespace VGW_NAMESPACE
 
         vk::SubmitInfo submitInfo{};
         submitInfo.setCommandBuffers(cmd);
-        queue.submit(submitInfo, outFence ? outFence->get_fence() : nullptr);
+        auto result = queue.submit(submitInfo, outFence ? outFence->get_fence() : nullptr);
+        VGW_UNUSED(result); // TODO: Check result.
     }
 
     void Device::present(std::uint32_t queueIndex, SwapChain& swapChain)
@@ -436,7 +437,8 @@ namespace VGW_NAMESPACE
         presentInfo.setSwapchains(swapChains);
         presentInfo.setImageIndices(imageIndex);
         presentInfo.setWaitSemaphores({});
-        queue.presentKHR(presentInfo);
+        auto result = queue.presentKHR(presentInfo);
+        VGW_UNUSED(result);  // TODO: Check result.
     }
 
     auto Device::operator=(Device&& rhs) noexcept -> Device&

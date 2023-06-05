@@ -26,6 +26,7 @@
     #endif
 #endif
 
+#define VGW_UNUSED(_var) ((void)_var)
 namespace VGW_NAMESPACE
 {
     template <typename T>

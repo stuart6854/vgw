@@ -39,7 +39,8 @@ namespace VGW_NAMESPACE
 
         auto device = m_device->get_device();
         const auto timeout = std::numeric_limits<std::uint64_t>::max();
-        device.waitForFences(m_fence, VK_TRUE, timeout);
+        auto result = device.waitForFences(m_fence, VK_TRUE, timeout);
+        VGW_UNUSED(result);
     }
 
     void Fence::reset()
