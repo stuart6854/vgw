@@ -9,11 +9,13 @@
 
 namespace VGW_NAMESPACE
 {
+    constexpr auto RESOURCE_STORAGE_MAX_SLOTS = 1024u;
+
     template <typename HandleType, typename ResourceType>
     class ResourceStorage
     {
     public:
-        ResourceStorage() = default;
+        ResourceStorage();
         ~ResourceStorage() = default;
 
         [[nodiscard]] auto allocate_handle() noexcept -> std::expected<HandleType, ResultCode>;
@@ -35,6 +37,16 @@ namespace VGW_NAMESPACE
     };
 
     template <typename HandleType, typename ResourceType>
+    ResourceStorage<HandleType, ResourceType>::ResourceStorage()
+    {
+        m_storage.resize(RESOURCE_STORAGE_MAX_SLOTS);
+        for (auto i = 0u; i < m_storage.size(); ++i)
+        {
+            m_storage[i].handle = CREATE_HANDLE(HandleType, i, 0u);
+        }
+    }
+
+    template <typename HandleType, typename ResourceType>
     auto ResourceStorage<HandleType, ResourceType>::allocate_handle() noexcept -> std::expected<HandleType, ResultCode>
     {
         if (m_freeSlotIndices.empty())
@@ -44,11 +56,13 @@ namespace VGW_NAMESPACE
             m_storage[slotIndex].handle = handle;
             return handle;
         }
-
-        const auto slotIndex = m_freeSlotIndices.front();
-        m_freeSlotIndices.pop();
-        const auto handle = m_storage[slotIndex].handle;
-        return handle;
+        else
+        {
+            const auto slotIndex = m_freeSlotIndices.front();
+            m_freeSlotIndices.pop();
+            const auto handle = m_storage[slotIndex].handle;
+            return handle;
+        }
     }
 
     template <typename HandleType, typename ResourceType>
