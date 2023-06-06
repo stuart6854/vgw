@@ -110,7 +110,7 @@ namespace VGW_NAMESPACE
         void bind_buffer(vk::DescriptorSet set,
                          std::uint32_t binding,
                          vk::DescriptorType descriptorType,
-                         Buffer* buffer,
+                         HandleBuffer bufferHandle,
                          std::uint64_t offset,
                          std::uint64_t range);
 
