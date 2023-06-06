@@ -96,6 +96,7 @@ namespace VGW_NAMESPACE
         auto createResult = create_compute_pipeline(pipelineLayout, pipelineInfo);
         if (!createResult)
         {
+            m_pipelines.free_handle(handle);
             return std::unexpected(createResult.error());
         }
         auto vkPipeline = createResult.value();
@@ -161,6 +162,7 @@ namespace VGW_NAMESPACE
         auto createResult = create_graphics_pipeline(pipelineLayout, pipelineInfo, mergedReflectionData);
         if (!createResult)
         {
+            m_pipelines.free_handle(handle);
             return std::unexpected(createResult.error());
         }
         auto vkPipeline = createResult.value();

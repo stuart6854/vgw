@@ -316,6 +316,7 @@ namespace VGW_NAMESPACE
         auto createResult = allocate_buffer(bufferInfo);
         if (!createResult)
         {
+            m_buffers.free_handle(handle);
             return std::unexpected(ResultCode::eFailedToCreate);
         }
 
@@ -325,6 +326,7 @@ namespace VGW_NAMESPACE
         auto result = m_buffers.set_resource(handle, std::move(buffer));
         if (result != ResultCode::eSuccess)
         {
+            m_buffers.free_handle(handle);
             return std::unexpected(result);
         }
 
@@ -444,6 +446,7 @@ namespace VGW_NAMESPACE
         auto createResult = allocate_image(imageInfo);
         if (!createResult)
         {
+            m_images.free_handle(handle);
             return std::unexpected(ResultCode::eFailedToCreate);
         }
 
@@ -453,6 +456,7 @@ namespace VGW_NAMESPACE
         auto result = m_images.set_resource(handle, std::move(buffer));
         if (result != ResultCode::eSuccess)
         {
+            m_images.free_handle(handle);
             return std::unexpected(result);
         }
 
