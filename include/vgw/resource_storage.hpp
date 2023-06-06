@@ -24,6 +24,8 @@ namespace VGW_NAMESPACE
         auto set_resource(HandleType handle, std::unique_ptr<ResourceType>&& resource) -> ResultCode;
         [[nodiscard]] auto get_resource(HandleType handle) noexcept -> std::expected<ResourceType*, ResultCode>;
 
+        void clear() noexcept;
+
     private:
         struct Slot
         {
@@ -77,12 +79,6 @@ namespace VGW_NAMESPACE
         return ResultCode::eSuccess;
     }
 
-    //    template <typename HandleType, typename ResourceType>
-    //    bool ResourceStorage<HandleType, ResourceType>::is_handle_valid() const noexcept
-    //    {
-    //        return false;
-    //    }
-
     template <typename HandleType, typename ResourceType>
     auto ResourceStorage<HandleType, ResourceType>::set_resource(HandleType handle, std::unique_ptr<ResourceType>&& resource) -> ResultCode
     {
@@ -109,6 +105,18 @@ namespace VGW_NAMESPACE
         }
 
         return { slot.resource.get() };
+    }
+
+    template <typename HandleType, typename ResourceType>
+    void ResourceStorage<HandleType, ResourceType>::clear() noexcept
+    {
+        for (auto i = 0u; i < m_storage.size(); ++i)
+        {
+            auto& slot = m_storage.at(i);
+            slot.handle = CREATE_HANDLE(HandleType, i, 0u);
+            slot.resource.reset();
+        }
+        m_freeSlotIndices = {};
     }
 
 }  // VGW_NAMESPACE

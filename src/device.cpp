@@ -218,6 +218,8 @@ namespace VGW_NAMESPACE
     {
         if (is_valid())
         {
+            m_images.clear();
+            m_buffers.clear();
             m_pendingDescriptorWrites.clear();
             m_pendingBufferInfos.clear();
 
