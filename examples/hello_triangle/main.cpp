@@ -81,8 +81,6 @@ int main(int argc, char** argv)
     };
     auto swapChain = device->create_swap_chain(swapChainInfo);
 
-    auto pipelineLibrary = device->create_pipeline_library();
-
     // Create graphics pipeline
     auto vertexCode = vgw::read_shader_code("triangle.vert").value();
     auto compiledVertexCode = vgw::compile_spirv(vertexCode, shaderc_vertex_shader, "triangle.vert", false).value();
@@ -99,7 +97,7 @@ int main(int argc, char** argv)
         .depthWrite = false,
         .colorAttachmentFormats = { vk::Format::eR8G8B8A8Unorm },
     };
-    auto* trianglePipeline = pipelineLibrary->create_graphics_pipeline(graphicsPipelineInfo);
+    auto trianglePipelineHandle = device->create_graphics_pipeline(graphicsPipelineInfo).value();
 
     vgw::RenderPassInfo renderPassInfo{
         .colorAttachments = { {
@@ -136,7 +134,7 @@ int main(int argc, char** argv)
         cmd->begin_render_pass(*renderPass);
         cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-        cmd->bind_pipeline(trianglePipeline);
+        cmd->bind_pipeline(trianglePipelineHandle);
         cmd->draw(3, 1, 0, 0);
         cmd->end_render_pass();
 

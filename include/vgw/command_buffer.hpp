@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "handles.hpp"
 #include "structs.hpp"
 
 #include <vulkan/vulkan.hpp>
@@ -43,7 +44,7 @@ namespace VGW_NAMESPACE
 
         void transition_image(const TransitionImage& transitionImage);
 
-        void bind_pipeline(Pipeline* pipeline);
+        void bind_pipeline(HandlePipeline pipeline);
         void bind_descriptor_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& descriptorSets);
 
         void begin_render_pass(RenderPass& renderPass);

@@ -103,14 +103,21 @@ namespace VGW_NAMESPACE
         m_commandBuffer.pipelineBarrier2(dependencyInfo);
     }
 
-    void CommandBuffer::bind_pipeline(Pipeline* pipeline)
+    void CommandBuffer::bind_pipeline(HandlePipeline pipeline)
     {
         is_invariant();
         VGW_ASSERT(m_recordingStarted && !m_recordingEnded);
-        VGW_ASSERT(pipeline);
 
-        m_commandBuffer.bindPipeline(pipeline->get_bind_point(), pipeline->get_pipeline());
-        m_boundPipeline = pipeline;
+        auto getResult = m_device->get_pipeline(pipeline);
+        if (!getResult)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& pipelineRef = getResult.value().get();
+
+        m_commandBuffer.bindPipeline(pipelineRef.get_bind_point(), pipelineRef.get_pipeline());
+        m_boundPipeline = &pipelineRef;
     }
 
     void CommandBuffer::bind_descriptor_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& descriptorSets)

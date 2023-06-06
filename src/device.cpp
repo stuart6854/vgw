@@ -183,6 +183,8 @@ namespace VGW_NAMESPACE
         poolCreateInfo.setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet);
         m_descriptorPool = m_device->createDescriptorPoolUnique(poolCreateInfo).value;
 
+        m_pipelineLibrary = std::make_unique<PipelineLibrary>(*this);
+
         is_invariant();
     }
 
@@ -196,6 +198,7 @@ namespace VGW_NAMESPACE
         std::swap(m_descriptorPool, other.m_descriptorPool);
         std::swap(m_commandPoolMap, other.m_commandPoolMap);
         std::swap(m_descriptorSetLayoutMap, other.m_descriptorSetLayoutMap);
+        std::swap(m_pipelineLibrary, other.m_pipelineLibrary);
     }
 
     Device::~Device()
@@ -220,6 +223,8 @@ namespace VGW_NAMESPACE
         {
             m_images.clear();
             m_buffers.clear();
+            m_pipelineLibrary.reset();
+
             m_pendingDescriptorWrites.clear();
             m_pendingBufferInfos.clear();
 
@@ -271,6 +276,30 @@ namespace VGW_NAMESPACE
         }
 
         return commandBuffers;
+    }
+
+    auto Device::create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept -> std::expected<HandlePipeline, ResultCode>
+    {
+        is_invariant();
+
+        return m_pipelineLibrary->create_compute_pipeline(pipelineInfo);
+    }
+
+    auto Device::create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) noexcept -> std::expected<HandlePipeline, ResultCode>
+    {
+        is_invariant();
+
+        return m_pipelineLibrary->create_graphics_pipeline(pipelineInfo);
+    }
+
+    auto Device::get_pipeline(HandlePipeline handle) noexcept -> std::expected<std::reference_wrapper<Pipeline>, ResultCode>
+    {
+        return m_pipelineLibrary->get_pipeline(handle);
+    }
+
+    void Device::destroy_pipeline(HandlePipeline handle) noexcept
+    {
+        m_pipelineLibrary->destroy_pipeline(handle);
     }
 
     auto Device::create_buffer(const BufferInfo& bufferInfo) noexcept -> std::expected<HandleBuffer, ResultCode>
@@ -481,11 +510,6 @@ namespace VGW_NAMESPACE
         return m_device->allocateDescriptorSetsUnique(allocInfo).value;
     }
 
-    auto Device::create_pipeline_library() -> std::unique_ptr<PipelineLibrary>
-    {
-        return std::make_unique<PipelineLibrary>(*this);
-    }
-
     auto Device::create_render_pass(const RenderPassInfo& renderPassInfo) -> std::unique_ptr<RenderPass>
     {
         return std::make_unique<RenderPass>(*this, renderPassInfo);
@@ -593,6 +617,7 @@ namespace VGW_NAMESPACE
         std::swap(m_descriptorPool, rhs.m_descriptorPool);
         std::swap(m_commandPoolMap, rhs.m_commandPoolMap);
         std::swap(m_descriptorSetLayoutMap, rhs.m_descriptorSetLayoutMap);
+        std::swap(m_pipelineLibrary, rhs.m_pipelineLibrary);
         return *this;
     }
 

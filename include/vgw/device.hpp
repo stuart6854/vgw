@@ -5,6 +5,7 @@
 #include "buffer.hpp"
 #include "swap_chain.hpp"
 #include "resource_storage.hpp"
+#include "pipelines.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
@@ -17,7 +18,6 @@ namespace VGW_NAMESPACE
 {
     class Context;
     class CommandBuffer;
-    class PipelineLibrary;
     class Buffer;
     class SwapChain;
     class Fence;
@@ -74,6 +74,13 @@ namespace VGW_NAMESPACE
         auto create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)
             -> std::vector<std::unique_ptr<CommandBuffer>>;
 
+        [[nodiscard]] auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept
+            -> std::expected<HandlePipeline, ResultCode>;
+        [[nodiscard]] auto create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) noexcept
+            -> std::expected<HandlePipeline, ResultCode>;
+        [[nodiscard]] auto get_pipeline(HandlePipeline handle) noexcept -> std::expected<std::reference_wrapper<Pipeline>, ResultCode>;
+        void destroy_pipeline(HandlePipeline handle) noexcept;
+
         /**
          * Create buffer.
          * @param bufferInfo
@@ -98,8 +105,6 @@ namespace VGW_NAMESPACE
 
         auto create_descriptor_sets(std::uint32_t count, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
             -> std::vector<vk::UniqueDescriptorSet>;
-
-        auto create_pipeline_library() -> std::unique_ptr<PipelineLibrary>;
 
         auto create_render_pass(const RenderPassInfo& renderPassInfo) -> std::unique_ptr<RenderPass>;
 
@@ -153,6 +158,8 @@ namespace VGW_NAMESPACE
 
         std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> m_pendingBufferInfos;
         std::vector<vk::WriteDescriptorSet> m_pendingDescriptorWrites;
+
+        std::unique_ptr<PipelineLibrary> m_pipelineLibrary;
 
         ResourceStorage<HandleBuffer, Buffer> m_buffers;
         ResourceStorage<HandleImage, Image> m_images;

@@ -61,15 +61,13 @@ int main(int argc, char** argv)
         throw std::runtime_error("Failed to create graphics device!");
     }
 
-    auto pipelineLibrary = device->create_pipeline_library();
-
     // Create compute pipeline
     auto computeCode = vgw::read_shader_code("compute.comp").value();
     auto compiledComputeCode = vgw::compile_spirv(computeCode, shaderc_compute_shader, "compute.comp", false).value();
     vgw::ComputePipelineInfo computePipelineInfo{
         .computeCode = compiledComputeCode,
     };
-    auto* computePipeline = pipelineLibrary->create_compute_pipeline(computePipelineInfo);
+    auto computePipelineHandle = device->create_compute_pipeline(computePipelineInfo).value();
 
     // Create input storage buffer
     const auto NumElements = 10u;
@@ -112,7 +110,7 @@ int main(int argc, char** argv)
 
     auto mainCmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
     mainCmd->begin();
-    mainCmd->bind_pipeline(computePipeline);
+    mainCmd->bind_pipeline(computePipelineHandle);
     mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
     mainCmd->dispatch(NumElements, 1, 1);
     mainCmd->end();

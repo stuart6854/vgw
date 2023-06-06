@@ -1,7 +1,9 @@
 #pragma once
 
 #include "base.hpp"
+#include "handles.hpp"
 #include "structs.hpp"
+#include "resource_storage.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -14,26 +16,23 @@ namespace VGW_NAMESPACE
     class Pipeline
     {
     public:
-        Pipeline() = default;
-        Pipeline(Device& device, vk::PipelineLayout layout, vk::PipelineBindPoint bindPoint, ShaderReflectionData reflectionData);
+        Pipeline(Device& device,
+                 vk::PipelineLayout layout,
+                 vk::Pipeline pipeline,
+                 vk::PipelineBindPoint bindPoint,
+                 ShaderReflectionData reflectionData);
         Pipeline(const Pipeline&) = delete;
         Pipeline(Pipeline&& other) noexcept;
-        virtual ~Pipeline() = default;
+        ~Pipeline();
 
         /* Getters */
 
-        auto get_device() const -> Device* { return m_device; }
-        auto get_layout() const -> vk::PipelineLayout { return m_layout; }
-        auto get_pipeline() const -> vk::Pipeline { return m_pipeline; }
-        auto get_bind_point() const -> vk::PipelineBindPoint { return m_bindPoint; }
+        auto get_device() const noexcept -> Device* { return m_device; }
+        auto get_layout() const noexcept -> vk::PipelineLayout { return m_layout; }
+        auto get_pipeline() const noexcept -> vk::Pipeline { return m_pipeline; }
+        auto get_bind_point() const noexcept -> vk::PipelineBindPoint { return m_bindPoint; }
 
-        auto get_reflection_data() const -> const ShaderReflectionData& { return m_reflectionData; }
-
-        /* Methods */
-
-        virtual bool is_valid() const;
-
-        virtual void destroy();
+        auto get_reflection_data() const noexcept -> const ShaderReflectionData& { return m_reflectionData; }
 
         /* Operators */
 
@@ -41,10 +40,7 @@ namespace VGW_NAMESPACE
         auto operator=(Pipeline&& rhs) noexcept -> Pipeline&;
 
     protected:
-        virtual void is_invariant();
-
-        void set_layout(vk::PipelineLayout layout);
-        void set_pipeline(vk::Pipeline pipeline);
+        void is_invariant() const noexcept;
 
     private:
         Device* m_device{ nullptr };
@@ -55,44 +51,12 @@ namespace VGW_NAMESPACE
         ShaderReflectionData m_reflectionData;
     };
 
-    class ComputePipeline final : public Pipeline
-    {
-    public:
-        ComputePipeline() = default;
-        ComputePipeline(Device& device, vk::PipelineLayout layout, vk::Pipeline pipeline, const ShaderReflectionData& reflectionData);
-        ComputePipeline(const ComputePipeline&) = delete;
-        ComputePipeline(ComputePipeline&& other) noexcept;
-        ~ComputePipeline() override;
-
-        /* Getters */
-
-    private:
-    };
-
-    class GraphicsPipeline final : public Pipeline
-    {
-    public:
-        GraphicsPipeline() = default;
-        GraphicsPipeline(Device& device,
-                         const GraphicsPipelineInfo& pipelineInfo,
-                         vk::PipelineLayout layout,
-                         const ShaderReflectionData& reflectionData);
-        GraphicsPipeline(const GraphicsPipeline&) = delete;
-        GraphicsPipeline(GraphicsPipeline&& other) noexcept;
-        ~GraphicsPipeline() override;
-
-        /* Getters */
-
-    private:
-    };
-
     /**
      * Manages pipelines and prevents duplicate pipeline creation.
      */
     class PipelineLibrary
     {
     public:
-        PipelineLibrary() = default;
         explicit PipelineLibrary(Device& device);
         PipelineLibrary(const PipelineLibrary&) = delete;
         PipelineLibrary(PipelineLibrary&& other) noexcept = delete;
@@ -100,8 +64,14 @@ namespace VGW_NAMESPACE
 
         /* Methods */
 
-        auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> ComputePipeline*;
-        auto create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) -> GraphicsPipeline*;
+        [[nodiscard]] auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept
+            -> std::expected<HandlePipeline, ResultCode>;
+        [[nodiscard]] auto create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) noexcept
+            -> std::expected<HandlePipeline, ResultCode>;
+
+        [[nodiscard]] auto get_pipeline(HandlePipeline handle) noexcept -> std::expected<std::reference_wrapper<Pipeline>, ResultCode>;
+
+        void destroy_pipeline(HandlePipeline handle) noexcept;
 
         /* Operators */
 
@@ -115,11 +85,20 @@ namespace VGW_NAMESPACE
         static auto merge_reflection_data(const ShaderReflectionData& reflectionDataA, const ShaderReflectionData& reflectionDataB)
             -> ShaderReflectionData;
 
+        auto create_compute_pipeline(vk::PipelineLayout layout, const ComputePipelineInfo& pipelineInfo)
+            -> std::expected<vk::Pipeline, ResultCode>;
+
+        auto create_graphics_pipeline(vk::PipelineLayout layout,
+                                      const GraphicsPipelineInfo& pipelineInfo,
+                                      const ShaderReflectionData& reflectionData) -> std::expected<vk::Pipeline, ResultCode>;
+
     private:
         Device* m_device{ nullptr };
 
         std::unordered_map<std::size_t, vk::UniquePipelineLayout> m_pipelineLayoutMap;
-        std::unordered_map<std::size_t, std::unique_ptr<ComputePipeline>> m_computePipelineMap;
-        std::unordered_map<std::size_t, std::unique_ptr<GraphicsPipeline>> m_graphicsPipelineMap;
+        std::unordered_map<std::size_t, HandlePipeline> m_computePipelineMap;
+        std::unordered_map<std::size_t, HandlePipeline> m_graphicsPipelineMap;
+
+        ResourceStorage<HandlePipeline, Pipeline> m_pipelines;
     };
 }
