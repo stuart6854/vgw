@@ -335,24 +335,19 @@ namespace VGW_NAMESPACE
         return { handle };
     }
 
-    auto Device::resize_buffer(HandleBuffer handle) noexcept -> ResultCode
+    auto Device::resize_buffer(HandleBuffer handle, std::uint64_t size) noexcept -> ResultCode
     {
         is_invariant();
-#if 0
-        if (!m_buffers.is_handle_valid())
+
+        auto getResult = m_buffers.get_resource(handle);
+        if (!getResult)
         {
-            return ResultCode::eInvalidHandle;
+            return getResult.error();
         }
+        auto& bufferRef = getResult.value();
 
-        auto result = m_buffers.get_resource(handle);
-        if (!result)
-        {
-            return result.error();
-        }
-
-        const auto& oldBuffer = result.value().get();
-        const auto& bufferInfo = oldBuffer.get_info();
-
+        auto bufferInfo = bufferRef->get_info();
+        bufferInfo.size = size;
         auto createResult = allocate_buffer(bufferInfo);
         if (!createResult)
         {
@@ -362,15 +357,11 @@ namespace VGW_NAMESPACE
         auto [vkBuffer, vmaAllocation] = createResult.value();
         auto buffer = std::make_unique<Buffer>(*this, vkBuffer, vmaAllocation, bufferInfo);
 
-        auto swapResult = m_buffers.set_handle_resource(handle, std::move(buffer));
-        if (!swapResult)
+        auto result = m_buffers.set_resource(handle, std::move(buffer));
+        if (result != ResultCode::eSuccess)
         {
-            return swapResult.error();
+            return result;
         }
-
-        auto oldBufferPtr = std::move(swapResult.value());
-        // #TODO: Destroy buffer
-#endif
 
         return ResultCode::eSuccess;
     }

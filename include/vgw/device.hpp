@@ -87,7 +87,7 @@ namespace VGW_NAMESPACE
          * @return HandleBuffer of buffer or ResultCode for error.
          */
         [[nodiscard]] auto create_buffer(const BufferInfo& bufferInfo) noexcept -> std::expected<HandleBuffer, ResultCode>;
-        [[nodiscard]] auto resize_buffer(HandleBuffer handle) noexcept -> ResultCode;
+        [[nodiscard]] auto resize_buffer(HandleBuffer handle, std::uint64_t size) noexcept -> ResultCode;
         [[nodiscard]] auto get_buffer(HandleBuffer handle) noexcept -> std::expected<std::reference_wrapper<Buffer>, ResultCode>;
         void destroy_buffer(HandleBuffer handle) noexcept;
 
