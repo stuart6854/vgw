@@ -625,10 +625,27 @@ namespace VGW_NAMESPACE
 
     auto Device::allocate_image(const ImageInfo& imageInfo) noexcept -> std::expected<std::pair<vk::Image, vma::Allocation>, ResultCode>
     {
+        vk::ImageType type{};
+        if (imageInfo.depth > 1)
+        {
+            type = vk::ImageType::e3D;
+        }
+        else if (imageInfo.height > 1)
+        {
+            type = vk::ImageType::e2D;
+        }
+        else
+        {
+            type = vk::ImageType::e1D;
+        }
+
         vk::ImageCreateInfo vkImageInfo{};
+        vkImageInfo.setImageType(type);
+        vkImageInfo.setFormat(imageInfo.format);
         vkImageInfo.setExtent({ imageInfo.width, imageInfo.height, imageInfo.depth });
         vkImageInfo.setMipLevels(imageInfo.mipLevels);
-        vkImageInfo.setFormat(imageInfo.format);
+        vkImageInfo.setArrayLayers(1);                        // #TODO: Support array images.
+        vkImageInfo.setSamples(vk::SampleCountFlagBits::e1);  // #TODO: Support image samples.
         vkImageInfo.setUsage(imageInfo.usage);
 
         vma::AllocationCreateInfo allocInfo{};
