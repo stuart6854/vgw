@@ -1,12 +1,16 @@
 #pragma once
 
 #include "base.hpp"
+#include "handles.hpp"
+#include "buffer.hpp"
 #include "swap_chain.hpp"
+#include "resource_storage.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 
 #include <memory>
+#include <expected>
 #include <unordered_map>
 
 namespace VGW_NAMESPACE
@@ -72,24 +76,23 @@ namespace VGW_NAMESPACE
 
         /**
          * Create buffer.
-         * @param size
-         * @param usage
-         * @param memoryUsage
-         * @param allocationCreateFlags
-         * @return
+         * @param bufferInfo
+         * @return HandleBuffer of buffer or ResultCode for error.
          */
-        auto create_buffer(std::uint64_t size,
-                           vk::BufferUsageFlags usage,
-                           vma::MemoryUsage memoryUsage,
-                           vma::AllocationCreateFlags allocationCreateFlags) -> std::unique_ptr<Buffer>;
+        [[nodiscard]] auto create_buffer(const BufferInfo& bufferInfo) noexcept -> std::expected<HandleBuffer, ResultCode>;
+        [[nodiscard]] auto resize_buffer(HandleBuffer handle) noexcept -> ResultCode;
+        [[nodiscard]] auto get_buffer(HandleBuffer handle) noexcept -> std::expected<std::reference_wrapper<Buffer>, ResultCode>;
+        void destroy_buffer(HandleBuffer handle) noexcept;
 
-        auto create_staging_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
-        auto create_storage_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
-        auto create_uniform_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
-        auto create_vertex_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
-        auto create_index_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>;
+        auto create_staging_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
+        auto create_storage_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
+        auto create_uniform_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
+        auto create_vertex_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
+        auto create_index_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
 
-        auto create_image(const ImageInfo& imageInfo) -> std::unique_ptr<Image>;
+        [[nodiscard]] auto create_image(const ImageInfo& imageInfo) noexcept -> std::expected<HandleImage, ResultCode>;
+        [[nodiscard]] auto get_image(HandleImage handle) noexcept -> std::expected<std::reference_wrapper<Image>, ResultCode>;
+        void destroy_image(HandleImage handle) noexcept;
 
         auto get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout;
 
@@ -128,6 +131,12 @@ namespace VGW_NAMESPACE
         /* Checks if this instance is invariant. Used to check pre-/post-conditions for methods. */
         void is_invariant() const;
 
+        [[nodiscard]] auto allocate_buffer(const BufferInfo& bufferInfo) noexcept
+            -> std::expected<std::pair<vk::Buffer, vma::Allocation>, ResultCode>;
+
+        [[nodiscard]] auto allocate_image(const ImageInfo& imageInfo) noexcept
+            -> std::expected<std::pair<vk::Image, vma::Allocation>, ResultCode>;
+
     private:
         Context* m_context{ nullptr };
         vk::PhysicalDevice m_physicalDevice;
@@ -144,5 +153,8 @@ namespace VGW_NAMESPACE
 
         std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> m_pendingBufferInfos;
         std::vector<vk::WriteDescriptorSet> m_pendingDescriptorWrites;
+
+        ResourceStorage<HandleBuffer, Buffer> m_buffers;
+        ResourceStorage<HandleImage, Image> m_images;
     };
 }

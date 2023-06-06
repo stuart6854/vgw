@@ -11,15 +11,19 @@ namespace VGW_NAMESPACE
 {
     class Device;
 
+    struct BufferInfo
+    {
+        std::uint64_t size;
+        vk::BufferUsageFlags usage;
+        vma::MemoryUsage memoryUsage;
+        vma::AllocationCreateFlags allocationCreateFlags;
+    };
+
     class Buffer
     {
     public:
         Buffer() = default;
-        explicit Buffer(Device& device,
-                        std::uint64_t size,
-                        vk::BufferUsageFlags usage,
-                        vma::MemoryUsage memoryUsage,
-                        vma::AllocationCreateFlags allocationCreateFlags);
+        explicit Buffer(Device& device, vk::Buffer buffer, vma::Allocation allocation, const BufferInfo& bufferInfo);
         Buffer(const Buffer&) = delete;
         Buffer(Buffer&& other) noexcept;
         ~Buffer();
@@ -34,13 +38,8 @@ namespace VGW_NAMESPACE
         auto get_buffer() const -> vk::Buffer { return m_buffer; }
         auto get_allocation() const -> vma::Allocation { return m_allocation; }
 
-        auto get_size() const -> std::uint64_t { return m_size; }
-
-        /* Setters */
-
-        void set_usage(vk::BufferUsageFlags usage);
-        void set_memory_usage(vma::MemoryUsage memoryUsage);
-        void set_allocation_flags(vma::AllocationCreateFlags allocationFlags);
+        auto get_info() const -> const BufferInfo& { return m_info; }
+        auto get_size() const -> std::uint64_t { return m_info.size; }
 
         /* Methods */
 
@@ -63,9 +62,6 @@ namespace VGW_NAMESPACE
         vk::Buffer m_buffer;
         vma::Allocation m_allocation;
 
-        std::size_t m_size;
-        vk::BufferUsageFlags m_usage;
-        vma::MemoryUsage m_memoryUsage;
-        vma::AllocationCreateFlags m_allocationFlags;
+        BufferInfo m_info;
     };
 }

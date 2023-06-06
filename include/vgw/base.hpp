@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <utility>
 #include <cstddef>
 #include <functional>
 
@@ -27,8 +28,27 @@
 #endif
 
 #define VGW_UNUSED(_var) ((void)_var)
+
+#define DEFINE_HANDLE(_typename) \
+    enum class Handle##_typename \
+    {                            \
+        eInvalid, eValid         \
+    }
+
+#define CREATE_HANDLE(_handleType, _index, _gen) _handleType((_index) | ((_gen) << 16u))
+#define GET_HANDLE_INDEX(_handle) std::uint16_t(_handle)
+#define GET_HANDLE_GEN(_handle) std::uint16_t(std::to_underlying(_handle) >> 16u)
+
 namespace VGW_NAMESPACE
 {
+    enum class ResultCode : std::uint16_t
+    {
+        eSuccess,
+        eFailedToCreate,
+        eNoHandleAvailable,
+        eInvalidHandle,
+    };
+
     template <typename T>
     constexpr void hash_combine(std::size_t& seed, const T& v)
     {

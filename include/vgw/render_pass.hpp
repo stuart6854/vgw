@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "handles.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -55,8 +56,8 @@ namespace VGW_NAMESPACE
 
         vk::Extent2D m_currentResolution;
 
-        std::vector<std::unique_ptr<Image>> m_colorImages;
-        std::unique_ptr<Image> m_depthStencilImage;
+        std::vector<HandleImage> m_colorImages;
+        HandleImage m_depthStencilImage;
 
         std::vector<vk::RenderingAttachmentInfo> m_colorAttachments;
         vk::RenderingAttachmentInfo m_depthStencilAttachment;

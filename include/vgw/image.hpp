@@ -30,7 +30,7 @@ namespace VGW_NAMESPACE
     {
     public:
         Image() = default;
-        Image(Device& device, const ImageInfo& imageInfo);
+        Image(Device& device, vk::Image image, vma::Allocation allocation, const ImageInfo& imageInfo);
         Image(SwapChain& swapChain, vk::Image image, const ImageInfo& imageInfo);
         ~Image();
 
@@ -39,20 +39,12 @@ namespace VGW_NAMESPACE
         auto is_valid();
 
         auto get_image() const -> vk::Image { return m_image; }
-        //        auto get_view() const -> vk::ImageView { return m_view; }
 
-        auto get_extent() const -> vk::Extent3D { return m_extent; }
-        auto get_mip_levels() const -> std::uint32_t { return m_mipLevels; }
-        auto get_format() const -> vk::Format { return m_format; }
-        auto get_usage() const -> vk::ImageUsageFlags { return m_usage; }
+        auto get_info() const -> const ImageInfo& { return m_info; }
 
         auto get_view(const ImageViewInfo& viewInfo) -> vk::ImageView;
 
         /* Methods */
-
-        void destroy();
-
-        void resize(std::uint32_t width, std::uint32_t height, std::uint32_t depth);
 
     private:
         void is_invariant();
@@ -64,10 +56,7 @@ namespace VGW_NAMESPACE
         vk::Image m_image;
         vma::Allocation m_allocation;
 
-        vk::Extent3D m_extent;
-        std::uint32_t m_mipLevels;
-        vk::Format m_format;
-        vk::ImageUsageFlags m_usage;
+        ImageInfo m_info;
 
         std::unordered_map<std::size_t, vk::UniqueImageView> m_viewMap;
     };

@@ -73,32 +73,40 @@ int main(int argc, char** argv)
 
     // Create input storage buffer
     const auto NumElements = 10u;
-    auto inBuffer = device->create_buffer(sizeof(std::int32_t) * NumElements,
-                                         vk::BufferUsageFlagBits::eStorageBuffer,
-                                         vma::MemoryUsage::eAuto,
-                                         vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
-    auto* mappedPtr = static_cast<std::int32_t*>(inBuffer->map());
+    vgw::BufferInfo inBufferInfo{
+        .size = sizeof(std::int32_t) * NumElements,
+        .usage = vk::BufferUsageFlagBits::eStorageBuffer,
+        .memoryUsage = vma::MemoryUsage::eAuto,
+        .allocationCreateFlags = vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
+    };
+    auto inBufferHandle = device->create_buffer(inBufferInfo).value();
+    auto& inBufferRef = device->get_buffer(inBufferHandle).value().get();
+    auto* mappedPtr = static_cast<std::int32_t*>(inBufferRef.map());
     for (auto i = 0; i < NumElements; ++i)
     {
         mappedPtr[i] = i;
     }
-    inBuffer->unmap();
+    inBufferRef.unmap();
 
     // Create output storage buffer
-    auto outBuffer = device->create_buffer(sizeof(std::int32_t) * NumElements,
-                                          vk::BufferUsageFlagBits::eStorageBuffer,
-                                          vma::MemoryUsage::eAuto,
-                                          vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+    vgw::BufferInfo outBufferInfo{
+        .size = sizeof(std::int32_t) * NumElements,
+        .usage = vk::BufferUsageFlagBits::eStorageBuffer,
+        .memoryUsage = vma::MemoryUsage::eAuto,
+        .allocationCreateFlags = vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
+    };
+    auto outBufferHandle = device->create_buffer(outBufferInfo).value();
+    auto& outBufferRef = device->get_buffer(outBufferHandle).value().get();
 
     auto descriptorSet =
         std::move(device->create_descriptor_sets(1,
-                                                {
-                                                    { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
-                                                    { 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
-                                                })[0]);
+                                                 {
+                                                     { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
+                                                     { 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
+                                                 })[0]);
 
-    device->bind_buffer(descriptorSet.get(), 0, vk::DescriptorType::eStorageBuffer, inBuffer.get(), 0, inBuffer->get_size());
-    device->bind_buffer(descriptorSet.get(), 1, vk::DescriptorType::eStorageBuffer, outBuffer.get(), 0, outBuffer->get_size());
+    device->bind_buffer(descriptorSet.get(), 0, vk::DescriptorType::eStorageBuffer, inBufferHandle, 0, inBufferInfo.size);
+    device->bind_buffer(descriptorSet.get(), 1, vk::DescriptorType::eStorageBuffer, outBufferHandle, 0, outBufferInfo.size);
 
     device->flush_descriptor_writes();
 
@@ -115,20 +123,20 @@ int main(int argc, char** argv)
     fence.reset();
 
     // Print storage buffer contents
-    mappedPtr = static_cast<std::int32_t*>(inBuffer->map());
+    mappedPtr = static_cast<std::int32_t*>(inBufferRef.map());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
     std::cout << std::endl;
-    inBuffer->unmap();
-    mappedPtr = static_cast<std::int32_t*>(outBuffer->map());
+    inBufferRef.unmap();
+    mappedPtr = static_cast<std::int32_t*>(outBufferRef.map());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
     std::cout << std::endl;
-    outBuffer->unmap();
+    outBufferRef.unmap();
 
     return 0;
 }

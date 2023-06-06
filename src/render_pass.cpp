@@ -28,7 +28,7 @@ namespace VGW_NAMESPACE
         m_currentResolution = vk::Extent2D{ width, height };
 
         m_colorImages.clear();
-        m_depthStencilImage.reset();
+        m_depthStencilImage = {};
 
         m_colorAttachments.clear();
         m_depthStencilAttachment = vk::RenderingAttachmentInfo{};
@@ -44,10 +44,20 @@ namespace VGW_NAMESPACE
                 .format = attachmentInfo.format,
                 .usage = vk::ImageUsageFlagBits::eColorAttachment,
             };
-            m_colorImages.push_back(m_device->create_image(imageInfo));
+            auto result = m_device->create_image(imageInfo);
+            if (!result)
+            {
+                //                return std::unexpected(result);
+                return;  // #TODO: Return unexpected.
+            }
+
+            const auto imageHandle = result.value();
+            m_colorImages.push_back(imageHandle);
+
+            auto& imageRef = m_device->get_image(imageHandle).value().get();
 
             auto& attachment = m_colorAttachments.emplace_back();
-            attachment.setImageView(m_colorImages.back()->get_view(viewInfo));
+            attachment.setImageView(imageRef.get_view(viewInfo));
             attachment.setImageLayout(vk::ImageLayout::eColorAttachmentOptimal);
             attachment.setLoadOp(vk::AttachmentLoadOp::eClear);
             attachment.setStoreOp(vk::AttachmentStoreOp::eStore);
@@ -75,9 +85,19 @@ namespace VGW_NAMESPACE
                 .format = m_renderPassInfo.depthStencilAttachment.format,
                 .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
             };
-            m_depthStencilImage = m_device->create_image(imageInfo);
+            auto result = m_device->create_image(imageInfo);
+            if (!result)
+            {
+                //                return std::unexpected(result);
+                return;  // #TODO: Return unexpected.
+            }
 
-            m_depthStencilAttachment.setImageView(m_depthStencilImage->get_view(viewInfo));
+            const auto imageHandle = result.value();
+            m_depthStencilImage = imageHandle;
+
+            auto& imageRef = m_device->get_image(imageHandle).value().get();
+
+            m_depthStencilAttachment.setImageView(imageRef.get_view(viewInfo));
             m_depthStencilAttachment.setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal);
             m_depthStencilAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
             m_depthStencilAttachment.setStoreOp(vk::AttachmentStoreOp::eDontCare);

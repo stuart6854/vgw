@@ -271,53 +271,186 @@ namespace VGW_NAMESPACE
         return commandBuffers;
     }
 
-    auto Device::create_buffer(std::uint64_t size,
-                               vk::BufferUsageFlags usage,
-                               vma::MemoryUsage memoryUsage,
-                               vma::AllocationCreateFlags allocationCreateFlags) -> std::unique_ptr<Buffer>
+    auto Device::create_buffer(const BufferInfo& bufferInfo) noexcept -> std::expected<HandleBuffer, ResultCode>
     {
         is_invariant();
 
-        return std::make_unique<Buffer>(*this, size, usage, memoryUsage, allocationCreateFlags);
+        auto handleResult = m_buffers.allocate_handle();
+        if (!handleResult)
+        {
+            return std::unexpected(handleResult.error());
+        }
+        const auto handle = handleResult.value();
+
+        auto createResult = allocate_buffer(bufferInfo);
+        if (!createResult)
+        {
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+
+        auto [vkBuffer, vmaAllocation] = createResult.value();
+        auto buffer = std::make_unique<Buffer>(*this, vkBuffer, vmaAllocation, bufferInfo);
+
+        auto result = m_buffers.set_resource(handle, std::move(buffer));
+        if (result != ResultCode::eSuccess)
+        {
+            return std::unexpected(result);
+        }
+
+        return { handle };
     }
 
-    auto Device::create_staging_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
+    auto Device::resize_buffer(HandleBuffer handle) noexcept -> ResultCode
     {
-        return create_buffer(size,
-                             vk::BufferUsageFlagBits::eTransferSrc,
-                             vma::MemoryUsage::eAuto,
-                             vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+        is_invariant();
+#if 0
+        if (!m_buffers.is_handle_valid())
+        {
+            return ResultCode::eInvalidHandle;
+        }
+
+        auto result = m_buffers.get_resource(handle);
+        if (!result)
+        {
+            return result.error();
+        }
+
+        const auto& oldBuffer = result.value().get();
+        const auto& bufferInfo = oldBuffer.get_info();
+
+        auto createResult = allocate_buffer(bufferInfo);
+        if (!createResult)
+        {
+            return ResultCode::eFailedToCreate;
+        }
+
+        auto [vkBuffer, vmaAllocation] = createResult.value();
+        auto buffer = std::make_unique<Buffer>(*this, vkBuffer, vmaAllocation, bufferInfo);
+
+        auto swapResult = m_buffers.set_handle_resource(handle, std::move(buffer));
+        if (!swapResult)
+        {
+            return swapResult.error();
+        }
+
+        auto oldBufferPtr = std::move(swapResult.value());
+        // #TODO: Destroy buffer
+#endif
+
+        return ResultCode::eSuccess;
     }
 
-    auto Device::create_storage_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
+    auto Device::get_buffer(HandleBuffer handle) noexcept -> std::expected<std::reference_wrapper<Buffer>, ResultCode>
+    {
+        auto result = m_buffers.get_resource(handle);
+        if (!result)
+        {
+            return std::unexpected(result.error());
+        }
+
+        auto* ptr = result.value();
+        VGW_ASSERT(ptr != nullptr);
+        return { *ptr };
+    }
+
+    void Device::destroy_buffer(HandleBuffer handle) noexcept
+    {
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto result = m_buffers.set_resource(handle, nullptr);
+        if (result != ResultCode::eSuccess)
+        {
+            return;
+        }
+
+        m_buffers.free_handle(handle);
+    }
+
+    auto Device::create_staging_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>
+    {
+        return create_buffer({ size,
+                               vk::BufferUsageFlagBits::eTransferSrc,
+                               vma::MemoryUsage::eAuto,
+                               vma::AllocationCreateFlagBits::eHostAccessSequentialWrite });
+    }
+
+    auto Device::create_storage_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>
     {
         return create_buffer(
-            size, vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags());
+            { size, vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags() });
     }
 
-    auto Device::create_uniform_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
+    auto Device::create_uniform_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>
     {
-        return create_buffer(size,
-                             vk::BufferUsageFlagBits::eUniformBuffer,
-                             vma::MemoryUsage::eAutoPreferDevice,
-                             vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+        return create_buffer({ size,
+                               vk::BufferUsageFlagBits::eUniformBuffer,
+                               vma::MemoryUsage::eAutoPreferDevice,
+                               vma::AllocationCreateFlagBits::eHostAccessSequentialWrite });
     }
 
-    auto Device::create_vertex_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
-    {
-        return create_buffer(
-            size, vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags());
-    }
-
-    auto Device::create_index_buffer(std::uint64_t size) -> std::unique_ptr<Buffer>
+    auto Device::create_vertex_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>
     {
         return create_buffer(
-            size, vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags());
+            { size, vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags() });
     }
 
-    auto Device::create_image(const ImageInfo& imageInfo) -> std::unique_ptr<Image>
+    auto Device::create_index_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>
     {
-        return std::make_unique<Image>(*this, imageInfo);
+        return create_buffer(
+            { size, vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags() });
+    }
+
+    auto Device::create_image(const ImageInfo& imageInfo) noexcept -> std::expected<HandleImage, ResultCode>
+    {
+        is_invariant();
+
+        auto handleResult = m_images.allocate_handle();
+        if (!handleResult)
+        {
+            return std::unexpected(handleResult.error());
+        }
+        const auto handle = handleResult.value();
+
+        auto createResult = allocate_image(imageInfo);
+        if (!createResult)
+        {
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+
+        auto [vkImage, vmaAllocation] = createResult.value();
+        auto buffer = std::make_unique<Image>(*this, vkImage, vmaAllocation, imageInfo);
+
+        auto result = m_images.set_resource(handle, std::move(buffer));
+        if (result != ResultCode::eSuccess)
+        {
+            return std::unexpected(result);
+        }
+
+        return { handle };
+    }
+
+    auto Device::get_image(HandleImage handle) noexcept -> std::expected<std::reference_wrapper<Image>, ResultCode>
+    {
+        auto result = m_images.get_resource(handle);
+        if (!result)
+        {
+            return std::unexpected(result.error());
+        }
+
+        auto* ptr = result.value();
+        VGW_ASSERT(ptr != nullptr);
+        return { *ptr };
+    }
+
+    void Device::destroy_image(HandleImage handle) noexcept
+    {
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto result = m_images.set_resource(handle, nullptr);
+        if (result != ResultCode::eSuccess)
+        {
+            return;
+        }
+
+        m_images.free_handle(handle);
     }
 
     auto Device::get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout
@@ -420,7 +553,7 @@ namespace VGW_NAMESPACE
         vk::SubmitInfo submitInfo{};
         submitInfo.setCommandBuffers(cmd);
         auto result = queue.submit(submitInfo, outFence ? outFence->get_fence() : nullptr);
-        VGW_UNUSED(result); // TODO: Check result.
+        VGW_UNUSED(result);  // TODO: Check result.
     }
 
     void Device::present(std::uint32_t queueIndex, SwapChain& swapChain)
@@ -461,6 +594,47 @@ namespace VGW_NAMESPACE
         VGW_ASSERT(m_allocator);
         VGW_ASSERT(!m_queues.empty());
         VGW_ASSERT(m_descriptorPool);
+    }
+
+    auto Device::allocate_buffer(const BufferInfo& bufferInfo) noexcept -> std::expected<std::pair<vk::Buffer, vma::Allocation>, ResultCode>
+    {
+        vk::BufferCreateInfo vkBufferInfo{};
+        vkBufferInfo.setSize(bufferInfo.size);
+        vkBufferInfo.setUsage(bufferInfo.usage);
+
+        vma::AllocationCreateInfo allocInfo{};
+        allocInfo.setUsage(bufferInfo.memoryUsage);
+        allocInfo.setFlags(bufferInfo.allocationCreateFlags);
+
+        auto result = m_allocator->createBuffer(vkBufferInfo, allocInfo);
+        if (result.result != vk::Result::eSuccess)
+        {
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+
+        auto& [buffer, allocation] = result.value;
+        return { { buffer, allocation } };
+    }
+
+    auto Device::allocate_image(const ImageInfo& imageInfo) noexcept -> std::expected<std::pair<vk::Image, vma::Allocation>, ResultCode>
+    {
+        vk::ImageCreateInfo vkImageInfo{};
+        vkImageInfo.setExtent({ imageInfo.width, imageInfo.height, imageInfo.depth });
+        vkImageInfo.setMipLevels(imageInfo.mipLevels);
+        vkImageInfo.setFormat(imageInfo.format);
+        vkImageInfo.setUsage(imageInfo.usage);
+
+        vma::AllocationCreateInfo allocInfo{};
+        allocInfo.setUsage(vma::MemoryUsage::eAuto);
+
+        auto result = m_allocator->createImage(vkImageInfo, allocInfo);
+        if (result.result != vk::Result::eSuccess)
+        {
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+
+        auto& [image, allocation] = result.value;
+        return { { image, allocation } };
     }
 
 }
