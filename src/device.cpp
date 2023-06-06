@@ -221,6 +221,8 @@ namespace VGW_NAMESPACE
     {
         if (is_valid())
         {
+            m_device->waitIdle();
+
             m_images.clear();
             m_buffers.clear();
             m_pipelineLibrary.reset();
