@@ -9,6 +9,7 @@ cmake-build-*/
 
 # Build Artifacts
 **/bin
+/out
 *.spv
 
 # Package Manager Artifacts
