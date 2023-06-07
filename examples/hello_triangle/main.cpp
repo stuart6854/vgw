@@ -100,14 +100,15 @@ int main(int argc, char** argv)
     auto trianglePipelineHandle = device->create_graphics_pipeline(graphicsPipelineInfo).value();
 
     vgw::RenderPassInfo renderPassInfo{
+        .width = WINDOW_WIDTH,
+        .height = WINDOW_HEIGHT,
         .colorAttachments = { {
             vk::Format::eR8G8B8A8Unorm,
             1.0f,
             { 1, 0.3f, 0.4f, 1.0f },
         } },
     };
-    auto renderPass = device->create_render_pass(renderPassInfo);
-    renderPass->resize(WINDOW_WIDTH, WINDOW_HEIGHT);
+    auto renderPassHandle = device->create_render_pass(renderPassInfo).value();
 
     auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb);
 
@@ -123,7 +124,7 @@ int main(int argc, char** argv)
         cmd->begin();
         // Render Offscreen
         {
-            cmd->begin_render_pass(*renderPass);
+            cmd->begin_render_pass(renderPassHandle);
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->bind_pipeline(trianglePipelineHandle);
