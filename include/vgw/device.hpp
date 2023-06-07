@@ -96,6 +96,9 @@ namespace VGW_NAMESPACE
             -> std::expected<HandlePipeline, ResultCode>;
 
 #pragma endregion
+
+#pragma region Buffers
+
         /**
          * Create buffer.
          * @param bufferInfo
@@ -112,9 +115,15 @@ namespace VGW_NAMESPACE
         auto create_vertex_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
         auto create_index_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
 
+#pragma endregion
+
+#pragma region Images
+
         [[nodiscard]] auto create_image(const ImageInfo& imageInfo) noexcept -> std::expected<HandleImage, ResultCode>;
         [[nodiscard]] auto get_image(HandleImage handle) noexcept -> std::expected<std::reference_wrapper<Image>, ResultCode>;
         void destroy_image(HandleImage handle) noexcept;
+
+#pragma endregion
 
         auto get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout;
 

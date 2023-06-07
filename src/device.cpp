@@ -476,6 +476,10 @@ namespace VGW_NAMESPACE
         m_pipelineLibrary->destroy_pipeline(handle);
     }
 
+#pragma endregion
+
+#pragma region Buffers
+
     auto Device::create_buffer(const BufferInfo& bufferInfo) noexcept -> std::expected<HandleBuffer, ResultCode>
     {
         is_invariant();
@@ -597,6 +601,10 @@ namespace VGW_NAMESPACE
             { size, vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags() });
     }
 
+#pragma endregion
+
+#pragma region Images
+
     auto Device::create_image(const ImageInfo& imageInfo) noexcept -> std::expected<HandleImage, ResultCode>
     {
         is_invariant();
@@ -652,6 +660,8 @@ namespace VGW_NAMESPACE
 
         m_images.free_handle(handle);
     }
+
+#pragma endregion
 
     auto Device::get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout
     {
