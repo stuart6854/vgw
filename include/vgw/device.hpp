@@ -74,6 +74,8 @@ namespace VGW_NAMESPACE
         auto create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)
             -> std::vector<std::unique_ptr<CommandBuffer>>;
 
+#pragma region Pipelines
+
         [[nodiscard]] auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept
             -> std::expected<HandlePipeline, ResultCode>;
         [[nodiscard]] auto create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) noexcept
@@ -81,6 +83,10 @@ namespace VGW_NAMESPACE
         [[nodiscard]] auto get_pipeline(HandlePipeline handle) noexcept -> std::expected<std::reference_wrapper<Pipeline>, ResultCode>;
         void destroy_pipeline(HandlePipeline handle) noexcept;
 
+        [[nodiscard]] auto get_fullscreen_quad_pipeline(vk::Format colorAttachmentFormat) noexcept
+            -> std::expected<HandlePipeline, ResultCode>;
+
+#pragma endregion
         /**
          * Create buffer.
          * @param bufferInfo

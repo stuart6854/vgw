@@ -109,6 +109,8 @@ int main(int argc, char** argv)
     auto renderPass = device->create_render_pass(renderPassInfo);
     renderPass->resize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
+    auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb);
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
