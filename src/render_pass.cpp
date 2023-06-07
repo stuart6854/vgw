@@ -11,21 +11,17 @@ namespace VGW_NAMESPACE
     {
     }
 
-    bool RenderPass::is_valid() const
-    {
-        return m_device;
-    }
-
-    void RenderPass::resize(std::uint32_t width, std::uint32_t height)
+    auto RenderPass::resize(std::uint32_t width, std::uint32_t height) -> ResultCode
     {
         is_invariant();
 
-        if (m_currentResolution.width == width && m_currentResolution.height == height)
+        if (m_renderPassInfo.width == width && m_renderPassInfo.height == height)
         {
-            return;
+            return ResultCode::eSuccess;
         }
 
-        m_currentResolution = vk::Extent2D{ width, height };
+        m_renderPassInfo.width = width;
+        m_renderPassInfo.height = height;
 
         m_colorImages.clear();
         m_depthStencilImage = {};
@@ -37,8 +33,8 @@ namespace VGW_NAMESPACE
         for (const auto& attachmentInfo : m_renderPassInfo.colorAttachments)
         {
             ImageInfo imageInfo{
-                .width = std::uint32_t(float(m_currentResolution.width) * attachmentInfo.resolutionScale),
-                .height = std::uint32_t(float(m_currentResolution.height) * attachmentInfo.resolutionScale),
+                .width = std::uint32_t(float(m_renderPassInfo.width) * attachmentInfo.resolutionScale),
+                .height = std::uint32_t(float(m_renderPassInfo.height) * attachmentInfo.resolutionScale),
                 .depth = 1,
                 .mipLevels = 1,
                 .format = attachmentInfo.format,
@@ -47,8 +43,7 @@ namespace VGW_NAMESPACE
             auto result = m_device->create_image(imageInfo);
             if (!result)
             {
-                //                return std::unexpected(result);
-                return;  // #TODO: Return unexpected.
+                return result.error();
             }
 
             const auto imageHandle = result.value();
@@ -78,8 +73,8 @@ namespace VGW_NAMESPACE
             viewInfo.subresourceRange.setAspectMask(depthStencilAspect);
 
             ImageInfo imageInfo{
-                .width = std::uint32_t(float(m_currentResolution.width) * m_renderPassInfo.depthStencilAttachment.resolutionScale),
-                .height = std::uint32_t(float(m_currentResolution.height) * m_renderPassInfo.depthStencilAttachment.resolutionScale),
+                .width = std::uint32_t(float(m_renderPassInfo.width) * m_renderPassInfo.depthStencilAttachment.resolutionScale),
+                .height = std::uint32_t(float(m_renderPassInfo.height) * m_renderPassInfo.depthStencilAttachment.resolutionScale),
                 .depth = 1,
                 .mipLevels = 1,
                 .format = m_renderPassInfo.depthStencilAttachment.format,
@@ -88,8 +83,7 @@ namespace VGW_NAMESPACE
             auto result = m_device->create_image(imageInfo);
             if (!result)
             {
-                //                return std::unexpected(result);
-                return;  // #TODO: Return unexpected.
+                return result.error();
             }
 
             const auto imageHandle = result.value();
@@ -105,7 +99,7 @@ namespace VGW_NAMESPACE
                                                                               m_renderPassInfo.depthStencilAttachment.clearStencil));
         }
 
-        m_renderingInfo.setRenderArea(vk::Rect2D({ 0, 0 }, m_currentResolution));
+        m_renderingInfo.setRenderArea(vk::Rect2D({ 0, 0 }, { m_renderPassInfo.width, m_renderPassInfo.height }));
         m_renderingInfo.setLayerCount(1);
         m_renderingInfo.setColorAttachments(m_colorAttachments);
         if (m_renderPassInfo.useDepth)
@@ -116,6 +110,8 @@ namespace VGW_NAMESPACE
         {
             m_renderingInfo.setPStencilAttachment(&m_depthStencilAttachment);
         }
+
+        return ResultCode::eSuccess;
     }
 
     void RenderPass::is_invariant()

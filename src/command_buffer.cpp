@@ -130,11 +130,19 @@ namespace VGW_NAMESPACE
         m_commandBuffer.bindDescriptorSets(m_boundPipeline->get_bind_point(), m_boundPipeline->get_layout(), firstSet, descriptorSets, {});
     }
 
-    void CommandBuffer::begin_render_pass(RenderPass& renderPass)
+    void CommandBuffer::begin_render_pass(HandleRenderPass renderPass)
     {
         is_invariant();
 
-        m_commandBuffer.beginRendering(renderPass.get_rendering_info());
+        auto getResult = m_device->get_render_pass(renderPass);
+        if (!getResult)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& renderPassRef = getResult.value().get();
+
+        m_commandBuffer.beginRendering(renderPassRef.get_rendering_info());
     }
 
     void CommandBuffer::end_render_pass()

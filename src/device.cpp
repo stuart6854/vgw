@@ -63,7 +63,7 @@ namespace VGW_NAMESPACE
 
 #pragma endregion
 
-#pragma region Layers & Extensions
+#pragma region Layers& Extensions
 
         std::vector<const char*> wantedExtensions;
         if (deviceInfo.enableSwapChains)
@@ -301,6 +301,86 @@ namespace VGW_NAMESPACE
         return commandBuffers;
     }
 
+#pragma region RenderPass
+
+    auto Device::create_render_pass(const RenderPassInfo& renderPassInfo) noexcept -> std::expected<HandleRenderPass, ResultCode>
+    {
+        is_invariant();
+
+        auto handleResult = m_renderPasses.allocate_handle();
+        if (!handleResult)
+        {
+            return std::unexpected(handleResult.error());
+        }
+        const auto handle = handleResult.value();
+
+        auto renderPass = std::make_unique<RenderPass>(*this, renderPassInfo);
+        auto createResult = renderPass->resize(renderPassInfo.width, renderPassInfo.height);
+        if (createResult != ResultCode::eSuccess)
+        {
+            m_renderPasses.free_handle(handle);
+            return std::unexpected(createResult);
+        }
+
+        auto result = m_renderPasses.set_resource(handle, std::move(renderPass));
+        if (result != ResultCode::eSuccess)
+        {
+            m_renderPasses.free_handle(handle);
+            return std::unexpected(result);
+        }
+
+        return { handle };
+    }
+
+    auto Device::resize_render_pass(HandleRenderPass handle, std::uint32_t width, std::uint32_t height) noexcept -> ResultCode
+    {
+        is_invariant();
+
+        auto getResult = m_renderPasses.get_resource(handle);
+        if (!getResult)
+        {
+            return getResult.error();
+        }
+        auto& bufferRef = getResult.value();
+
+        auto result = bufferRef->resize(width, height);
+        if (result != ResultCode::eSuccess)
+        {
+            return result;
+        }
+
+        return ResultCode::eSuccess;
+    }
+
+    auto Device::get_render_pass(HandleRenderPass handle) noexcept -> std::expected<std::reference_wrapper<RenderPass>, ResultCode>
+    {
+        auto result = m_renderPasses.get_resource(handle);
+        if (!result)
+        {
+            return std::unexpected(result.error());
+        }
+
+        auto* ptr = result.value();
+        VGW_ASSERT(ptr != nullptr);
+        return { *ptr };
+    }
+
+    void Device::destroy_render_pass(HandleRenderPass handle) noexcept
+    {
+        is_invariant();
+
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto result = m_renderPasses.set_resource(handle, nullptr);
+        if (result != ResultCode::eSuccess)
+        {
+            return;
+        }
+
+        m_renderPasses.free_handle(handle);
+    }
+
+#pragma endregion
+
 #pragma region Pipelines
 
     auto Device::create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept -> std::expected<HandlePipeline, ResultCode>
@@ -385,8 +465,6 @@ namespace VGW_NAMESPACE
         };
         return create_graphics_pipeline(pipelineInfo);
     }
-
-#pragma endregion
 
     auto Device::get_pipeline(HandlePipeline handle) noexcept -> std::expected<std::reference_wrapper<Pipeline>, ResultCode>
     {
@@ -599,11 +677,6 @@ namespace VGW_NAMESPACE
         allocInfo.setDescriptorPool(m_descriptorPool.get());
         allocInfo.setSetLayouts(setLayouts);
         return m_device->allocateDescriptorSetsUnique(allocInfo).value;
-    }
-
-    auto Device::create_render_pass(const RenderPassInfo& renderPassInfo) -> std::unique_ptr<RenderPass>
-    {
-        return std::make_unique<RenderPass>(*this, renderPassInfo);
     }
 
     void Device::bind_buffer(vk::DescriptorSet set,

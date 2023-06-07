@@ -16,13 +16,15 @@ namespace VGW_NAMESPACE
     struct RenderPassAttachmentInfo
     {
         vk::Format format{ vk::Format::eUndefined };
-        float resolutionScale{ 1.0f };  // Scale of the attachment based on the screen resolution.
+        float resolutionScale{ 1.0f };  // Scale of the attachment based on the render pass size.
         std::array<float, 4> clearColor{ 1, 1, 1, 1 };
         float clearDepth{ 1.0f };
         std::uint32_t clearStencil{ 0 };
     };
     struct RenderPassInfo
     {
+        std::uint32_t width;
+        std::uint32_t height;
         std::vector<RenderPassAttachmentInfo> colorAttachments;
         RenderPassAttachmentInfo depthStencilAttachment;
         bool useDepth{ false };
@@ -38,13 +40,11 @@ namespace VGW_NAMESPACE
 
         /* Getters */
 
-        bool is_valid() const;
-
         auto get_rendering_info() const -> const vk::RenderingInfo& { return m_renderingInfo; }
 
         /* Methods */
 
-        void resize(std::uint32_t width, std::uint32_t height);
+        auto resize(std::uint32_t width, std::uint32_t height) -> ResultCode;
 
     private:
         void is_invariant();
@@ -53,8 +53,6 @@ namespace VGW_NAMESPACE
         Device* m_device{ nullptr };
 
         RenderPassInfo m_renderPassInfo;
-
-        vk::Extent2D m_currentResolution;
 
         std::vector<HandleImage> m_colorImages;
         HandleImage m_depthStencilImage;

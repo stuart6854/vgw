@@ -74,6 +74,15 @@ namespace VGW_NAMESPACE
         auto create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)
             -> std::vector<std::unique_ptr<CommandBuffer>>;
 
+#pragma region RenderPass
+
+        [[nodiscard]] auto create_render_pass(const RenderPassInfo& renderPassInfo) noexcept -> std::expected<HandleRenderPass, ResultCode>;
+        auto resize_render_pass(HandleRenderPass handle, std::uint32_t width, std::uint32_t height) noexcept -> ResultCode;
+        [[nodiscard]] auto get_render_pass(HandleRenderPass handle) noexcept -> std::expected<std::reference_wrapper<RenderPass>, ResultCode>;
+        void destroy_render_pass(HandleRenderPass handle) noexcept;
+
+#pragma endregion
+
 #pragma region Pipelines
 
         [[nodiscard]] auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept
@@ -111,8 +120,6 @@ namespace VGW_NAMESPACE
 
         auto create_descriptor_sets(std::uint32_t count, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
             -> std::vector<vk::UniqueDescriptorSet>;
-
-        auto create_render_pass(const RenderPassInfo& renderPassInfo) -> std::unique_ptr<RenderPass>;
 
 #pragma endregion
 
@@ -165,8 +172,8 @@ namespace VGW_NAMESPACE
         std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> m_pendingBufferInfos;
         std::vector<vk::WriteDescriptorSet> m_pendingDescriptorWrites;
 
+        ResourceStorage<HandleRenderPass, RenderPass> m_renderPasses;
         std::unique_ptr<PipelineLibrary> m_pipelineLibrary;
-
         ResourceStorage<HandleBuffer, Buffer> m_buffers;
         ResourceStorage<HandleImage, Image> m_images;
     };

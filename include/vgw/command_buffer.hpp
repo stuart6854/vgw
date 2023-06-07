@@ -47,7 +47,7 @@ namespace VGW_NAMESPACE
         void bind_pipeline(HandlePipeline pipeline);
         void bind_descriptor_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& descriptorSets);
 
-        void begin_render_pass(RenderPass& renderPass);
+        void begin_render_pass(HandleRenderPass renderPass);
         void end_render_pass();
 
         void set_viewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);
