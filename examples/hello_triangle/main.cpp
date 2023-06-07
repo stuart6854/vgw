@@ -121,36 +121,43 @@ int main(int argc, char** argv)
         // Record command buffer
         auto cmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
         cmd->begin();
-        vgw::TransitionImage attachmentTransition{
-            .image = swapChain->get_current_image(),
-            .oldLayout = vk::ImageLayout::eUndefined,
-            .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
-            .srcAccess = vk::AccessFlagBits2::eNone,
-            .dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
-            .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
-            .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-            .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
-        };
-        cmd->transition_image(attachmentTransition);
+        // Render Offscreen
+        {
+            cmd->begin_render_pass(*renderPass);
+            cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            cmd->bind_pipeline(trianglePipelineHandle);
+            cmd->draw(3, 1, 0, 0);
+            cmd->end_render_pass();
+        }
 
-        cmd->begin_render_pass(*renderPass);
-        cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-        cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-        cmd->bind_pipeline(trianglePipelineHandle);
-        cmd->draw(3, 1, 0, 0);
-        cmd->end_render_pass();
+        // Render SwapChain
+        {
+            vgw::TransitionImage attachmentTransition{
+                .image = swapChain->get_current_image(),
+                .oldLayout = vk::ImageLayout::eUndefined,
+                .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                .srcAccess = vk::AccessFlagBits2::eNone,
+                .dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+                .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
+                .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+            };
+            cmd->transition_image(attachmentTransition);
 
-        vgw::TransitionImage presentTransition{
-            .image = swapChain->get_current_image(),
-            .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
-            .newLayout = vk::ImageLayout::ePresentSrcKHR,
-            .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
-            .dstAccess = vk::AccessFlagBits2::eNone,
-            .srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-            .dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe,
-            .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
-        };
-        cmd->transition_image(presentTransition);
+            vgw::TransitionImage presentTransition{
+                .image = swapChain->get_current_image(),
+                .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                .newLayout = vk::ImageLayout::ePresentSrcKHR,
+                .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+                .dstAccess = vk::AccessFlagBits2::eNone,
+                .srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                .dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe,
+                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+            };
+            cmd->transition_image(presentTransition);
+        }
+
         cmd->end();
 
         vgw::Fence fence;
