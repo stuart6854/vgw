@@ -222,7 +222,7 @@ namespace VGW_NAMESPACE
             VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
             for (const auto& inputVar : inputVariables)
             {
-                if (inputVar->name == nullptr)
+                if (inputVar->built_in)
                 {
                     continue;
                 }
