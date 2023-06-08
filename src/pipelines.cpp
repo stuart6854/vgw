@@ -167,7 +167,8 @@ namespace VGW_NAMESPACE
         }
         auto vkPipeline = createResult.value();
 
-        auto pipeline = std::make_unique<Pipeline>(*m_device, pipelineLayout, vkPipeline, vk::PipelineBindPoint::eGraphics, mergedReflectionData);
+        auto pipeline =
+            std::make_unique<Pipeline>(*m_device, pipelineLayout, vkPipeline, vk::PipelineBindPoint::eGraphics, mergedReflectionData);
         auto result = m_pipelines.set_resource(handle, std::move(pipeline));
         if (result != ResultCode::eSuccess)
         {
@@ -275,8 +276,31 @@ namespace VGW_NAMESPACE
     auto PipelineLibrary::merge_reflection_data(const ShaderReflectionData& reflectionDataA, const ShaderReflectionData& reflectionDataB)
         -> ShaderReflectionData
     {
-        auto resultReflectionData = reflectionDataA;
-        // #TODO: Merge reflection data
+        // Merge Descriptor Sets
+        std::unordered_map<std::uint32_t, DescriptorSet> sets;
+        for (const auto& set : reflectionDataA.descriptorSets)
+        {
+            sets[set.set] = set;
+        }
+        for (const auto& set : reflectionDataB.descriptorSets)
+        {
+            if (!sets.contains(set.set))
+            {
+                sets[set.set] = set;
+                continue;
+            }
+
+            // #TODO: Merge bindings
+        }
+
+        // Merge Push Constant Blocks
+        // #TODO: Merge shader push constant blocks
+
+        ShaderReflectionData resultReflectionData{};
+        for (auto& [set, descSet] : sets)
+        {
+            resultReflectionData.descriptorSets.push_back(descSet);
+        }
         return resultReflectionData;
     }
 
