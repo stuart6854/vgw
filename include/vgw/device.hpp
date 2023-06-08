@@ -63,7 +63,17 @@ namespace VGW_NAMESPACE
 
 #pragma region Resource Creation
 
-        auto create_swap_chain(const vgw::SwapChainInfo& swapChainInfo) -> std::unique_ptr<SwapChain>;
+#pragma region SwapChain
+
+        [[nodiscard]] auto create_swap_chain(const SwapChainInfo& swapChainInfo) noexcept -> std::expected<HandleSwapChain, ResultCode>;
+        auto resize_swap_chain(HandleSwapChain handle, std::uint32_t width, std::uint32_t height, bool vsync) noexcept -> ResultCode;
+        [[nodiscard]] auto get_swap_chain(HandleSwapChain handle) noexcept -> std::expected<std::reference_wrapper<SwapChain>, ResultCode>;
+        void destroy_swap_chain(HandleSwapChain handle) noexcept;
+
+        void acquire_next_swap_chain_image(HandleSwapChain swapChainHandle, vk::UniqueSemaphore* outSemaphore) noexcept;
+        void present_swap_chain(HandleSwapChain swapChainHandle, std::uint32_t queueIndex) noexcept;
+
+#pragma endregion
 
         /**
          * Allocate `count` number of command buffers from a command pool created with `poolFlags` flags.
@@ -78,7 +88,8 @@ namespace VGW_NAMESPACE
 
         [[nodiscard]] auto create_render_pass(const RenderPassInfo& renderPassInfo) noexcept -> std::expected<HandleRenderPass, ResultCode>;
         auto resize_render_pass(HandleRenderPass handle, std::uint32_t width, std::uint32_t height) noexcept -> ResultCode;
-        [[nodiscard]] auto get_render_pass(HandleRenderPass handle) noexcept -> std::expected<std::reference_wrapper<RenderPass>, ResultCode>;
+        [[nodiscard]] auto get_render_pass(HandleRenderPass handle) noexcept
+            -> std::expected<std::reference_wrapper<RenderPass>, ResultCode>;
         void destroy_render_pass(HandleRenderPass handle) noexcept;
 
 #pragma endregion
@@ -147,7 +158,7 @@ namespace VGW_NAMESPACE
 
         void submit(std::uint32_t queueIndex, CommandBuffer& commandBuffer, Fence* outFence);
 
-        void present(std::uint32_t queueIndex, SwapChain& swapChain);
+        void present(SwapChain& swapChain, std::uint32_t queueIndex);
 
         /* Operators */
 
@@ -181,6 +192,7 @@ namespace VGW_NAMESPACE
         std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> m_pendingBufferInfos;
         std::vector<vk::WriteDescriptorSet> m_pendingDescriptorWrites;
 
+        ResourceStorage<HandleSwapChain, SwapChain> m_swapChains;
         ResourceStorage<HandleRenderPass, RenderPass> m_renderPasses;
         std::unique_ptr<PipelineLibrary> m_pipelineLibrary;
         ResourceStorage<HandleBuffer, Buffer> m_buffers;

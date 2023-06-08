@@ -247,6 +247,8 @@ namespace VGW_NAMESPACE
             m_images.clear();
             m_buffers.clear();
             m_pipelineLibrary.reset();
+            m_renderPasses.clear();
+            m_swapChains.clear();
 
             m_pendingDescriptorWrites.clear();
             m_pendingBufferInfos.clear();
@@ -263,10 +265,113 @@ namespace VGW_NAMESPACE
         }
     }
 
-    auto Device::create_swap_chain(const SwapChainInfo& swapChainInfo) -> std::unique_ptr<SwapChain>
+#pragma region SwapChain
+
+    auto Device::create_swap_chain(const SwapChainInfo& swapChainInfo) noexcept -> std::expected<HandleSwapChain, ResultCode>
     {
-        return std::make_unique<SwapChain>(*this, swapChainInfo);
+        is_invariant();
+
+        auto handleResult = m_swapChains.allocate_handle();
+        if (!handleResult)
+        {
+            return std::unexpected(handleResult.error());
+        }
+        const auto handle = handleResult.value();
+
+        auto swapChain = std::make_unique<SwapChain>(*this, swapChainInfo);
+        auto createResult = swapChain->resize(swapChainInfo.width, swapChainInfo.height, swapChainInfo.vsync);
+        if (createResult != ResultCode::eSuccess)
+        {
+            m_swapChains.free_handle(handle);
+            return std::unexpected(createResult);
+        }
+
+        auto result = m_swapChains.set_resource(handle, std::move(swapChain));
+        if (result != ResultCode::eSuccess)
+        {
+            m_swapChains.free_handle(handle);
+            return std::unexpected(result);
+        }
+
+        return { handle };
     }
+
+    auto Device::resize_swap_chain(HandleSwapChain handle, std::uint32_t width, std::uint32_t height, bool vsync) noexcept -> ResultCode
+    {
+        is_invariant();
+
+        auto getResult = m_swapChains.get_resource(handle);
+        if (!getResult)
+        {
+            return getResult.error();
+        }
+        auto& swapChainRef = getResult.value();
+
+        auto result = swapChainRef->resize(width, height, vsync);
+        if (result != ResultCode::eSuccess)
+        {
+            return result;
+        }
+
+        return ResultCode::eSuccess;
+    }
+
+    auto Device::get_swap_chain(HandleSwapChain handle) noexcept -> std::expected<std::reference_wrapper<SwapChain>, ResultCode>
+    {
+        auto result = m_swapChains.get_resource(handle);
+        if (!result)
+        {
+            return std::unexpected(result.error());
+        }
+
+        auto* ptr = result.value();
+        VGW_ASSERT(ptr != nullptr);
+        return { *ptr };
+    }
+
+    void Device::destroy_swap_chain(HandleSwapChain handle) noexcept
+    {
+        is_invariant();
+
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto result = m_swapChains.set_resource(handle, nullptr);
+        if (result != ResultCode::eSuccess)
+        {
+            return;
+        }
+
+        m_swapChains.free_handle(handle);
+    }
+
+    void Device::acquire_next_swap_chain_image(HandleSwapChain swapChainHandle, vk::UniqueSemaphore* outSemaphore) noexcept
+    {
+        is_invariant();
+
+        auto result = get_swap_chain(swapChainHandle);
+        if (!result)
+        {
+            return;
+        }
+
+        auto& swapChainRef = result.value().get();
+        swapChainRef.acquire_next_image(outSemaphore);
+    }
+
+    void Device::present_swap_chain(HandleSwapChain swapChainHandle, std::uint32_t queueIndex) noexcept
+    {
+        is_invariant();
+
+        auto result = get_swap_chain(swapChainHandle);
+        if (!result)
+        {
+            return;
+        }
+
+        auto& swapChainRef = result.value().get();
+        present(swapChainRef, queueIndex);
+    }
+
+#pragma endregion
 
     auto Device::create_command_buffers(std::uint32_t count, vk::CommandPoolCreateFlags poolFlags)
         -> std::vector<std::unique_ptr<CommandBuffer>>
@@ -763,10 +868,9 @@ namespace VGW_NAMESPACE
         VGW_UNUSED(result);  // TODO: Check result.
     }
 
-    void Device::present(std::uint32_t queueIndex, SwapChain& swapChain)
+    void Device::present(SwapChain& swapChain, std::uint32_t queueIndex)
     {
         is_invariant();
-        VGW_ASSERT(swapChain.is_valid());
 
         auto queue = m_queues.at(queueIndex);
         VGW_ASSERT(queue);

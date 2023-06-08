@@ -55,7 +55,6 @@ namespace VGW_NAMESPACE
 
     struct TransitionImage
     {
-        Image* image;
         vk::ImageLayout oldLayout;
         vk::ImageLayout newLayout;
         vk::AccessFlags2 srcAccess;

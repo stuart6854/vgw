@@ -1,11 +1,11 @@
-#include <iostream>
-
 #include <vgw.hpp>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #define GLFW_NATIVE_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+
+#include <iostream>
 
 void LogCallback(vgw::LogLevel logLevel, const std::string_view& msg, const std::source_location& sourceLocation)
 {
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
         .height = WINDOW_HEIGHT,
         .vsync = true,
     };
-    auto swapChain = device->create_swap_chain(swapChainInfo);
+    auto swapChainHandle = device->create_swap_chain(swapChainInfo).value();
 
     // Create graphics pipeline
     auto vertexCode = vgw::read_shader_code("triangle.vert").value();
@@ -110,14 +110,14 @@ int main(int argc, char** argv)
     };
     auto renderPassHandle = device->create_render_pass(renderPassInfo).value();
 
-    auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb);
+    auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb).value();
 
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
         vk::UniqueSemaphore imageAcquireSemaphore{};
-        swapChain->acquire_next_image(&imageAcquireSemaphore);
+        device->acquire_next_swap_chain_image(swapChainHandle, &imageAcquireSemaphore);
 
         // Record command buffer
         auto cmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
@@ -135,7 +135,6 @@ int main(int argc, char** argv)
         // Render SwapChain
         {
             vgw::TransitionImage attachmentTransition{
-                .image = swapChain->get_current_image(),
                 .oldLayout = vk::ImageLayout::eUndefined,
                 .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 .srcAccess = vk::AccessFlagBits2::eNone,
@@ -144,10 +143,16 @@ int main(int argc, char** argv)
                 .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
-            cmd->transition_image(attachmentTransition);
+            cmd->transition_image(swapChainHandle, attachmentTransition);
+
+            cmd->begin_render_pass(swapChainHandle);
+            cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            cmd->bind_pipeline(fullscreenQuadPipelineHandle);
+            cmd->draw(3, 1, 0, 0);
+            cmd->end_render_pass();
 
             vgw::TransitionImage presentTransition{
-                .image = swapChain->get_current_image(),
                 .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 .newLayout = vk::ImageLayout::ePresentSrcKHR,
                 .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
@@ -156,7 +161,7 @@ int main(int argc, char** argv)
                 .dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe,
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
-            cmd->transition_image(presentTransition);
+            cmd->transition_image(swapChainHandle, presentTransition);
         }
 
         cmd->end();
@@ -165,7 +170,7 @@ int main(int argc, char** argv)
         device->submit(0, *cmd, &fence);
         fence.wait();
 
-        swapChain->present(0);
+        device->present_swap_chain(swapChainHandle, 0);
     }
 
     glfwDestroyWindow(window);

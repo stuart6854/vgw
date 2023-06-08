@@ -82,14 +82,49 @@ namespace VGW_NAMESPACE
         m_commandBuffer.copyBuffer2(copyBufferInfo);
     }
 
-    void CommandBuffer::transition_image(const TransitionImage& transitionImage)
+    void CommandBuffer::transition_image(HandleImage imageHandle, const TransitionImage& transitionImage)
     {
         is_invariant();
         VGW_ASSERT(m_recordingStarted && !m_recordingEnded);
-        VGW_ASSERT(transitionImage.image);
+
+        auto getResult = m_device->get_image(imageHandle);
+        if (!getResult)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& imageRef = getResult.value().get();
 
         vk::ImageMemoryBarrier2 barrier{};
-        barrier.setImage(transitionImage.image->get_image());
+        barrier.setImage(imageRef.get_image());
+        barrier.setOldLayout(transitionImage.oldLayout);
+        barrier.setNewLayout(transitionImage.newLayout);
+        barrier.setSrcAccessMask(transitionImage.srcAccess);
+        barrier.setDstAccessMask(transitionImage.dstAccess);
+        barrier.setSrcStageMask(transitionImage.srcStage);
+        barrier.setDstStageMask(transitionImage.dstStage);
+        barrier.setSubresourceRange(transitionImage.subresourceRange);
+
+        vk::DependencyInfo dependencyInfo{};
+        dependencyInfo.setImageMemoryBarriers(barrier);
+        m_commandBuffer.pipelineBarrier2(dependencyInfo);
+    }
+
+    void CommandBuffer::transition_image(HandleSwapChain swapChainHandle, const TransitionImage& transitionImage)
+    {
+        is_invariant();
+        VGW_ASSERT(m_recordingStarted && !m_recordingEnded);
+
+        auto getResult = m_device->get_swap_chain(swapChainHandle);
+        if (!getResult)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& swapChainRef = getResult.value().get();
+
+        vk::ImageMemoryBarrier2 barrier{};
+        barrier.setImage(swapChainRef.get_current_image()->get_image());
         barrier.setOldLayout(transitionImage.oldLayout);
         barrier.setNewLayout(transitionImage.newLayout);
         barrier.setSrcAccessMask(transitionImage.srcAccess);
@@ -142,6 +177,21 @@ namespace VGW_NAMESPACE
         }
         auto& renderPassRef = getResult.value().get();
         const auto& renderingInfo = renderPassRef.get_rendering_info();
+        m_commandBuffer.beginRendering(renderingInfo);
+    }
+
+    void CommandBuffer::begin_render_pass(HandleSwapChain swapChain)
+    {
+        is_invariant();
+
+        auto getResult = m_device->get_swap_chain(swapChain);
+        if (!getResult)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& swapChainRef = getResult.value().get();
+        const auto& renderingInfo = swapChainRef.get_rendering_info();
         m_commandBuffer.beginRendering(renderingInfo);
     }
 

@@ -42,12 +42,14 @@ namespace VGW_NAMESPACE
 
         void copy_to_buffer(const CopyToBuffer& copyToBuffer);
 
-        void transition_image(const TransitionImage& transitionImage);
+        void transition_image(HandleImage imageHandle, const TransitionImage& transitionImage);
+        void transition_image(HandleSwapChain swapChainHandle, const TransitionImage& transitionImage);
 
         void bind_pipeline(HandlePipeline pipeline);
         void bind_descriptor_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& descriptorSets);
 
         void begin_render_pass(HandleRenderPass renderPass);
+        void begin_render_pass(HandleSwapChain swapChain);
         void end_render_pass();
 
         void set_viewport(float x, float y, float width, float height, float minDepth = 0.0f, float maxDepth = 1.0f);

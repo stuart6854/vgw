@@ -4,33 +4,31 @@
 
 namespace VGW_NAMESPACE
 {
-    SwapChain::SwapChain(Device& device, const SwapChainInfo& swapChainInfo)
-        : m_device(&device), m_surface(swapChainInfo.surface), m_extent(swapChainInfo.width, swapChainInfo.height), m_vsync(swapChainInfo.vsync)
-    {
-        resize(m_extent.width, m_extent.height, m_vsync);
-    }
+    SwapChain::SwapChain(Device& device, const SwapChainInfo& swapChainInfo) : m_device(&device), m_info(swapChainInfo) {}
 
     SwapChain::SwapChain(SwapChain&& other) noexcept {}
 
-    SwapChain::~SwapChain() {}
-
-    bool SwapChain::is_valid() const
+    auto SwapChain::get_rendering_info() -> vk::RenderingInfo
     {
-        return m_device && m_surface && m_swapChain;
+        ImageViewInfo viewInfo{ .viewType = vk::ImageViewType::e2D, .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } };
+        auto view = get_current_image()->get_view(viewInfo);
+        m_colorAttachment.setImageView(view);
+
+        return m_renderingInfo;
     }
 
-    void SwapChain::resize(std::uint32_t width, std::uint32_t height, bool vsync)
+    auto SwapChain::resize(std::uint32_t width, std::uint32_t height, bool vsync) -> ResultCode
     {
         m_images.clear();
 
         vk::SurfaceFormatKHR surfaceFormat = { vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear };
 
         vk::SwapchainCreateInfoKHR swapChainCreateInfo{};
-        swapChainCreateInfo.setSurface(m_surface);
+        swapChainCreateInfo.setSurface(m_info.surface);
         swapChainCreateInfo.setMinImageCount(3);
         swapChainCreateInfo.setImageFormat(surfaceFormat.format);
         swapChainCreateInfo.setImageColorSpace(surfaceFormat.colorSpace);
-        swapChainCreateInfo.setImageExtent(m_extent);
+        swapChainCreateInfo.setImageExtent({ m_info.width, m_info.height });
         swapChainCreateInfo.setImageArrayLayers(1);
         swapChainCreateInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
         swapChainCreateInfo.setPreTransform(vk::SurfaceTransformFlagBitsKHR::eIdentity);
@@ -41,8 +39,8 @@ namespace VGW_NAMESPACE
         m_swapChain = m_device->get_device().createSwapchainKHRUnique(swapChainCreateInfo).value;
 
         ImageInfo imageInfo{
-            .width = m_extent.width,
-            .height = m_extent.height,
+            .width = m_info.width,
+            .height = m_info.height,
             .depth = 1,
             .mipLevels = 1,
             .format = surfaceFormat.format,
@@ -56,6 +54,16 @@ namespace VGW_NAMESPACE
         }
 
         VGW_ASSERT(!m_images.empty());
+
+        m_colorAttachment.setLoadOp(vk::AttachmentLoadOp::eClear);
+        m_colorAttachment.setStoreOp(vk::AttachmentStoreOp::eStore);
+        m_colorAttachment.setImageLayout(vk::ImageLayout::eAttachmentOptimal);
+
+        m_renderingInfo.setColorAttachments(m_colorAttachment);
+        m_renderingInfo.setRenderArea({ { 0, 0 }, { m_info.width, m_info.height } });
+        m_renderingInfo.setLayerCount(1);
+
+        return ResultCode::eSuccess;
     }
 
     void SwapChain::acquire_next_image(vk::UniqueSemaphore* outSemaphore)
@@ -75,13 +83,13 @@ namespace VGW_NAMESPACE
     {
         is_invariant();
 
-        m_device->present(queueIndex, *this);
+        m_device->present(*this, queueIndex);
     }
 
     void SwapChain::is_invariant()
     {
         VGW_ASSERT(m_device);
-        VGW_ASSERT(m_surface);
+        VGW_ASSERT(m_info.surface);
         VGW_ASSERT(m_swapChain);
     }
 
