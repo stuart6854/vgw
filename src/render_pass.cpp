@@ -9,6 +9,9 @@ namespace VGW_NAMESPACE
 {
     RenderPass::RenderPass(Device& device, RenderPassInfo renderPassInfo) : m_device(&device), m_renderPassInfo(std::move(renderPassInfo))
     {
+        // So we can manually resize later.
+        m_renderPassInfo.width = 0;
+        m_renderPassInfo.height = 0;
     }
 
     auto RenderPass::resize(std::uint32_t width, std::uint32_t height) -> ResultCode

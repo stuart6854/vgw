@@ -141,8 +141,8 @@ namespace VGW_NAMESPACE
             return;
         }
         auto& renderPassRef = getResult.value().get();
-
-        m_commandBuffer.beginRendering(renderPassRef.get_rendering_info());
+        const auto& renderingInfo = renderPassRef.get_rendering_info();
+        m_commandBuffer.beginRendering(renderingInfo);
     }
 
     void CommandBuffer::end_render_pass()
