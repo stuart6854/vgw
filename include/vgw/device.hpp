@@ -92,6 +92,9 @@ namespace VGW_NAMESPACE
             -> std::expected<std::reference_wrapper<RenderPass>, ResultCode>;
         void destroy_render_pass(HandleRenderPass handle) noexcept;
 
+        [[nodiscard]] auto get_render_pass_color_image(HandleRenderPass handle, std::uint32_t imageIndex) noexcept
+            -> std::expected<HandleImage, ResultCode>;
+
 #pragma endregion
 
 #pragma region Pipelines

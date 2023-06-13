@@ -43,12 +43,14 @@ namespace VGW_NAMESPACE
 
         auto get_rendering_info() const -> const vk::RenderingInfo& { return m_renderingInfo; }
 
+        auto get_color_image(std::uint32_t imageIndex) const noexcept -> std::expected<HandleImage, ResultCode>;
+
         /* Methods */
 
         auto resize(std::uint32_t width, std::uint32_t height) -> ResultCode;
 
     private:
-        void is_invariant();
+        void is_invariant() const;
 
     private:
         Device* m_device{ nullptr };

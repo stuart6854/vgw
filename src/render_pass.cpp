@@ -14,6 +14,18 @@ namespace VGW_NAMESPACE
         m_renderPassInfo.height = 0;
     }
 
+    auto RenderPass::get_color_image(std::uint32_t imageIndex) const noexcept -> std::expected<HandleImage, ResultCode>
+    {
+        is_invariant();
+        if (m_colorImages.empty())
+        {
+            return std::unexpected(ResultCode::eInvalidIndex);
+        }
+        VGW_ASSERT(imageIndex >= 0 && imageIndex < m_colorImages.size());
+
+        return m_colorImages.at(imageIndex);
+    }
+
     auto RenderPass::resize(std::uint32_t width, std::uint32_t height) -> ResultCode
     {
         is_invariant();
@@ -123,7 +135,7 @@ namespace VGW_NAMESPACE
         return ResultCode::eSuccess;
     }
 
-    void RenderPass::is_invariant()
+    void RenderPass::is_invariant() const
     {
         VGW_ASSERT(m_device);
     }

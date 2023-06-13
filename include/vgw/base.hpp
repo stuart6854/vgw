@@ -47,6 +47,7 @@ namespace VGW_NAMESPACE
         eFailedToCreate,
         eNoHandleAvailable,
         eInvalidHandle,
+        eInvalidIndex,
     };
 
     template <typename T>

@@ -484,6 +484,19 @@ namespace VGW_NAMESPACE
         m_renderPasses.free_handle(handle);
     }
 
+    auto Device::get_render_pass_color_image(HandleRenderPass handle, std::uint32_t imageIndex) noexcept
+        -> std::expected<HandleImage, ResultCode>
+    {
+        auto getResult = get_render_pass(handle);
+        if (!getResult)
+        {
+            return std::unexpected(getResult.error());
+        }
+        auto& renderPassRef = getResult.value().get();
+
+        return renderPassRef.get_color_image(imageIndex);
+    }
+
 #pragma endregion
 
 #pragma region Pipelines
