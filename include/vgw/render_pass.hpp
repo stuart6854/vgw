@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <vector>
+#include <expected>
 
 namespace VGW_NAMESPACE
 {
