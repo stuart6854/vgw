@@ -245,6 +245,7 @@ namespace VGW_NAMESPACE
         {
             m_device->waitIdle();
 
+            m_samplers.clear();
             m_images.clear();
             m_buffers.clear();
             m_pipelineLibrary.reset();
