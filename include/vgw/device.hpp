@@ -161,7 +161,8 @@ namespace VGW_NAMESPACE
                         std::uint32_t binding,
                         vk::DescriptorType descriptorType,
                         HandleImage imageHandle,
-                        const ImageViewInfo& viewInfo);
+                        const ImageViewInfo& viewInfo,
+                        vk::Sampler sampler);
 
         void flush_descriptor_writes();
 

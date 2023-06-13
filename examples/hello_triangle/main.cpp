@@ -132,7 +132,8 @@ int main(int argc, char** argv)
                        0,
                        vk::DescriptorType::eCombinedImageSampler,
                        attachmentImageHandle,
-                       { vk::ImageViewType::e2D, { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } });
+                       { vk::ImageViewType::e2D, { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } },
+                       attachmentSampler);
     device->flush_descriptor_writes();
 
     while (!glfwWindowShouldClose(window))

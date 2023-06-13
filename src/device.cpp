@@ -872,7 +872,8 @@ namespace VGW_NAMESPACE
                             std::uint32_t binding,
                             vk::DescriptorType descriptorType,
                             HandleImage imageHandle,
-                            const ImageViewInfo& viewInfo)
+                            const ImageViewInfo& viewInfo,
+                            vk::Sampler sampler)
     {
         is_invariant();
         VGW_ASSERT(binding >= 0);
@@ -891,7 +892,7 @@ namespace VGW_NAMESPACE
         auto& imageInfo = m_pendingImageInfos.back();
         imageInfo->setImageView(imageRef.get_view(viewInfo));
         imageInfo->setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-        imageInfo->setSampler({});
+        imageInfo->setSampler(sampler);
 
         auto& write = m_pendingDescriptorWrites.emplace_back();
         write.setDstSet(set);
