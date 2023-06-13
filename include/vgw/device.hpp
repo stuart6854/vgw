@@ -155,6 +155,12 @@ namespace VGW_NAMESPACE
                          std::uint64_t offset,
                          std::uint64_t range);
 
+        void bind_image(vk::DescriptorSet set,
+                        std::uint32_t binding,
+                        vk::DescriptorType descriptorType,
+                        HandleImage imageHandle,
+                        const ImageViewInfo& viewInfo);
+
         void flush_descriptor_writes();
 
 #pragma endregion
@@ -193,6 +199,7 @@ namespace VGW_NAMESPACE
         std::unordered_map<std::size_t, vk::UniqueDescriptorSetLayout> m_descriptorSetLayoutMap;
 
         std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> m_pendingBufferInfos;
+        std::vector<std::unique_ptr<vk::DescriptorImageInfo>> m_pendingImageInfos;
         std::vector<vk::WriteDescriptorSet> m_pendingDescriptorWrites;
 
         ResourceStorage<HandleSwapChain, SwapChain> m_swapChains;

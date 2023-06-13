@@ -842,6 +842,40 @@ namespace VGW_NAMESPACE
         write.setPBufferInfo(bufferInfo.get());
     }
 
+    void Device::bind_image(vk::DescriptorSet set,
+                            std::uint32_t binding,
+                            vk::DescriptorType descriptorType,
+                            HandleImage imageHandle,
+                            const ImageViewInfo& viewInfo)
+    {
+        is_invariant();
+        VGW_ASSERT(binding >= 0);
+        VGW_ASSERT(descriptorType >= vk::DescriptorType::eCombinedImageSampler &&
+                   descriptorType <= vk::DescriptorType::eCombinedImageSampler);
+
+        auto result = get_image(imageHandle);
+        if (!result)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& imageRef = result.value().get();
+
+        m_pendingImageInfos.push_back(std::make_unique<vk::DescriptorImageInfo>());
+        auto& imageInfo = m_pendingImageInfos.back();
+        imageInfo->setImageView(imageRef.get_view(viewInfo));
+        imageInfo->setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        imageInfo->setSampler({});
+
+        auto& write = m_pendingDescriptorWrites.emplace_back();
+        write.setDstSet(set);
+        write.setDstBinding(binding);
+        write.setDescriptorType(descriptorType);
+        write.setDescriptorCount(1);
+        write.setDstArrayElement(0);
+        write.setPImageInfo(imageInfo.get());
+    }
+
     void Device::flush_descriptor_writes()
     {
         is_invariant();
