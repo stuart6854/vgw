@@ -31,6 +31,15 @@ namespace VGW_NAMESPACE
         vk::Format depthStencilFormat;
     };
 
+    struct SamplerInfo
+    {
+        vk::SamplerAddressMode addressModeU{ vk::SamplerAddressMode::eRepeat };
+        vk::SamplerAddressMode addressModeV{ vk::SamplerAddressMode::eRepeat };
+        vk::SamplerAddressMode addressModeW{ vk::SamplerAddressMode::eRepeat };
+        vk::Filter minFilter{ vk::Filter::eLinear };
+        vk::Filter magFilter{ vk::Filter::eLinear };
+    };
+
     struct DescriptorSet
     {
         std::uint32_t set;
@@ -166,6 +175,21 @@ namespace std
             vgw::hash_combine(seed, pipelineInfo.depthTest);
             vgw::hash_combine(seed, pipelineInfo.depthWrite);
             vgw::hash_combine(seed, pipelineInfo.colorAttachmentFormats);
+            return seed;
+        }
+    };
+
+    template <>
+    struct hash<vgw::SamplerInfo>
+    {
+        std::size_t operator()(const vgw::SamplerInfo& samplerInfo) const
+        {
+            std::size_t seed{ 0 };
+            vgw::hash_combine(seed, samplerInfo.addressModeU);
+            vgw::hash_combine(seed, samplerInfo.addressModeV);
+            vgw::hash_combine(seed, samplerInfo.addressModeW);
+            vgw::hash_combine(seed, samplerInfo.minFilter);
+            vgw::hash_combine(seed, samplerInfo.magFilter);
             return seed;
         }
     };

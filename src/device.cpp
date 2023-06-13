@@ -16,6 +16,7 @@
 #include <vk_mem_alloc.h>
 
 #include <unordered_map>
+#include <functional>
 
 /* Shader: Fullscreen Quad Vertex
 #version 450
@@ -780,6 +781,30 @@ namespace VGW_NAMESPACE
     }
 
 #pragma endregion
+
+    auto Device::get_or_create_sampler(const SamplerInfo& samplerInfo) noexcept -> std::expected<vk::Sampler, ResultCode>
+    {
+        const auto samplerHash = std::hash<SamplerInfo>{}(samplerInfo);
+        if (m_samplers.contains(samplerHash))
+        {
+            return { m_samplers.at(samplerHash).get() };
+        }
+
+        vk::SamplerCreateInfo samplerCreateInfo{};
+        samplerCreateInfo.setAddressModeU(samplerInfo.addressModeU);
+        samplerCreateInfo.setAddressModeV(samplerInfo.addressModeV);
+        samplerCreateInfo.setAddressModeW(samplerInfo.addressModeW);
+        samplerCreateInfo.setMinFilter(samplerInfo.minFilter);
+        samplerCreateInfo.setMagFilter(samplerInfo.magFilter);
+        auto result = m_device->createSamplerUnique(samplerCreateInfo);
+        if (result.result != vk::Result::eSuccess)
+        {
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+        m_samplers[samplerHash] = std::move(result.value);
+
+        return { m_samplers.at(samplerHash).get() };
+    }
 
     auto Device::get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout
     {

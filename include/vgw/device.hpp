@@ -139,6 +139,8 @@ namespace VGW_NAMESPACE
 
 #pragma endregion
 
+        [[nodiscard]] auto get_or_create_sampler(const SamplerInfo& samplerInfo) noexcept -> std::expected<vk::Sampler, ResultCode>;
+
         auto get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout;
 
         auto create_descriptor_sets(std::uint32_t count, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
@@ -207,5 +209,7 @@ namespace VGW_NAMESPACE
         std::unique_ptr<PipelineLibrary> m_pipelineLibrary;
         ResourceStorage<HandleBuffer, Buffer> m_buffers;
         ResourceStorage<HandleImage, Image> m_images;
+
+        std::unordered_map<std::size_t, vk::UniqueSampler> m_samplers;
     };
 }

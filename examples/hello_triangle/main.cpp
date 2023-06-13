@@ -118,6 +118,15 @@ int main(int argc, char** argv)
                                            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
                                        })[0]);
 
+    vgw::SamplerInfo samplerInfo{
+        .addressModeU = vk::SamplerAddressMode::eRepeat,
+        .addressModeV = vk::SamplerAddressMode::eRepeat,
+        .addressModeW = vk::SamplerAddressMode::eRepeat,
+        .minFilter = vk::Filter::eLinear,
+        .magFilter = vk::Filter::eLinear,
+    };
+    auto attachmentSampler = device->get_or_create_sampler(samplerInfo).value();
+
     auto attachmentImageHandle = device->get_render_pass_color_image(renderPassHandle, 0).value();
     device->bind_image(fullscreenDescriptorSet.get(),
                        0,
