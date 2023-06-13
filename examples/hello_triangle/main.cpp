@@ -148,6 +148,17 @@ int main(int argc, char** argv)
         cmd->begin();
         // Render Offscreen
         {
+            vgw::TransitionImage attachmentTransition{
+                .oldLayout = vk::ImageLayout::eUndefined,
+                .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                .srcAccess = vk::AccessFlagBits2::eNone,
+                .dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+                .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
+                .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+            };
+            cmd->transition_image(attachmentImageHandle, attachmentTransition);
+
             cmd->begin_render_pass(renderPassHandle);
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -168,6 +179,17 @@ int main(int argc, char** argv)
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
             cmd->transition_image(swapChainHandle, attachmentTransition);
+
+            vgw::TransitionImage sampledAttachmentTransition{
+                .oldLayout = vk::ImageLayout::eAttachmentOptimal,
+                .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+                .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+                .dstAccess = vk::AccessFlagBits2::eShaderRead,
+                .srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                .dstStage = vk::PipelineStageFlagBits2::eFragmentShader,
+                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+            };
+            cmd->transition_image(attachmentImageHandle, sampledAttachmentTransition);
 
             cmd->begin_render_pass(swapChainHandle);
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
