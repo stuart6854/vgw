@@ -35,13 +35,19 @@ namespace VGW_NAMESPACE
         ImageViewInfo viewInfo{ .viewType = vk::ImageViewType::e2D, .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } };
         for (const auto& attachmentInfo : m_renderPassInfo.colorAttachments)
         {
+            vk::ImageUsageFlags imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+            if (attachmentInfo.sampled)
+            {
+                imageUsage |= vk::ImageUsageFlagBits::eSampled;
+            }
+
             ImageInfo imageInfo{
                 .width = std::uint32_t(float(m_renderPassInfo.width) * attachmentInfo.resolutionScale),
                 .height = std::uint32_t(float(m_renderPassInfo.height) * attachmentInfo.resolutionScale),
                 .depth = 1,
                 .mipLevels = 1,
                 .format = attachmentInfo.format,
-                .usage = vk::ImageUsageFlagBits::eColorAttachment,
+                .usage = imageUsage,
             };
             auto result = m_device->create_image(imageInfo);
             if (!result)

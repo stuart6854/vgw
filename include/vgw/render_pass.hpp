@@ -20,6 +20,7 @@ namespace VGW_NAMESPACE
         std::array<float, 4> clearColor{ 1, 1, 1, 1 };
         float clearDepth{ 1.0f };
         std::uint32_t clearStencil{ 0 };
+        bool sampled{ false };
     };
     struct RenderPassInfo
     {

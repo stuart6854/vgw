@@ -103,9 +103,10 @@ int main(int argc, char** argv)
         .width = WINDOW_WIDTH,
         .height = WINDOW_HEIGHT,
         .colorAttachments = { {
-            vk::Format::eR8G8B8A8Unorm,
-            1.0f,
-            { 1, 0.3f, 0.4f, 1.0f },
+            .format = vk::Format::eR8G8B8A8Unorm,
+            .resolutionScale = 1.0f,
+            .clearColor = { 1, 0.3f, 0.4f, 1.0f },
+            .sampled = true,
         } },
     };
     auto renderPassHandle = device->create_render_pass(renderPassInfo).value();
