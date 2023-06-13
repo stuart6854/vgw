@@ -112,6 +112,19 @@ int main(int argc, char** argv)
     auto renderPassHandle = device->create_render_pass(renderPassInfo).value();
 
     auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb).value();
+    auto fullscreenDescriptorSet = std::move(
+        device->create_descriptor_sets(1,
+                                       {
+                                           { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+                                       })[0]);
+
+    auto attachmentImageHandle = device->get_render_pass_color_image(renderPassHandle, 0).value();
+    device->bind_image(fullscreenDescriptorSet.get(),
+                       0,
+                       vk::DescriptorType::eCombinedImageSampler,
+                       attachmentImageHandle,
+                       { vk::ImageViewType::e2D, { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } });
+    device->flush_descriptor_writes();
 
     while (!glfwWindowShouldClose(window))
     {
@@ -150,6 +163,7 @@ int main(int argc, char** argv)
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->bind_pipeline(fullscreenQuadPipelineHandle);
+            cmd->bind_descriptor_sets(0, { fullscreenDescriptorSet.get() });
             cmd->draw(3, 1, 0, 0);
             cmd->end_render_pass();
 
