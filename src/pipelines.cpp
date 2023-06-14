@@ -10,6 +10,16 @@ namespace VGW_NAMESPACE
 
     PipelineLibrary::PipelineLibrary(Device& device) : m_device(&device) {}
 
+    PipelineLibrary::~PipelineLibrary()
+    {
+        m_pipelines.clear(
+            [this](Pipeline& pipeline)
+            {
+                m_device->get_device().destroy(pipeline.pipeline);
+                pipeline.pipeline = VK_NULL_HANDLE;
+            });
+    }
+
     auto PipelineLibrary::create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept
         -> std::expected<HandlePipeline, ResultCode>
     {

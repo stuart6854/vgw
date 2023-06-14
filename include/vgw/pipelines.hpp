@@ -34,7 +34,7 @@ namespace VGW_NAMESPACE
         explicit PipelineLibrary(Device& device);
         PipelineLibrary(const PipelineLibrary&) = delete;
         PipelineLibrary(PipelineLibrary&& other) noexcept = delete;
-        ~PipelineLibrary() = default;
+        ~PipelineLibrary();
 
         /* Methods */
 

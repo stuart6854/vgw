@@ -24,7 +24,7 @@ namespace VGW_NAMESPACE
         auto set_resource(HandleType handle, std::unique_ptr<ResourceType>&& resource) -> ResultCode;
         [[nodiscard]] auto get_resource(HandleType handle) noexcept -> std::expected<ResourceType*, ResultCode>;
 
-        void clear() noexcept;
+        void clear(std::function<void(ResourceType&)>&& destroyFunc = {}) noexcept;
 
     private:
         struct Slot
@@ -108,12 +108,17 @@ namespace VGW_NAMESPACE
     }
 
     template <typename HandleType, typename ResourceType>
-    void ResourceStorage<HandleType, ResourceType>::clear() noexcept
+    void ResourceStorage<HandleType, ResourceType>::clear(std::function<void(ResourceType&)>&& destroyFunc) noexcept
     {
         for (auto i = 0u; i < m_storage.size(); ++i)
         {
             auto& slot = m_storage.at(i);
             slot.handle = CREATE_HANDLE(HandleType, i, 0u);
+
+            if (destroyFunc && slot.resource != nullptr)
+            {
+                destroyFunc(*slot.resource);
+            }
             slot.resource.reset();
         }
         m_freeSlotIndices = {};
