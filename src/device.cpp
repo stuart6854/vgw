@@ -219,7 +219,7 @@ namespace VGW_NAMESPACE
         std::swap(m_queues, other.m_queues);
         std::swap(m_descriptorPool, other.m_descriptorPool);
         std::swap(m_commandPoolMap, other.m_commandPoolMap);
-        std::swap(m_descriptorSetLayoutMap, other.m_descriptorSetLayoutMap);
+        std::swap(m_setLayoutMap, other.m_setLayoutMap);
         std::swap(m_pipelineLibrary, other.m_pipelineLibrary);
     }
 
@@ -245,7 +245,6 @@ namespace VGW_NAMESPACE
         {
             m_device->waitIdle();
 
-            m_samplers.clear();
             m_images.clear();
             m_buffers.clear();
             m_pipelineLibrary.reset();
@@ -255,7 +254,9 @@ namespace VGW_NAMESPACE
             m_pendingDescriptorWrites.clear();
             m_pendingBufferInfos.clear();
 
-            m_descriptorSetLayoutMap.clear();
+            m_samplerMap.clear();
+            m_pipelineLayoutMap.clear();
+            m_setLayoutMap.clear();
             m_commandPoolMap.clear();
 
             m_descriptorPool.reset();
@@ -501,7 +502,146 @@ namespace VGW_NAMESPACE
 
 #pragma endregion
 
+#pragma region Descriptor Sets
+
+    auto Device::get_or_create_set_layout(const SetLayoutInfo& layoutInfo) -> std::expected<vk::DescriptorSetLayout, ResultCode>
+    {
+        auto setLayoutHash = std::hash<SetLayoutInfo>{}(layoutInfo);
+        if (m_setLayoutMap.contains(setLayoutHash))
+        {
+            return m_setLayoutMap.at(setLayoutHash).get();
+        }
+
+        vk::DescriptorSetLayoutCreateInfo layoutCreateInfo{};
+        layoutCreateInfo.setBindings(layoutInfo.bindings);
+        auto result = m_device->createDescriptorSetLayoutUnique(layoutCreateInfo);
+        if (result.result != vk::Result::eSuccess)
+        {
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+        m_setLayoutMap[setLayoutHash] = std::move(result.value);
+
+        return m_setLayoutMap.at(setLayoutHash).get();
+    }
+
+    auto Device::create_descriptor_sets(std::uint32_t count, vk::DescriptorSetLayout setLayout) -> std::vector<vk::UniqueDescriptorSet>
+    {
+        std::vector setLayouts(count, setLayout);
+        vk::DescriptorSetAllocateInfo allocInfo{};
+        allocInfo.setDescriptorPool(m_descriptorPool.get());
+        allocInfo.setSetLayouts(setLayouts);
+        return m_device->allocateDescriptorSetsUnique(allocInfo).value;
+    }
+
+    void Device::bind_buffer(vk::DescriptorSet set,
+                             std::uint32_t binding,
+                             vk::DescriptorType descriptorType,
+                             HandleBuffer bufferHandle,
+                             std::uint64_t offset,
+                             std::uint64_t range)
+    {
+        is_invariant();
+        VGW_ASSERT(binding >= 0);
+        VGW_ASSERT(descriptorType >= vk::DescriptorType::eUniformBuffer && descriptorType <= vk::DescriptorType::eStorageBufferDynamic);
+        VGW_ASSERT(range >= 1)
+
+        auto result = m_buffers.get_resource(bufferHandle);
+        if (!result)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto* bufferRef = result.value();
+
+        m_pendingBufferInfos.push_back(std::make_unique<vk::DescriptorBufferInfo>());
+        auto& bufferInfo = m_pendingBufferInfos.back();
+        bufferInfo->setBuffer(bufferRef->get_buffer());
+        bufferInfo->setOffset(offset);
+        bufferInfo->setRange(range);
+
+        auto& write = m_pendingDescriptorWrites.emplace_back();
+        write.setDstSet(set);
+        write.setDstBinding(binding);
+        write.setDescriptorType(descriptorType);
+        write.setDescriptorCount(1);
+        write.setDstArrayElement(0);
+        write.setPBufferInfo(bufferInfo.get());
+    }
+
+    void Device::bind_image(vk::DescriptorSet set,
+                            std::uint32_t binding,
+                            vk::DescriptorType descriptorType,
+                            HandleImage imageHandle,
+                            const ImageViewInfo& viewInfo,
+                            vk::Sampler sampler)
+    {
+        is_invariant();
+        VGW_ASSERT(binding >= 0);
+        VGW_ASSERT(descriptorType >= vk::DescriptorType::eCombinedImageSampler &&
+                   descriptorType <= vk::DescriptorType::eCombinedImageSampler);
+
+        auto result = get_image(imageHandle);
+        if (!result)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& imageRef = result.value().get();
+
+        m_pendingImageInfos.push_back(std::make_unique<vk::DescriptorImageInfo>());
+        auto& imageInfo = m_pendingImageInfos.back();
+        imageInfo->setImageView(imageRef.get_view(viewInfo));
+        imageInfo->setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        imageInfo->setSampler(sampler);
+
+        auto& write = m_pendingDescriptorWrites.emplace_back();
+        write.setDstSet(set);
+        write.setDstBinding(binding);
+        write.setDescriptorType(descriptorType);
+        write.setDescriptorCount(1);
+        write.setDstArrayElement(0);
+        write.setPImageInfo(imageInfo.get());
+    }
+
+    void Device::flush_descriptor_writes()
+    {
+        is_invariant();
+        if (m_pendingDescriptorWrites.empty())
+        {
+            return;
+        }
+
+        m_device->updateDescriptorSets(m_pendingDescriptorWrites, {});
+
+        m_pendingBufferInfos.clear();
+        m_pendingDescriptorWrites.clear();
+    }
+
+#pragma endregion
+
 #pragma region Pipelines
+
+    auto Device::get_or_create_pipeline_layout(const PipelineLayoutInfo& layoutInfo) noexcept
+        -> std::expected<vk::PipelineLayout, ResultCode>
+    {
+        const auto layoutHash = std::hash<PipelineLayoutInfo>{}(layoutInfo);
+        if (m_pipelineLayoutMap.contains(layoutHash))
+        {
+            return { m_pipelineLayoutMap.at(layoutHash).get() };
+        }
+
+        vk::PipelineLayoutCreateInfo layoutCreateInfo{};
+        layoutCreateInfo.setSetLayouts(layoutInfo.setLayouts);
+        layoutCreateInfo.setPushConstantRanges(layoutInfo.constantRange);
+        auto result = m_device->createPipelineLayoutUnique(layoutCreateInfo);
+        if (result.result != vk::Result::eSuccess)
+        {
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+        m_pipelineLayoutMap[layoutHash] = std::move(result.value);
+
+        return { m_pipelineLayoutMap.at(layoutHash).get() };
+    }
 
     auto Device::create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept -> std::expected<HandlePipeline, ResultCode>
     {
@@ -786,9 +926,9 @@ namespace VGW_NAMESPACE
     auto Device::get_or_create_sampler(const SamplerInfo& samplerInfo) noexcept -> std::expected<vk::Sampler, ResultCode>
     {
         const auto samplerHash = std::hash<SamplerInfo>{}(samplerInfo);
-        if (m_samplers.contains(samplerHash))
+        if (m_samplerMap.contains(samplerHash))
         {
-            return { m_samplers.at(samplerHash).get() };
+            return { m_samplerMap.at(samplerHash).get() };
         }
 
         vk::SamplerCreateInfo samplerCreateInfo{};
@@ -802,119 +942,9 @@ namespace VGW_NAMESPACE
         {
             return std::unexpected(ResultCode::eFailedToCreate);
         }
-        m_samplers[samplerHash] = std::move(result.value);
+        m_samplerMap[samplerHash] = std::move(result.value);
 
-        return { m_samplers.at(samplerHash).get() };
-    }
-
-    auto Device::get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout
-    {
-        auto setLayoutHash = std::hash<vk::DescriptorSetLayoutCreateInfo>{}(layoutInfo);
-        if (m_descriptorSetLayoutMap.contains(setLayoutHash))
-        {
-            return m_descriptorSetLayoutMap.at(setLayoutHash).get();
-        }
-
-        m_descriptorSetLayoutMap[setLayoutHash] = m_device->createDescriptorSetLayoutUnique(layoutInfo).value;
-        return m_descriptorSetLayoutMap.at(setLayoutHash).get();
-    }
-
-    auto Device::create_descriptor_sets(std::uint32_t count, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
-        -> std::vector<vk::UniqueDescriptorSet>
-    {
-        vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-        layoutInfo.setBindings(bindings);
-        auto layout = get_or_create_descriptor_set_layout(layoutInfo);
-
-        std::vector setLayouts(count, layout);
-        vk::DescriptorSetAllocateInfo allocInfo{};
-        allocInfo.setDescriptorPool(m_descriptorPool.get());
-        allocInfo.setSetLayouts(setLayouts);
-        return m_device->allocateDescriptorSetsUnique(allocInfo).value;
-    }
-
-    void Device::bind_buffer(vk::DescriptorSet set,
-                             std::uint32_t binding,
-                             vk::DescriptorType descriptorType,
-                             HandleBuffer bufferHandle,
-                             std::uint64_t offset,
-                             std::uint64_t range)
-    {
-        is_invariant();
-        VGW_ASSERT(binding >= 0);
-        VGW_ASSERT(descriptorType >= vk::DescriptorType::eUniformBuffer && descriptorType <= vk::DescriptorType::eStorageBufferDynamic);
-        VGW_ASSERT(range >= 1)
-
-        auto result = m_buffers.get_resource(bufferHandle);
-        if (!result)
-        {
-            // #TODO: Handle error.
-            return;
-        }
-        auto* bufferRef = result.value();
-
-        m_pendingBufferInfos.push_back(std::make_unique<vk::DescriptorBufferInfo>());
-        auto& bufferInfo = m_pendingBufferInfos.back();
-        bufferInfo->setBuffer(bufferRef->get_buffer());
-        bufferInfo->setOffset(offset);
-        bufferInfo->setRange(range);
-
-        auto& write = m_pendingDescriptorWrites.emplace_back();
-        write.setDstSet(set);
-        write.setDstBinding(binding);
-        write.setDescriptorType(descriptorType);
-        write.setDescriptorCount(1);
-        write.setDstArrayElement(0);
-        write.setPBufferInfo(bufferInfo.get());
-    }
-
-    void Device::bind_image(vk::DescriptorSet set,
-                            std::uint32_t binding,
-                            vk::DescriptorType descriptorType,
-                            HandleImage imageHandle,
-                            const ImageViewInfo& viewInfo,
-                            vk::Sampler sampler)
-    {
-        is_invariant();
-        VGW_ASSERT(binding >= 0);
-        VGW_ASSERT(descriptorType >= vk::DescriptorType::eCombinedImageSampler &&
-                   descriptorType <= vk::DescriptorType::eCombinedImageSampler);
-
-        auto result = get_image(imageHandle);
-        if (!result)
-        {
-            // #TODO: Handle error.
-            return;
-        }
-        auto& imageRef = result.value().get();
-
-        m_pendingImageInfos.push_back(std::make_unique<vk::DescriptorImageInfo>());
-        auto& imageInfo = m_pendingImageInfos.back();
-        imageInfo->setImageView(imageRef.get_view(viewInfo));
-        imageInfo->setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-        imageInfo->setSampler(sampler);
-
-        auto& write = m_pendingDescriptorWrites.emplace_back();
-        write.setDstSet(set);
-        write.setDstBinding(binding);
-        write.setDescriptorType(descriptorType);
-        write.setDescriptorCount(1);
-        write.setDstArrayElement(0);
-        write.setPImageInfo(imageInfo.get());
-    }
-
-    void Device::flush_descriptor_writes()
-    {
-        is_invariant();
-        if (m_pendingDescriptorWrites.empty())
-        {
-            return;
-        }
-
-        m_device->updateDescriptorSets(m_pendingDescriptorWrites, {});
-
-        m_pendingBufferInfos.clear();
-        m_pendingDescriptorWrites.clear();
+        return { m_samplerMap.at(samplerHash).get() };
     }
 
     void Device::submit(std::uint32_t queueIndex, CommandBuffer& commandBuffer, Fence* outFence)
@@ -968,7 +998,7 @@ namespace VGW_NAMESPACE
         std::swap(m_queues, rhs.m_queues);
         std::swap(m_descriptorPool, rhs.m_descriptorPool);
         std::swap(m_commandPoolMap, rhs.m_commandPoolMap);
-        std::swap(m_descriptorSetLayoutMap, rhs.m_descriptorSetLayoutMap);
+        std::swap(m_setLayoutMap, rhs.m_setLayoutMap);
         std::swap(m_pipelineLibrary, rhs.m_pipelineLibrary);
         return *this;
     }

@@ -68,7 +68,7 @@ namespace VGW_NAMESPACE
             {
                 vk::DescriptorSetLayoutCreateInfo layoutInfo{};
                 layoutInfo.setBindings(descriptorSet.bindings);
-                setLayouts.emplace_back(m_device->get_or_create_descriptor_set_layout(layoutInfo));
+                setLayouts.emplace_back(m_device->get_or_create_set_layout(layoutInfo));
             }
 
             vk::PipelineLayoutCreateInfo layoutCreateInfo{};
@@ -134,7 +134,7 @@ namespace VGW_NAMESPACE
             {
                 vk::DescriptorSetLayoutCreateInfo layoutInfo{};
                 layoutInfo.setBindings(descriptorSet.bindings);
-                setLayouts.emplace_back(m_device->get_or_create_descriptor_set_layout(layoutInfo));
+                setLayouts.emplace_back(m_device->get_or_create_set_layout(layoutInfo));
             }
 
             vk::PipelineLayoutCreateInfo layoutCreateInfo{};

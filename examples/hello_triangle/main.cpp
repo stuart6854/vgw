@@ -81,6 +81,19 @@ int main(int argc, char** argv)
     };
     auto swapChainHandle = device->create_swap_chain(swapChainInfo).value();
 
+    vgw::SetLayoutInfo setLayoutInfo{
+        .bindings = {
+            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+        },
+    };
+    auto setLayout = device->get_or_create_set_layout(setLayoutInfo).value();
+
+    vgw::PipelineLayoutInfo pipelineLayoutInfo{
+        .setLayouts = { setLayout },
+        .constantRange = {},
+    };
+    auto pipelineLayout = device->get_or_create_pipeline_layout(pipelineLayoutInfo).value();
+
     // Create graphics pipeline
     auto vertexCode = vgw::read_shader_code("triangle.vert").value();
     auto compiledVertexCode = vgw::compile_spirv(vertexCode, shaderc_vertex_shader, "triangle.vert", false).value();
@@ -112,11 +125,7 @@ int main(int argc, char** argv)
     auto renderPassHandle = device->create_render_pass(renderPassInfo).value();
 
     auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb).value();
-    auto fullscreenDescriptorSet = std::move(
-        device->create_descriptor_sets(1,
-                                       {
-                                           { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
-                                       })[0]);
+    auto fullscreenDescriptorSet = std::move(device->create_descriptor_sets(1, setLayout)[0]);
 
     vgw::SamplerInfo samplerInfo{
         .addressModeU = vk::SamplerAddressMode::eRepeat,

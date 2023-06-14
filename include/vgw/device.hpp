@@ -97,7 +97,35 @@ namespace VGW_NAMESPACE
 
 #pragma endregion
 
+#pragma region Descriptor Sets
+
+        auto get_or_create_set_layout(const SetLayoutInfo& layoutInfo) -> std::expected<vk::DescriptorSetLayout, ResultCode>;
+
+        auto create_descriptor_sets(std::uint32_t count, vk::DescriptorSetLayout setLayout)
+            -> std::vector<vk::UniqueDescriptorSet>;
+
+        void bind_buffer(vk::DescriptorSet set,
+                         std::uint32_t binding,
+                         vk::DescriptorType descriptorType,
+                         HandleBuffer bufferHandle,
+                         std::uint64_t offset,
+                         std::uint64_t range);
+
+        void bind_image(vk::DescriptorSet set,
+                        std::uint32_t binding,
+                        vk::DescriptorType descriptorType,
+                        HandleImage imageHandle,
+                        const ImageViewInfo& viewInfo,
+                        vk::Sampler sampler);
+
+        void flush_descriptor_writes();
+
+#pragma endregion
+
 #pragma region Pipelines
+
+        [[nodiscard]] auto get_or_create_pipeline_layout(const PipelineLayoutInfo& layoutInfo) noexcept
+            -> std::expected<vk::PipelineLayout, ResultCode>;
 
         [[nodiscard]] auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept
             -> std::expected<HandlePipeline, ResultCode>;
@@ -141,33 +169,6 @@ namespace VGW_NAMESPACE
 
         [[nodiscard]] auto get_or_create_sampler(const SamplerInfo& samplerInfo) noexcept -> std::expected<vk::Sampler, ResultCode>;
 
-        auto get_or_create_descriptor_set_layout(const vk::DescriptorSetLayoutCreateInfo& layoutInfo) -> vk::DescriptorSetLayout;
-
-        auto create_descriptor_sets(std::uint32_t count, const std::vector<vk::DescriptorSetLayoutBinding>& bindings)
-            -> std::vector<vk::UniqueDescriptorSet>;
-
-#pragma endregion
-
-#pragma region Descriptor Binding
-
-        void bind_buffer(vk::DescriptorSet set,
-                         std::uint32_t binding,
-                         vk::DescriptorType descriptorType,
-                         HandleBuffer bufferHandle,
-                         std::uint64_t offset,
-                         std::uint64_t range);
-
-        void bind_image(vk::DescriptorSet set,
-                        std::uint32_t binding,
-                        vk::DescriptorType descriptorType,
-                        HandleImage imageHandle,
-                        const ImageViewInfo& viewInfo,
-                        vk::Sampler sampler);
-
-        void flush_descriptor_writes();
-
-#pragma endregion
-
         void submit(std::uint32_t queueIndex, CommandBuffer& commandBuffer, Fence* outFence);
 
         void present(SwapChain& swapChain, std::uint32_t queueIndex);
@@ -199,7 +200,9 @@ namespace VGW_NAMESPACE
         vk::UniqueDescriptorPool m_descriptorPool;
 
         std::unordered_map<std::size_t, vk::UniqueCommandPool> m_commandPoolMap;
-        std::unordered_map<std::size_t, vk::UniqueDescriptorSetLayout> m_descriptorSetLayoutMap;
+        std::unordered_map<std::size_t, vk::UniqueDescriptorSetLayout> m_setLayoutMap;
+        std::unordered_map<std::size_t, vk::UniquePipelineLayout> m_pipelineLayoutMap;
+        std::unordered_map<std::size_t, vk::UniqueSampler> m_samplerMap;
 
         std::vector<std::unique_ptr<vk::DescriptorBufferInfo>> m_pendingBufferInfos;
         std::vector<std::unique_ptr<vk::DescriptorImageInfo>> m_pendingImageInfos;
@@ -210,7 +213,5 @@ namespace VGW_NAMESPACE
         std::unique_ptr<PipelineLibrary> m_pipelineLibrary;
         ResourceStorage<HandleBuffer, Buffer> m_buffers;
         ResourceStorage<HandleImage, Image> m_images;
-
-        std::unordered_map<std::size_t, vk::UniqueSampler> m_samplers;
     };
 }
