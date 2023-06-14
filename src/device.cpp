@@ -632,7 +632,10 @@ namespace VGW_NAMESPACE
 
         vk::PipelineLayoutCreateInfo layoutCreateInfo{};
         layoutCreateInfo.setSetLayouts(layoutInfo.setLayouts);
-        layoutCreateInfo.setPushConstantRanges(layoutInfo.constantRange);
+        if (layoutInfo.constantRange.size > 0)
+        {
+            layoutCreateInfo.setPushConstantRanges(layoutInfo.constantRange);
+        }
         auto result = m_device->createPipelineLayoutUnique(layoutCreateInfo);
         if (result.result != vk::Result::eSuccess)
         {
