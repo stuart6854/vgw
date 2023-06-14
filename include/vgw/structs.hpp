@@ -203,11 +203,24 @@ namespace std
     };
 
     template <>
+    struct hash<vgw::ComputePipelineInfo>
+    {
+        std::size_t operator()(const vgw::ComputePipelineInfo& pipelineInfo) const
+        {
+            std::size_t seed{ 0 };
+            vgw::hash_combine(seed, pipelineInfo.pipelineLayout);
+            vgw::hash_combine(seed, pipelineInfo.computeCode);
+            return seed;
+        }
+    };
+
+    template <>
     struct hash<vgw::GraphicsPipelineInfo>
     {
         std::size_t operator()(const vgw::GraphicsPipelineInfo& pipelineInfo) const
         {
             std::size_t seed{ 0 };
+            vgw::hash_combine(seed, pipelineInfo.pipelineLayout);
             vgw::hash_combine(seed, pipelineInfo.vertexCode);
             vgw::hash_combine(seed, pipelineInfo.fragmentCode);
             vgw::hash_combine(seed, pipelineInfo.topology);

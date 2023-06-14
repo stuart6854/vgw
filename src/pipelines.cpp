@@ -2,51 +2,10 @@
 
 #include "vgw/device.hpp"
 
-#include <spirv_reflect.h>
-
 #include <utility>
 
 namespace VGW_NAMESPACE
 {
-    Pipeline::Pipeline(Device& device,
-                       vk::PipelineLayout layout,
-                       vk::Pipeline pipeline,
-                       vk::PipelineBindPoint bindPoint,
-                       ShaderReflectionData reflectionData)
-        : m_device(&device), m_layout(layout), m_pipeline(pipeline), m_bindPoint(bindPoint), m_reflectionData(std::move(reflectionData))
-    {
-        is_invariant();
-    }
-
-    Pipeline::Pipeline(Pipeline&& other) noexcept
-    {
-        std::swap(m_device, other.m_device);
-        std::swap(m_layout, other.m_layout);
-        std::swap(m_pipeline, other.m_pipeline);
-        std::swap(m_bindPoint, other.m_bindPoint);
-    }
-
-    Pipeline::~Pipeline()
-    {
-        m_device->get_device().destroy(m_pipeline);
-    }
-
-    void Pipeline::is_invariant() const noexcept
-    {
-        VGW_ASSERT(m_device);
-        VGW_ASSERT(m_layout);
-        VGW_ASSERT(m_pipeline);
-    }
-
-    auto Pipeline::operator=(Pipeline&& rhs) noexcept -> Pipeline&
-    {
-        std::swap(m_device, rhs.m_device);
-        std::swap(m_layout, rhs.m_layout);
-        std::swap(m_pipeline, rhs.m_pipeline);
-        std::swap(m_bindPoint, rhs.m_bindPoint);
-        return *this;
-    }
-
 #pragma region Pipeline Library
 
     PipelineLibrary::PipelineLibrary(Device& device) : m_device(&device) {}
@@ -54,33 +13,7 @@ namespace VGW_NAMESPACE
     auto PipelineLibrary::create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) noexcept
         -> std::expected<HandlePipeline, ResultCode>
     {
-        auto computeStageReflectionData = reflect_shader_stage(pipelineInfo.computeCode, vk::ShaderStageFlagBits::eCompute);
-
-        std::size_t layoutHash{ 0 };
-        hash_combine(layoutHash, computeStageReflectionData.descriptorSets);
-        hash_combine(layoutHash, computeStageReflectionData.pushConstantBlocks);
-
-        vk::PipelineLayout pipelineLayout{};
-        if (!m_pipelineLayoutMap.contains(layoutHash))
-        {
-            std::vector<vk::DescriptorSetLayout> setLayouts{};
-            for (const auto& descriptorSet : computeStageReflectionData.descriptorSets)
-            {
-                vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-                layoutInfo.setBindings(descriptorSet.bindings);
-                setLayouts.emplace_back(m_device->get_or_create_set_layout(layoutInfo));
-            }
-
-            vk::PipelineLayoutCreateInfo layoutCreateInfo{};
-            layoutCreateInfo.setSetLayouts(setLayouts);
-            layoutCreateInfo.setPushConstantRanges(computeStageReflectionData.pushConstantBlocks);
-            m_pipelineLayoutMap[layoutHash] = m_device->get_device().createPipelineLayoutUnique(layoutCreateInfo).value;
-        }
-        pipelineLayout = m_pipelineLayoutMap.at(layoutHash).get();
-
-        std::size_t pipelineHash{ 0 };
-        hash_combine(pipelineHash, layoutHash);
-        hash_combine(pipelineHash, pipelineInfo.computeCode);
+        auto pipelineHash = std::hash<ComputePipelineInfo>{}(pipelineInfo);
         if (m_computePipelineMap.contains(pipelineHash))
         {
             return m_computePipelineMap.at(pipelineHash);
@@ -93,7 +26,7 @@ namespace VGW_NAMESPACE
         }
         const auto handle = handleResult.value();
 
-        auto createResult = create_compute_pipeline(pipelineLayout, pipelineInfo);
+        auto createResult = internal_create_compute_pipeline(pipelineInfo);
         if (!createResult)
         {
             m_pipelines.free_handle(handle);
@@ -101,8 +34,7 @@ namespace VGW_NAMESPACE
         }
         auto vkPipeline = createResult.value();
 
-        auto pipeline =
-            std::make_unique<Pipeline>(*m_device, pipelineLayout, vkPipeline, vk::PipelineBindPoint::eCompute, computeStageReflectionData);
+        auto pipeline = std::make_unique<Pipeline>(pipelineInfo.pipelineLayout, vkPipeline, vk::PipelineBindPoint::eCompute);
         auto result = m_pipelines.set_resource(handle, std::move(pipeline));
         if (result != ResultCode::eSuccess)
         {
@@ -116,37 +48,7 @@ namespace VGW_NAMESPACE
     auto PipelineLibrary::create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) noexcept
         -> std::expected<HandlePipeline, ResultCode>
     {
-        auto vertexStageReflectionData = reflect_shader_stage(pipelineInfo.vertexCode, vk::ShaderStageFlagBits::eVertex);
-        auto fragmentStageReflectionData = reflect_shader_stage(pipelineInfo.fragmentCode, vk::ShaderStageFlagBits::eFragment);
-
-        auto mergedReflectionData = merge_reflection_data(vertexStageReflectionData, fragmentStageReflectionData);
-
-        std::size_t layoutHash{ 0 };
-        hash_combine(layoutHash, mergedReflectionData.inputAttributes);
-        hash_combine(layoutHash, mergedReflectionData.descriptorSets);
-        hash_combine(layoutHash, mergedReflectionData.pushConstantBlocks);
-
-        vk::PipelineLayout pipelineLayout{};
-        if (!m_pipelineLayoutMap.contains(layoutHash))
-        {
-            std::vector<vk::DescriptorSetLayout> setLayouts{};
-            for (const auto& descriptorSet : mergedReflectionData.descriptorSets)
-            {
-                vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-                layoutInfo.setBindings(descriptorSet.bindings);
-                setLayouts.emplace_back(m_device->get_or_create_set_layout(layoutInfo));
-            }
-
-            vk::PipelineLayoutCreateInfo layoutCreateInfo{};
-            layoutCreateInfo.setSetLayouts(setLayouts);
-            layoutCreateInfo.setPushConstantRanges(mergedReflectionData.pushConstantBlocks);
-            m_pipelineLayoutMap[layoutHash] = m_device->get_device().createPipelineLayoutUnique(layoutCreateInfo).value;
-        }
-        pipelineLayout = m_pipelineLayoutMap.at(layoutHash).get();
-
-        std::size_t pipelineHash{ 0 };
-        hash_combine(pipelineHash, layoutHash);
-        hash_combine(pipelineHash, pipelineInfo);
+        auto pipelineHash = std::hash<GraphicsPipelineInfo>{}(pipelineInfo);
         if (m_graphicsPipelineMap.contains(pipelineHash))
         {
             return m_graphicsPipelineMap.at(pipelineHash);
@@ -159,7 +61,7 @@ namespace VGW_NAMESPACE
         }
         const auto handle = handleResult.value();
 
-        auto createResult = create_graphics_pipeline(pipelineLayout, pipelineInfo, mergedReflectionData);
+        auto createResult = internal_create_graphics_pipeline(pipelineInfo);
         if (!createResult)
         {
             m_pipelines.free_handle(handle);
@@ -167,8 +69,7 @@ namespace VGW_NAMESPACE
         }
         auto vkPipeline = createResult.value();
 
-        auto pipeline =
-            std::make_unique<Pipeline>(*m_device, pipelineLayout, vkPipeline, vk::PipelineBindPoint::eGraphics, mergedReflectionData);
+        auto pipeline = std::make_unique<Pipeline>(pipelineInfo.pipelineLayout, vkPipeline, vk::PipelineBindPoint::eGraphics);
         auto result = m_pipelines.set_resource(handle, std::move(pipeline));
         if (result != ResultCode::eSuccess)
         {
@@ -204,107 +105,7 @@ namespace VGW_NAMESPACE
         m_pipelines.free_handle(handle);
     }
 
-    auto PipelineLibrary::reflect_shader_stage(const std::vector<std::uint32_t>& code, vk::ShaderStageFlagBits shaderStage)
-        -> ShaderReflectionData
-    {
-        ShaderReflectionData outReflectionData{};
-
-        spv_reflect::ShaderModule module(code, SPV_REFLECT_MODULE_FLAG_NO_COPY);
-        SpvReflectResult result{};
-
-        std::uint32_t varCount{ 0 };
-
-        if (shaderStage == vk::ShaderStageFlagBits::eVertex)
-        {
-            result = module.EnumerateInputVariables(&varCount, nullptr);
-            VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-            std::vector<SpvReflectInterfaceVariable*> inputVariables(varCount);
-            result = module.EnumerateInputVariables(&varCount, inputVariables.data());
-            VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-            for (const auto& inputVar : inputVariables)
-            {
-                if (inputVar->built_in)
-                {
-                    continue;
-                }
-                auto attribute = outReflectionData.inputAttributes.emplace_back();
-                attribute.setBinding(0);
-                attribute.setLocation(inputVar->location);
-                attribute.setFormat(static_cast<vk::Format>(inputVar->format));
-                attribute.setOffset(0);
-            }
-        }
-
-        // Descriptor Sets
-        result = module.EnumerateDescriptorSets(&varCount, nullptr);
-        VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-        std::vector<SpvReflectDescriptorSet*> descriptorSets(varCount);
-        result = module.EnumerateDescriptorSets(&varCount, descriptorSets.data());
-        VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-        for (const auto& descriptorSet : descriptorSets)
-        {
-            auto& outSet = outReflectionData.descriptorSets.emplace_back();
-            outSet.set = descriptorSet->set;
-            for (auto i = 0; i < descriptorSet->binding_count; ++i)
-            {
-                const auto* setBinding = descriptorSet->bindings[i];
-                auto& outBinding = outSet.bindings.emplace_back();
-                outBinding.setBinding(setBinding->binding);
-                outBinding.setDescriptorType(static_cast<vk::DescriptorType>(setBinding->descriptor_type));
-                outBinding.setDescriptorCount(setBinding->count);
-                outBinding.setStageFlags(shaderStage);
-            }
-        }
-
-        // Push Constant Blocks
-        result = module.EnumeratePushConstantBlocks(&varCount, nullptr);
-        VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-        std::vector<SpvReflectBlockVariable*> pushConstBlocks(varCount);
-        result = module.EnumeratePushConstantBlocks(&varCount, pushConstBlocks.data());
-        VGW_ASSERT(result == SPV_REFLECT_RESULT_SUCCESS);
-        for (const auto& pushConstBlock : pushConstBlocks)
-        {
-            auto& outPushBlock = outReflectionData.pushConstantBlocks.emplace_back();
-            outPushBlock.setOffset(pushConstBlock->offset);
-            outPushBlock.setSize(pushConstBlock->size);
-            outPushBlock.setStageFlags(shaderStage);
-        }
-
-        return outReflectionData;
-    }
-
-    auto PipelineLibrary::merge_reflection_data(const ShaderReflectionData& reflectionDataA, const ShaderReflectionData& reflectionDataB)
-        -> ShaderReflectionData
-    {
-        // Merge Descriptor Sets
-        std::unordered_map<std::uint32_t, DescriptorSet> sets;
-        for (const auto& set : reflectionDataA.descriptorSets)
-        {
-            sets[set.set] = set;
-        }
-        for (const auto& set : reflectionDataB.descriptorSets)
-        {
-            if (!sets.contains(set.set))
-            {
-                sets[set.set] = set;
-                continue;
-            }
-
-            // #TODO: Merge bindings
-        }
-
-        // Merge Push Constant Blocks
-        // #TODO: Merge shader push constant blocks
-
-        ShaderReflectionData resultReflectionData{};
-        for (auto& [set, descSet] : sets)
-        {
-            resultReflectionData.descriptorSets.push_back(descSet);
-        }
-        return resultReflectionData;
-    }
-
-    auto PipelineLibrary::create_compute_pipeline(vk::PipelineLayout layout, const ComputePipelineInfo& pipelineInfo)
+    auto PipelineLibrary::internal_create_compute_pipeline(const ComputePipelineInfo& pipelineInfo)
         -> std::expected<vk::Pipeline, ResultCode>
     {
         vk::ShaderModuleCreateInfo moduleCreateInfo{};
@@ -322,7 +123,7 @@ namespace VGW_NAMESPACE
         shaderStageCreateInfo.setModule(shaderModule.get());
 
         vk::ComputePipelineCreateInfo pipelineCreateInfo{};
-        pipelineCreateInfo.setLayout(layout);
+        pipelineCreateInfo.setLayout(pipelineInfo.pipelineLayout);
         pipelineCreateInfo.setStage(shaderStageCreateInfo);
         auto createResult = m_device->get_device().createComputePipeline({}, pipelineCreateInfo);
         if (createResult.result != vk::Result::eSuccess)
@@ -333,9 +134,8 @@ namespace VGW_NAMESPACE
         return createResult.value;
     }
 
-    auto PipelineLibrary::create_graphics_pipeline(vk::PipelineLayout layout,
-                                                   const GraphicsPipelineInfo& pipelineInfo,
-                                                   const ShaderReflectionData& reflectionData) -> std::expected<vk::Pipeline, ResultCode>
+    auto PipelineLibrary::internal_create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo)
+        -> std::expected<vk::Pipeline, ResultCode>
     {
         vk::ShaderModuleCreateInfo vertex_module_info{};
         vertex_module_info.setCode(pipelineInfo.vertexCode);
@@ -386,14 +186,14 @@ namespace VGW_NAMESPACE
         vk::VertexInputBindingDescription vk_binding{};
         vk_binding.setBinding(0);
         vk_binding.setInputRate(vk::VertexInputRate::eVertex);
-        vk_binding.setStride(reflectionData.inputAttributesStride);
+        //        vk_binding.setStride(reflectionData.inputAttributesStride);
 
         vk::PipelineVertexInputStateCreateInfo vertex_input_state{};
-        if (!reflectionData.inputAttributes.empty())
-        {
-            vertex_input_state.setVertexAttributeDescriptions(reflectionData.inputAttributes);
-            vertex_input_state.setVertexBindingDescriptions(vk_binding);
-        }
+        //        if (!reflectionData.inputAttributes.empty())
+        //        {
+        //            vertex_input_state.setVertexAttributeDescriptions(reflectionData.inputAttributes);
+        //            vertex_input_state.setVertexBindingDescriptions(vk_binding);
+        //        }
 
         vk::PipelineInputAssemblyStateCreateInfo input_assembly_state{};
         input_assembly_state.setTopology(pipelineInfo.topology);
@@ -443,7 +243,7 @@ namespace VGW_NAMESPACE
 
         vk::GraphicsPipelineCreateInfo vk_pipeline_info{};
         vk_pipeline_info.setStages(stages);
-        vk_pipeline_info.setLayout(layout);
+        vk_pipeline_info.setLayout(pipelineInfo.pipelineLayout);
         vk_pipeline_info.setPVertexInputState(&vertex_input_state);
         vk_pipeline_info.setPInputAssemblyState(&input_assembly_state);
         vk_pipeline_info.setPViewportState(&viewport_state);

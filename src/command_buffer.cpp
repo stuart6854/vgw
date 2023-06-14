@@ -1,9 +1,6 @@
 #include "vgw/command_buffer.hpp"
 
 #include "vgw/device.hpp"
-#include "vgw/buffer.hpp"
-#include "vgw/image.hpp"
-#include "vgw/pipelines.hpp"
 #include "vgw/render_pass.hpp"
 
 namespace VGW_NAMESPACE
@@ -151,7 +148,7 @@ namespace VGW_NAMESPACE
         }
         auto& pipelineRef = getResult.value().get();
 
-        m_commandBuffer.bindPipeline(pipelineRef.get_bind_point(), pipelineRef.get_pipeline());
+        m_commandBuffer.bindPipeline(pipelineRef.bindPoint, pipelineRef.pipeline);
         m_boundPipeline = &pipelineRef;
     }
 
@@ -162,7 +159,7 @@ namespace VGW_NAMESPACE
         VGW_ASSERT(m_boundPipeline);
         VGW_ASSERT(!descriptorSets.empty());
 
-        m_commandBuffer.bindDescriptorSets(m_boundPipeline->get_bind_point(), m_boundPipeline->get_layout(), firstSet, descriptorSets, {});
+        m_commandBuffer.bindDescriptorSets(m_boundPipeline->bindPoint, m_boundPipeline->layout, firstSet, descriptorSets, {});
     }
 
     void CommandBuffer::begin_render_pass(HandleRenderPass renderPass)

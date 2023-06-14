@@ -61,10 +61,25 @@ int main(int argc, char** argv)
         throw std::runtime_error("Failed to create graphics device!");
     }
 
+    vgw::SetLayoutInfo setLayoutInfo{
+        .bindings = {
+            { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
+            { 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
+        },
+    };
+    auto setLayout = device->get_or_create_set_layout(setLayoutInfo).value();
+
+    vgw::PipelineLayoutInfo pipelineLayoutInfo{
+        .setLayouts = { setLayout },
+        .constantRange = {},
+    };
+    auto pipelineLayout = device->get_or_create_pipeline_layout(pipelineLayoutInfo).value();
+
     // Create compute pipeline
     auto computeCode = vgw::read_shader_code("compute.comp").value();
     auto compiledComputeCode = vgw::compile_spirv(computeCode, shaderc_compute_shader, "compute.comp", false).value();
     vgw::ComputePipelineInfo computePipelineInfo{
+        .pipelineLayout = pipelineLayout,
         .computeCode = compiledComputeCode,
     };
     auto computePipelineHandle = device->create_compute_pipeline(computePipelineInfo).value();
@@ -96,12 +111,7 @@ int main(int argc, char** argv)
     auto outBufferHandle = device->create_buffer(outBufferInfo).value();
     auto& outBufferRef = device->get_buffer(outBufferHandle).value().get();
 
-    auto descriptorSet =
-        std::move(device->create_descriptor_sets(1,
-                                                 {
-                                                     { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
-                                                     { 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
-                                                 })[0]);
+    auto descriptorSet = std::move(device->create_descriptor_sets(1, setLayout)[0]);
 
     device->bind_buffer(descriptorSet.get(), 0, vk::DescriptorType::eStorageBuffer, inBufferHandle, 0, inBufferInfo.size);
     device->bind_buffer(descriptorSet.get(), 1, vk::DescriptorType::eStorageBuffer, outBufferHandle, 0, outBufferInfo.size);

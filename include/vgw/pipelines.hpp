@@ -13,42 +13,16 @@ namespace VGW_NAMESPACE
 {
     class Device;
 
-    class Pipeline
+    struct Pipeline
     {
-    public:
-        Pipeline(Device& device,
-                 vk::PipelineLayout layout,
-                 vk::Pipeline pipeline,
-                 vk::PipelineBindPoint bindPoint,
-                 ShaderReflectionData reflectionData);
-        Pipeline(const Pipeline&) = delete;
-        Pipeline(Pipeline&& other) noexcept;
-        ~Pipeline();
+        Pipeline(vk::PipelineLayout layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint)
+            : layout(layout), pipeline(pipeline), bindPoint(bindPoint)
+        {
+        }
 
-        /* Getters */
-
-        auto get_device() const noexcept -> Device* { return m_device; }
-        auto get_layout() const noexcept -> vk::PipelineLayout { return m_layout; }
-        auto get_pipeline() const noexcept -> vk::Pipeline { return m_pipeline; }
-        auto get_bind_point() const noexcept -> vk::PipelineBindPoint { return m_bindPoint; }
-
-        auto get_reflection_data() const noexcept -> const ShaderReflectionData& { return m_reflectionData; }
-
-        /* Operators */
-
-        auto operator=(const Pipeline&) -> Pipeline& = delete;
-        auto operator=(Pipeline&& rhs) noexcept -> Pipeline&;
-
-    protected:
-        void is_invariant() const noexcept;
-
-    private:
-        Device* m_device{ nullptr };
-        vk::PipelineLayout m_layout;
-        vk::Pipeline m_pipeline;
-        vk::PipelineBindPoint m_bindPoint{};
-
-        ShaderReflectionData m_reflectionData;
+        vk::PipelineLayout layout;
+        vk::Pipeline pipeline;
+        vk::PipelineBindPoint bindPoint;
     };
 
     /**
@@ -79,18 +53,8 @@ namespace VGW_NAMESPACE
         auto operator=(PipelineLibrary&& rhs) noexcept -> PipelineLibrary& = delete;
 
     private:
-        static auto reflect_shader_stage(const std::vector<std::uint32_t>& code, vk::ShaderStageFlagBits shaderStage)
-            -> ShaderReflectionData;
-
-        static auto merge_reflection_data(const ShaderReflectionData& reflectionDataA, const ShaderReflectionData& reflectionDataB)
-            -> ShaderReflectionData;
-
-        auto create_compute_pipeline(vk::PipelineLayout layout, const ComputePipelineInfo& pipelineInfo)
-            -> std::expected<vk::Pipeline, ResultCode>;
-
-        auto create_graphics_pipeline(vk::PipelineLayout layout,
-                                      const GraphicsPipelineInfo& pipelineInfo,
-                                      const ShaderReflectionData& reflectionData) -> std::expected<vk::Pipeline, ResultCode>;
+        auto internal_create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
+        auto internal_create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
 
     private:
         Device* m_device{ nullptr };

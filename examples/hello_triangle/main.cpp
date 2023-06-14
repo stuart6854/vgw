@@ -100,6 +100,7 @@ int main(int argc, char** argv)
     auto fragmentCode = vgw::read_shader_code("triangle.frag").value();
     auto compiledFragmentCode = vgw::compile_spirv(fragmentCode, shaderc_fragment_shader, "triangle.frag", false).value();
     vgw::GraphicsPipelineInfo graphicsPipelineInfo{
+        .pipelineLayout = pipelineLayout,
         .vertexCode = compiledVertexCode,
         .fragmentCode = compiledFragmentCode,
         .topology = vk::PrimitiveTopology::eTriangleList,

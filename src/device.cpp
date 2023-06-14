@@ -715,7 +715,21 @@ namespace VGW_NAMESPACE
             0x0000001a, 0x00000017, 0x00000018, 0x00000019, 0x00000016, 0x0003003e, 0x00000009, 0x0000001a, 0x000100fd, 0x00010038
         };
 
+        vgw::SetLayoutInfo setLayoutInfo{
+            .bindings = {
+                { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            },
+        };
+        auto setLayout = get_or_create_set_layout(setLayoutInfo).value();
+
+        vgw::PipelineLayoutInfo pipelineLayoutInfo{
+            .setLayouts = { setLayout },
+            .constantRange = {},
+        };
+        auto pipelineLayout = get_or_create_pipeline_layout(pipelineLayoutInfo).value();
+
         GraphicsPipelineInfo pipelineInfo{
+            .pipelineLayout = pipelineLayout,
             .vertexCode = VertexCode,
             .fragmentCode = FragmentCode,
             .topology = vk::PrimitiveTopology::eTriangleList,
