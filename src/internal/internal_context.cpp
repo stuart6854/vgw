@@ -18,7 +18,7 @@ namespace vgw::internal
 
     ContextData::~ContextData()
     {
-        if (internal_is_context_valid())
+        if (internal_context_is_valid())
         {
             log_error("VGW context should be implicitly destroyed using `vgw::destroy_context()`!");
             internal_context_destroy();
@@ -27,7 +27,7 @@ namespace vgw::internal
 
     auto internal_context_init(const ContextInfo& contextInfo) -> ResultCode
     {
-        if (internal_is_context_valid())
+        if (internal_context_is_valid())
         {
             log_warn("VGW context has already been initialised!");
             return ResultCode::eSuccess;
@@ -141,7 +141,7 @@ namespace vgw::internal
 
     void internal_context_destroy()
     {
-        if (!internal_is_context_valid())
+        if (!internal_context_is_valid())
         {
             return;
         }
@@ -165,12 +165,12 @@ namespace vgw::internal
     {
         if (s_context == nullptr)
         {
-            return std::unexpected(ResultCode::eNullptr);
+            return std::unexpected(ResultCode::eInvalidContext);
         }
         return *s_context;
     }
 
-    bool internal_is_context_valid() noexcept
+    bool internal_context_is_valid() noexcept
     {
         auto getResult = internal_context_get();
         if (!getResult)

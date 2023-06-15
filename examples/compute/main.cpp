@@ -30,18 +30,8 @@ int main(int argc, char** argv)
     };
     if (vgw::initialise_context(contextInfo) != vgw::ResultCode::eSuccess)
     {
-        throw std::runtime_error("Failed to create VGW context!");
+        throw std::runtime_error("Failed to initialise VGW context!");
     }
-
-#if 0
-    auto context = vgw::create_context(contextInfo);
-    if (!context->is_valid())
-    {
-        throw std::runtime_error("Failed to create graphics context!");
-    }
-
-    context->set_log_level(vgw::LogLevel::eDebug);
-    context->set_log_callback(LogCallback);
 
     vgw::DeviceInfo deviceInfo{
         .wantedQueues = {
@@ -54,11 +44,11 @@ int main(int argc, char** argv)
             {vk::DescriptorType::eStorageBuffer, 2},
         },
     };
-    auto device = context->create_device(deviceInfo);
-    if (!device->is_valid())
+    if (vgw::initialise_device(deviceInfo) != vgw::ResultCode::eSuccess)
     {
-        throw std::runtime_error("Failed to create graphics device!");
+        throw std::runtime_error("Failed to initialise VGW device!");
     }
+#if 0
 
     vgw::SetLayoutInfo setLayoutInfo{
         .bindings = {
@@ -146,6 +136,7 @@ int main(int argc, char** argv)
     device->unmap_buffer(outBufferHandle);
 #endif
 
+    vgw::destroy_device();
     vgw::destroy_context();
 
     return 0;

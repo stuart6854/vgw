@@ -5,6 +5,28 @@
 #include <format>
 #include <string_view>
 
+#ifdef _DEBUG
+    #if defined(WIN32)
+        #define VGW_DEBUG_BREAK() __debugbreak()
+    #else defined(UNIX)
+        #include <signal.h>
+        #if defined(SIGTRAP)
+            #define VGW_DEBUG_BREAK() raise(SIGTRAP)
+        #else
+            #define VGW_DEBUG_BREAK() raise(SIGABRT)
+        #endif
+    #endif
+#else
+    #define VGW_DEBUG_BREAK()
+#endif
+
+#define VGW_ASSERT(_expr)                            \
+    do                                               \
+    {                                                \
+        log_error("Assertion failed: '{}'", #_expr); \
+        VGW_DEBUG_BREAK();                           \
+    } while (false)
+
 namespace vgw::internal
 {
     void set_message_callback(const MessageCallbackFn& callbackFn);

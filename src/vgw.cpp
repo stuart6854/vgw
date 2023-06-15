@@ -2,6 +2,7 @@
 
 #include "internal/internal_core.hpp"
 #include "internal/internal_context.hpp"
+#include "internal/internal_device.hpp"
 
 namespace vgw
 {
@@ -18,6 +19,16 @@ namespace vgw
     void destroy_context()
     {
         internal::internal_context_destroy();
+    }
+
+    auto initialise_device(const DeviceInfo& deviceInfo) -> ResultCode
+    {
+        return internal::internal_device_create(deviceInfo);
+    }
+
+    void destroy_device()
+    {
+        internal::internal_device_destroy();
     }
 
 }

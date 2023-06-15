@@ -10,10 +10,12 @@
 
 namespace vgw
 {
+    // #TODO: add vgw::to_string(ResultCode) function
     enum class ResultCode : std::uint8_t
     {
         eSuccess,
-        eNullptr,
+        eInvalidContext,
+        eInvalidDevice,
         eFailedToCreate,
         eFailedToMapMemory,
         eNoHandleAvailable,
@@ -44,6 +46,18 @@ namespace vgw
     };
     auto initialise_context(const ContextInfo& contextInfo) -> ResultCode;
     void destroy_context();
+
+    struct DeviceInfo
+    {
+        std::vector<vk::QueueFlags> wantedQueues;
+        bool enableSwapChains;
+        bool enableDynamicRendering;
+        std::uint32_t maxDescriptorSets;
+        std::vector<vk::DescriptorPoolSize> descriptorPoolSizes;
+    };
+    auto initialise_device(const DeviceInfo& deviceInfo) -> ResultCode;
+    void destroy_device();
+
 }
 
 #endif  // VGW_VGW_HPP

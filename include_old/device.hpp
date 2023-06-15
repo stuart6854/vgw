@@ -28,15 +28,6 @@ namespace VGW_NAMESPACE
     class RenderPass;
     struct RenderPassInfo;
 
-    struct DeviceInfo
-    {
-        std::vector<vk::QueueFlags> wantedQueues;
-        bool enableSwapChains;
-        bool enableDynamicRendering;
-        std::uint32_t maxDescriptorSets;
-        std::vector<vk::DescriptorPoolSize> descriptorPoolSizes;
-    };
-
     class Device
     {
     public:
