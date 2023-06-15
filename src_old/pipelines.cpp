@@ -1,6 +1,6 @@
-#include "vgw/pipelines.hpp"
+#include "../include_old/pipelines.hpp"
 
-#include "vgw/device.hpp"
+#include "../include_old/device.hpp"
 
 #include <utility>
 
@@ -44,8 +44,8 @@ namespace VGW_NAMESPACE
         }
         auto vkPipeline = createResult.value();
 
-        auto pipeline = std::make_unique<Pipeline>(pipelineInfo.pipelineLayout, vkPipeline, vk::PipelineBindPoint::eCompute);
-        auto result = m_pipelines.set_resource(handle, std::move(pipeline));
+        Pipeline pipeline = { pipelineInfo.pipelineLayout, vkPipeline, vk::PipelineBindPoint::eCompute };
+        auto result = m_pipelines.set_resource(handle, pipeline);
         if (result != ResultCode::eSuccess)
         {
             m_pipelines.free_handle(handle);
@@ -79,8 +79,8 @@ namespace VGW_NAMESPACE
         }
         auto vkPipeline = createResult.value();
 
-        auto pipeline = std::make_unique<Pipeline>(pipelineInfo.pipelineLayout, vkPipeline, vk::PipelineBindPoint::eGraphics);
-        auto result = m_pipelines.set_resource(handle, std::move(pipeline));
+        Pipeline pipeline = { pipelineInfo.pipelineLayout, vkPipeline, vk::PipelineBindPoint::eGraphics };
+        auto result = m_pipelines.set_resource(handle, pipeline);
         if (result != ResultCode::eSuccess)
         {
             m_pipelines.free_handle(handle);
@@ -92,25 +92,27 @@ namespace VGW_NAMESPACE
 
     auto PipelineLibrary::get_pipeline(HandlePipeline handle) noexcept -> std::expected<std::reference_wrapper<Pipeline>, ResultCode>
     {
-        auto result = m_pipelines.get_resource(handle);
-        if (!result)
+        auto getResult = m_pipelines.get_resource(handle);
+        if (!getResult)
         {
-            return std::unexpected(result.error());
+            return std::unexpected(getResult.error());
         }
 
-        auto* ptr = result.value();
-        VGW_ASSERT(ptr != nullptr);
-        return { *ptr };
+        auto wrappedRef = getResult.value();
+        return wrappedRef;
     }
 
     void PipelineLibrary::destroy_pipeline(HandlePipeline handle) noexcept
     {
-        // #TODO: Handle safe deletion? Or leave to library consumer?
-        auto result = m_pipelines.set_resource(handle, nullptr);
-        if (result != ResultCode::eSuccess)
+        auto getResult = get_pipeline(handle);
+        if (!getResult)
         {
             return;
         }
+
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto& pipelineRef = getResult.value().get();
+        m_device->get_device().destroy(pipelineRef.pipeline);
 
         m_pipelines.free_handle(handle);
     }

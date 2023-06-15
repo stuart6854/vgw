@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "handles.hpp"
 
 #include <shaderc/shaderc.hpp>
 
@@ -20,5 +21,5 @@ namespace VGW_NAMESPACE
 
     auto read_spirv(const std::string& filename) -> std::optional<std::vector<std::uint32_t>>;
 
-    void copy_to_buffer_blocking(Device& device, Buffer& dstBuffer, std::size_t size, const char* data, unsigned int queueIndex);
+    void copy_to_buffer_blocking(Device& device, HandleBuffer dstBufferHandle, std::size_t size, const char* data, std::uint32_t queueIndex);
 }

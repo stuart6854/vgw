@@ -1,10 +1,10 @@
-#include "vgw/utility.hpp"
+#include "../include_old/utility.hpp"
 
-#include "vgw/device.hpp"
-#include "vgw/buffer.hpp"
-#include "vgw/structs.hpp"
-#include "vgw/command_buffer.hpp"
-#include "vgw/synchronization.hpp"
+#include "../include_old/device.hpp"
+#include "../include_old/buffer.hpp"
+#include "../include_old/structs.hpp"
+#include "../include_old/command_buffer.hpp"
+#include "../include_old/synchronization.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -70,20 +70,19 @@ namespace VGW_NAMESPACE
         return buffer;
     }
 
-    void copy_to_buffer_blocking(Device& device, Buffer& dstBuffer, std::size_t size, const char* data, std::uint32_t queueIndex)
+    void copy_to_buffer_blocking(Device& device, HandleBuffer dstBufferHandle, std::size_t size, const char* data, std::uint32_t queueIndex)
     {
         auto uploadBufferHandle = device.create_staging_buffer(size).value();
-        auto& uploadBufferRef = device.get_buffer(uploadBufferHandle).value().get();
-        auto* mappedPtr = uploadBufferRef.map();
+        auto* mappedPtr = device.map_buffer(uploadBufferHandle).value();
         std::memcpy(mappedPtr, data, size);
-        uploadBufferRef.unmap();
+        device.unmap_buffer(uploadBufferHandle);
 
         auto cmd = std::move(device.create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
         cmd->begin();
         CopyToBuffer copyToBuffer{
-            .srcBuffer = &uploadBufferRef,
+            .srcBuffer = uploadBufferHandle,
             .srcOffset = 0,
-            .dstBuffer = &dstBuffer,
+            .dstBuffer = dstBufferHandle,
             .dstOffset = 0,
             .size = size,
         };

@@ -41,15 +41,6 @@
 
 namespace VGW_NAMESPACE
 {
-    enum class ResultCode : std::uint16_t
-    {
-        eSuccess,
-        eFailedToCreate,
-        eNoHandleAvailable,
-        eInvalidHandle,
-        eInvalidIndex,
-    };
-
     template <typename T>
     constexpr void hash_combine(std::size_t& seed, const T& v)
     {

@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include <vgw.hpp>
+#include "../../include_old/vgw.hpp"
+#include <vgw/vgw.hpp>
 
 void LogCallback(vgw::LogLevel logLevel, const std::string_view& msg, const std::source_location& sourceLocation)
 {
@@ -23,9 +24,23 @@ void LogCallback(vgw::LogLevel logLevel, const std::string_view& msg, const std:
     }
 }
 
+void MessageCallbackFunc(vgw::MessageType msgType, std::string_view msg)
+{
+    if (msgType == vgw::MessageType::eError)
+    {
+        std::cerr << msg << std::endl;
+    }
+    else
+    {
+        std::cout << msg << std::endl;
+    }
+}
+
 int main(int argc, char** argv)
 {
     std::cout << "VGW Compute Example" << std::endl;
+
+    vgw::set_message_callback(MessageCallbackFunc);
 
     vgw::ContextInfo contextInfo{
         .appName = "_app_name_",
@@ -35,6 +50,12 @@ int main(int argc, char** argv)
         .enableSurfaces = false,
         .enableDebug = true,
     };
+    if (vgw::initialise_context(contextInfo) != vgw::ResultCode::eSuccess)
+    {
+        throw std::runtime_error("Failed to create VGW context!");
+    }
+
+#if 0
     auto context = vgw::create_context(contextInfo);
     if (!context->is_valid())
     {
@@ -93,13 +114,12 @@ int main(int argc, char** argv)
         .allocationCreateFlags = vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
     };
     auto inBufferHandle = device->create_buffer(inBufferInfo).value();
-    auto& inBufferRef = device->get_buffer(inBufferHandle).value().get();
-    auto* mappedPtr = static_cast<std::int32_t*>(inBufferRef.map());
+    auto* mappedPtr = static_cast<std::int32_t*>(device->map_buffer(inBufferHandle).value());
     for (auto i = 0; i < NumElements; ++i)
     {
         mappedPtr[i] = i;
     }
-    inBufferRef.unmap();
+    device->unmap_buffer(inBufferHandle);
 
     // Create output storage buffer
     vgw::BufferInfo outBufferInfo{
@@ -131,20 +151,24 @@ int main(int argc, char** argv)
     fence.reset();
 
     // Print storage buffer contents
-    mappedPtr = static_cast<std::int32_t*>(inBufferRef.map());
+    mappedPtr = static_cast<std::int32_t*>(device->map_buffer(inBufferHandle).value());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
     std::cout << std::endl;
-    inBufferRef.unmap();
-    mappedPtr = static_cast<std::int32_t*>(outBufferRef.map());
+    device->unmap_buffer(inBufferHandle);
+
+    mappedPtr = static_cast<std::int32_t*>(device->map_buffer(outBufferHandle).value());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
     std::cout << std::endl;
-    outBufferRef.unmap();
+    device->unmap_buffer(outBufferHandle);
+#endif
+
+    vgw::destroy_context();
 
     return 0;
 }

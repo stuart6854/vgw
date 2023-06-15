@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "handles.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_hash.hpp>
@@ -68,9 +69,9 @@ namespace VGW_NAMESPACE
 
     struct CopyToBuffer
     {
-        Buffer* srcBuffer;
+        HandleBuffer srcBuffer;
         std::uint64_t srcOffset;
-        Buffer* dstBuffer;
+        HandleBuffer dstBuffer;
         std::uint64_t dstOffset;
         std::uint64_t size;
     };

@@ -1,7 +1,7 @@
-#include "vgw/render_pass.hpp"
+#include "../include_old/render_pass.hpp"
 
-#include "vgw/device.hpp"
-#include "vgw/image.hpp"
+#include "../include_old/device.hpp"
+#include "../include_old/image.hpp"
 
 #include <utility>
 

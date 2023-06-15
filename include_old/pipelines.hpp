@@ -15,14 +15,15 @@ namespace VGW_NAMESPACE
 
     struct Pipeline
     {
+        Pipeline() = default;
         Pipeline(vk::PipelineLayout layout, vk::Pipeline pipeline, vk::PipelineBindPoint bindPoint)
             : layout(layout), pipeline(pipeline), bindPoint(bindPoint)
         {
         }
 
-        vk::PipelineLayout layout;
-        vk::Pipeline pipeline;
-        vk::PipelineBindPoint bindPoint;
+        vk::PipelineLayout layout{};
+        vk::Pipeline pipeline{};
+        vk::PipelineBindPoint bindPoint{};
     };
 
     /**
@@ -63,6 +64,6 @@ namespace VGW_NAMESPACE
         std::unordered_map<std::size_t, HandlePipeline> m_computePipelineMap;
         std::unordered_map<std::size_t, HandlePipeline> m_graphicsPipelineMap;
 
-        ResourceStorage<HandlePipeline, Pipeline> m_pipelines;
+        DataStorage<HandlePipeline, Pipeline> m_pipelines;
     };
 }

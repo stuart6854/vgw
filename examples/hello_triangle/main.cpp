@@ -1,4 +1,6 @@
-#include <vgw.hpp>
+#include "../../include_old/vgw.hpp"
+#include <vgw/vgw.hpp>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #define GLFW_NATIVE_INCLUDE_NONE
@@ -47,6 +49,12 @@ int main(int argc, char** argv)
         .enableSurfaces = true,
         .enableDebug = true,
     };
+    if (vgw::initialise_context(contextInfo) != vgw::ResultCode::eSuccess)
+    {
+        throw std::runtime_error("Failed to create VGW context!");
+    }
+
+#if 0
     auto context = vgw::create_context(contextInfo);
     if (!context->is_valid())
     {
@@ -229,6 +237,9 @@ int main(int argc, char** argv)
 
         device->present_swap_chain(swapChainHandle, 0);
     }
+#endif
+
+    vgw::destroy_context();
 
     glfwDestroyWindow(window);
     glfwTerminate();

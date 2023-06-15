@@ -24,18 +24,6 @@ namespace VGW_NAMESPACE
 
     using LogCallbackFunc = std::function<void(LogLevel logLevel, const std::string_view& msg, const std::source_location& sourceLocation)>;
 
-    struct ContextInfo
-    {
-        const char* appName;
-        std::uint32_t appVersion;
-        const char* engineName;
-        std::uint32_t engineVersion;
-
-        bool enableSurfaces;
-
-        bool enableDebug;
-    };
-
     class Context
     {
     public:

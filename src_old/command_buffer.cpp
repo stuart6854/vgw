@@ -1,7 +1,8 @@
-#include "vgw/command_buffer.hpp"
+#include "../include_old/command_buffer.hpp"
 
-#include "vgw/device.hpp"
-#include "vgw/render_pass.hpp"
+#include "../include_old/device.hpp"
+#include "../include_old/render_pass.hpp"
+#include "internal/internal_swap_chain.hpp"
 
 namespace VGW_NAMESPACE
 {
@@ -70,12 +71,25 @@ namespace VGW_NAMESPACE
     {
         is_invariant();
         VGW_ASSERT(m_recordingStarted && !m_recordingEnded);
-        VGW_ASSERT(copyToBuffer.srcBuffer);
-        VGW_ASSERT(copyToBuffer.dstBuffer);
-        VGW_ASSERT(copyToBuffer.size > 0);
+
+        auto srcGetResult = m_device->get_buffer(copyToBuffer.srcBuffer);
+        if (!srcGetResult)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& srcBufferRef = srcGetResult.value().get();
+
+        auto dstGetResult = m_device->get_buffer(copyToBuffer.dstBuffer);
+        if (!dstGetResult)
+        {
+            // #TODO: Handle error.
+            return;
+        }
+        auto& dstBufferRef = dstGetResult.value().get();
 
         vk::BufferCopy2 region{ copyToBuffer.srcOffset, copyToBuffer.dstOffset, copyToBuffer.size };
-        vk::CopyBufferInfo2 copyBufferInfo{ copyToBuffer.srcBuffer->get_buffer(), copyToBuffer.dstBuffer->get_buffer(), region };
+        vk::CopyBufferInfo2 copyBufferInfo{ srcBufferRef.buffer, dstBufferRef.buffer, region };
         m_commandBuffer.copyBuffer2(copyBufferInfo);
     }
 
@@ -120,8 +134,10 @@ namespace VGW_NAMESPACE
         }
         auto& swapChainRef = getResult.value().get();
 
+        auto image = internal::swap_chain_get_current_image(swapChainRef).get_image();
+
         vk::ImageMemoryBarrier2 barrier{};
-        barrier.setImage(swapChainRef.get_current_image()->get_image());
+        barrier.setImage(image);
         barrier.setOldLayout(transitionImage.oldLayout);
         barrier.setNewLayout(transitionImage.newLayout);
         barrier.setSrcAccessMask(transitionImage.srcAccess);
@@ -188,7 +204,7 @@ namespace VGW_NAMESPACE
             return;
         }
         auto& swapChainRef = getResult.value().get();
-        const auto& renderingInfo = swapChainRef.get_rendering_info();
+        const auto& renderingInfo = internal::swap_chain_get_rendering_info(swapChainRef);
         m_commandBuffer.beginRendering(renderingInfo);
     }
 

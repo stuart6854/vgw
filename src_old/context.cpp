@@ -1,12 +1,11 @@
-#include "vgw/context.hpp"
+#if 0
+    #include "vgw/context.hpp"
 
-#include "context_helpers.hpp"
+    #include "context_helpers.hpp"
 
-#include <ranges>
-#include <format>
-#include <iostream>
-
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+    #include <ranges>
+    #include <format>
+    #include <iostream>
 
 namespace VGW_NAMESPACE
 {
@@ -33,11 +32,6 @@ namespace VGW_NAMESPACE
         }
     }
 
-    auto VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                             VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-                             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                             void* pUserData) -> VkBool32;
-
     Context::Context(const ContextInfo& contextInfo) : m_minLogLevel(LogLevel::eDebug), m_logCallbackFunc(DefaultLogCallback)
     {
         vk::DynamicLoader dl;
@@ -48,7 +42,7 @@ namespace VGW_NAMESPACE
             contextInfo.appName, contextInfo.appVersion, contextInfo.engineName, contextInfo.engineVersion, VK_API_VERSION_1_3
         };
 
-#pragma region Layers & Extensions
+    #pragma region Layers & Extensions
 
         std::vector<const char*> wantedLayers;
         std::vector<const char*> wantedExtensions;
@@ -60,9 +54,9 @@ namespace VGW_NAMESPACE
         if (contextInfo.enableSurfaces)
         {
             wantedExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-#ifdef _WIN32
+    #ifdef _WIN32
             wantedExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#endif
+    #endif
         }
 
         std::vector<const char*> enabledLayers;
@@ -106,7 +100,7 @@ namespace VGW_NAMESPACE
             log_info(msg);
         }
 
-#pragma endregion
+    #pragma endregion
         m_debugCallbackSupported =
             std::ranges::find(enabledExtensions, std::string_view(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) != enabledExtensions.end();
 
@@ -230,12 +224,12 @@ namespace VGW_NAMESPACE
 
     auto Context::windowHwnd(void* platformSurfaceHandle) const -> vk::UniqueSurfaceKHR
     {
-#if _WIN32
+    #if _WIN32
         vk::Win32SurfaceCreateInfoKHR surfaceInfo{};
         surfaceInfo.setHinstance(GetModuleHandle(nullptr));
         surfaceInfo.setHwnd(static_cast<HWND>(platformSurfaceHandle));
         return m_instance.createWin32SurfaceKHRUnique(surfaceInfo).value;
-#endif
+    #endif
     }
 
     void Context::is_invariant() const
@@ -291,3 +285,4 @@ namespace VGW_NAMESPACE
         return std::make_unique<Context>(contextInfo);
     }
 }
+#endif

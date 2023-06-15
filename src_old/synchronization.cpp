@@ -1,6 +1,6 @@
-#include "vgw/synchronization.hpp"
+#include "../include_old/synchronization.hpp"
 
-#include "vgw/device.hpp"
+#include "../include_old/device.hpp"
 
 #include <limits>
 

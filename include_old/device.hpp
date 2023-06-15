@@ -8,7 +8,7 @@
 #include "pipelines.hpp"
 
 #include <vulkan/vulkan.hpp>
-#include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
+#include "vulkan-memory-allocator-hpp/vk_mem_alloc.hpp"
 
 #include <memory>
 #include <expected>
@@ -101,8 +101,7 @@ namespace VGW_NAMESPACE
 
         auto get_or_create_set_layout(const SetLayoutInfo& layoutInfo) -> std::expected<vk::DescriptorSetLayout, ResultCode>;
 
-        auto create_descriptor_sets(std::uint32_t count, vk::DescriptorSetLayout setLayout)
-            -> std::vector<vk::UniqueDescriptorSet>;
+        auto create_descriptor_sets(std::uint32_t count, vk::DescriptorSetLayout setLayout) -> std::vector<vk::UniqueDescriptorSet>;
 
         void bind_buffer(vk::DescriptorSet set,
                          std::uint32_t binding,
@@ -157,6 +156,9 @@ namespace VGW_NAMESPACE
         auto create_vertex_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
         auto create_index_buffer(std::uint64_t size) -> std::expected<HandleBuffer, ResultCode>;
 
+        auto map_buffer(HandleBuffer handle) noexcept -> std::expected<void*, ResultCode>;
+        void unmap_buffer(HandleBuffer handle) noexcept;
+
 #pragma endregion
 
 #pragma region Images
@@ -208,10 +210,10 @@ namespace VGW_NAMESPACE
         std::vector<std::unique_ptr<vk::DescriptorImageInfo>> m_pendingImageInfos;
         std::vector<vk::WriteDescriptorSet> m_pendingDescriptorWrites;
 
-        ResourceStorage<HandleSwapChain, SwapChain> m_swapChains;
-        ResourceStorage<HandleRenderPass, RenderPass> m_renderPasses;
+        DataStorage<HandleSwapChain, SwapChain> m_swapChains;
+        DataStorage<HandleRenderPass, RenderPass> m_renderPasses;
         std::unique_ptr<PipelineLibrary> m_pipelineLibrary;
-        ResourceStorage<HandleBuffer, Buffer> m_buffers;
-        ResourceStorage<HandleImage, Image> m_images;
+        DataStorage<HandleBuffer, Buffer> m_buffers;
+        DataStorage<HandleImage, Image> m_images;
     };
 }

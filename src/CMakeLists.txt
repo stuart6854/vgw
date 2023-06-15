@@ -11,7 +11,7 @@ endif ()
 
 SET(VGW_TARGET_NAME "vgw")
 
-file(GLOB_RECURSE VGW_SOURCES "**.cpp")
+file(GLOB_RECURSE VGW_SOURCES "*.cpp")
 add_library(${VGW_TARGET_NAME} ${VGW_SOURCES})
 
 target_include_directories(${VGW_TARGET_NAME} PRIVATE "." PUBLIC "../include")

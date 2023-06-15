@@ -1,19 +1,20 @@
-#include "vgw/device.hpp"
+#include "../include_old/device.hpp"
 
 #include "device_helpers.hpp"
-#include "vgw/image.hpp"
-#include "vgw/buffer.hpp"
-#include "vgw/context.hpp"
-#include "vgw/pipelines.hpp"
-#include "vgw/swap_chain.hpp"
-#include "vgw/render_pass.hpp"
-#include "vgw/command_buffer.hpp"
-#include "vgw/synchronization.hpp"
+#include "../include_old/image.hpp"
+#include "../include_old/buffer.hpp"
+#include "../include_old/context.hpp"
+#include "../include_old/pipelines.hpp"
+#include "../include_old/swap_chain.hpp"
+#include "../include_old/render_pass.hpp"
+#include "../include_old/command_buffer.hpp"
+#include "../include_old/synchronization.hpp"
+#include "internal/internal_swap_chain.hpp"
 
 #include <vulkan/vulkan_hash.hpp>
 
 #define VMA_IMPLEMENTATION
-#include <vk_mem_alloc.h>
+#include "vk_mem_alloc.h"
 
 #include <unordered_map>
 #include <functional>
@@ -249,7 +250,7 @@ namespace VGW_NAMESPACE
             m_buffers.clear();
             m_pipelineLibrary.reset();
             m_renderPasses.clear();
-            m_swapChains.clear();
+            m_swapChains.clear([this](SwapChain& swapChain) { m_device->destroy(swapChain.swapChain); });
 
             m_pendingDescriptorWrites.clear();
             m_pendingBufferInfos.clear();
@@ -281,19 +282,19 @@ namespace VGW_NAMESPACE
         }
         const auto handle = handleResult.value();
 
-        auto swapChain = std::make_unique<SwapChain>(*this, swapChainInfo);
-        auto createResult = swapChain->resize(swapChainInfo.width, swapChainInfo.height, swapChainInfo.vsync);
-        if (createResult != ResultCode::eSuccess)
-        {
-            m_swapChains.free_handle(handle);
-            return std::unexpected(createResult);
-        }
-
-        auto result = m_swapChains.set_resource(handle, std::move(swapChain));
+        auto swapChain = SwapChain(swapChainInfo.surface);
+        auto result = m_swapChains.set_resource(handle, swapChain);
         if (result != ResultCode::eSuccess)
         {
             m_swapChains.free_handle(handle);
             return std::unexpected(result);
+        }
+
+        auto createResult = resize_swap_chain(handle, swapChainInfo.width, swapChainInfo.height, swapChainInfo.vsync);
+        if (createResult != ResultCode::eSuccess)
+        {
+            m_swapChains.free_handle(handle);
+            return std::unexpected(createResult);
         }
 
         return { handle };
@@ -310,7 +311,7 @@ namespace VGW_NAMESPACE
         }
         auto& swapChainRef = getResult.value();
 
-        auto result = swapChainRef->resize(width, height, vsync);
+        auto result = internal::swap_chain_resize(*this, swapChainRef, width, height, vsync);
         if (result != ResultCode::eSuccess)
         {
             return result;
@@ -327,21 +328,22 @@ namespace VGW_NAMESPACE
             return std::unexpected(result.error());
         }
 
-        auto* ptr = result.value();
-        VGW_ASSERT(ptr != nullptr);
-        return { *ptr };
+        return result.value();
     }
 
     void Device::destroy_swap_chain(HandleSwapChain handle) noexcept
     {
         is_invariant();
 
-        // #TODO: Handle safe deletion? Or leave to library consumer?
-        auto result = m_swapChains.set_resource(handle, nullptr);
-        if (result != ResultCode::eSuccess)
+        auto getResult = m_swapChains.get_resource(handle);
+        if (!getResult)
         {
             return;
         }
+
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto& swapChainRef = getResult.value().get();
+        m_device->destroy(swapChainRef.swapChain);
 
         m_swapChains.free_handle(handle);
     }
@@ -357,7 +359,7 @@ namespace VGW_NAMESPACE
         }
 
         auto& swapChainRef = result.value().get();
-        swapChainRef.acquire_next_image(outSemaphore);
+        internal::swap_chain_acquire_next_image(*this, swapChainRef, outSemaphore);
     }
 
     void Device::present_swap_chain(HandleSwapChain swapChainHandle, std::uint32_t queueIndex) noexcept
@@ -422,15 +424,15 @@ namespace VGW_NAMESPACE
         }
         const auto handle = handleResult.value();
 
-        auto renderPass = std::make_unique<RenderPass>(*this, renderPassInfo);
-        auto createResult = renderPass->resize(renderPassInfo.width, renderPassInfo.height);
+        auto renderPass = RenderPass(*this, renderPassInfo);
+        auto createResult = renderPass.resize(renderPassInfo.width, renderPassInfo.height);
         if (createResult != ResultCode::eSuccess)
         {
             m_renderPasses.free_handle(handle);
             return std::unexpected(createResult);
         }
 
-        auto result = m_renderPasses.set_resource(handle, std::move(renderPass));
+        auto result = m_renderPasses.set_resource(handle, renderPass);
         if (result != ResultCode::eSuccess)
         {
             m_renderPasses.free_handle(handle);
@@ -449,9 +451,9 @@ namespace VGW_NAMESPACE
         {
             return getResult.error();
         }
-        auto& bufferRef = getResult.value();
+        auto& bufferRef = getResult.value().get();
 
-        auto result = bufferRef->resize(width, height);
+        auto result = bufferRef.resize(width, height);
         if (result != ResultCode::eSuccess)
         {
             return result;
@@ -468,21 +470,23 @@ namespace VGW_NAMESPACE
             return std::unexpected(result.error());
         }
 
-        auto* ptr = result.value();
-        VGW_ASSERT(ptr != nullptr);
-        return { *ptr };
+        return result.value();
     }
 
     void Device::destroy_render_pass(HandleRenderPass handle) noexcept
     {
         is_invariant();
 
-        // #TODO: Handle safe deletion? Or leave to library consumer?
-        auto result = m_renderPasses.set_resource(handle, nullptr);
-        if (result != ResultCode::eSuccess)
+        auto getResult = m_renderPasses.get_resource(handle);
+        if (!getResult)
         {
             return;
         }
+
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto& renderPassRef = getResult.value().get();
+        renderPassRef = {};  // TODO: Temp
+        //        m_device->destroy();
 
         m_renderPasses.free_handle(handle);
     }
@@ -551,11 +555,11 @@ namespace VGW_NAMESPACE
             // #TODO: Handle error.
             return;
         }
-        auto* bufferRef = result.value();
+        auto& bufferRef = result.value().get();
 
         m_pendingBufferInfos.push_back(std::make_unique<vk::DescriptorBufferInfo>());
         auto& bufferInfo = m_pendingBufferInfos.back();
-        bufferInfo->setBuffer(bufferRef->get_buffer());
+        bufferInfo->setBuffer(bufferRef.buffer);
         bufferInfo->setOffset(offset);
         bufferInfo->setRange(range);
 
@@ -776,9 +780,9 @@ namespace VGW_NAMESPACE
         }
 
         auto [vkBuffer, vmaAllocation] = createResult.value();
-        auto buffer = std::make_unique<Buffer>(*this, vkBuffer, vmaAllocation, bufferInfo);
+        auto buffer = Buffer(vkBuffer, vmaAllocation, bufferInfo);
 
-        auto result = m_buffers.set_resource(handle, std::move(buffer));
+        auto result = m_buffers.set_resource(handle, buffer);
         if (result != ResultCode::eSuccess)
         {
             m_buffers.free_handle(handle);
@@ -797,10 +801,12 @@ namespace VGW_NAMESPACE
         {
             return getResult.error();
         }
-        auto& bufferRef = getResult.value();
+        auto& bufferRef = getResult.value().get();
 
-        auto bufferInfo = bufferRef->get_info();
-        bufferInfo.size = size;
+        m_allocator->destroyBuffer(bufferRef.buffer, bufferRef.allocation);
+
+        auto bufferInfo = BufferInfo{ bufferRef.size, bufferRef.usage, bufferRef.memoryUsage, bufferRef.allocationCreateFlags };
+        bufferRef.size = size;
         auto createResult = allocate_buffer(bufferInfo);
         if (!createResult)
         {
@@ -808,9 +814,9 @@ namespace VGW_NAMESPACE
         }
 
         auto [vkBuffer, vmaAllocation] = createResult.value();
-        auto buffer = std::make_unique<Buffer>(*this, vkBuffer, vmaAllocation, bufferInfo);
+        auto buffer = Buffer(vkBuffer, vmaAllocation, bufferInfo);
 
-        auto result = m_buffers.set_resource(handle, std::move(buffer));
+        auto result = m_buffers.set_resource(handle, buffer);
         if (result != ResultCode::eSuccess)
         {
             return result;
@@ -827,19 +833,20 @@ namespace VGW_NAMESPACE
             return std::unexpected(result.error());
         }
 
-        auto* ptr = result.value();
-        VGW_ASSERT(ptr != nullptr);
-        return { *ptr };
+        return result.value();
     }
 
     void Device::destroy_buffer(HandleBuffer handle) noexcept
     {
-        // #TODO: Handle safe deletion? Or leave to library consumer?
-        auto result = m_buffers.set_resource(handle, nullptr);
-        if (result != ResultCode::eSuccess)
+        auto getResult = m_buffers.get_resource(handle);
+        if (!getResult)
         {
             return;
         }
+
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto& bufferRef = getResult.value().get();
+        m_allocator->destroyBuffer(bufferRef.buffer, bufferRef.allocation);
 
         m_buffers.free_handle(handle);
     }
@@ -878,6 +885,37 @@ namespace VGW_NAMESPACE
             { size, vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlags() });
     }
 
+    auto Device::map_buffer(HandleBuffer handle) noexcept -> std::expected<void*, ResultCode>
+    {
+        auto getResult = m_buffers.get_resource(handle);
+        if (!getResult)
+        {
+            return std::unexpected(getResult.error());
+        }
+
+        auto& bufferRef = getResult.value().get();
+
+        auto result = m_allocator->mapMemory(bufferRef.allocation);
+        if (result.result != vk::Result::eSuccess)
+        {
+            return std::unexpected(ResultCode::eFailedToMapMemory);
+        }
+
+        return result.value;
+    }
+
+    void Device::unmap_buffer(HandleBuffer handle) noexcept
+    {
+        auto getResult = m_buffers.get_resource(handle);
+        if (!getResult)
+        {
+            return;
+        }
+
+        auto& bufferRef = getResult.value().get();
+        m_allocator->unmapMemory(bufferRef.allocation);
+    }
+
 #pragma endregion
 
 #pragma region Images
@@ -901,9 +939,9 @@ namespace VGW_NAMESPACE
         }
 
         auto [vkImage, vmaAllocation] = createResult.value();
-        auto buffer = std::make_unique<Image>(*this, vkImage, vmaAllocation, imageInfo);
+        auto image = Image(vkImage, vmaAllocation, imageInfo);
 
-        auto result = m_images.set_resource(handle, std::move(buffer));
+        auto result = m_images.set_resource(handle, image);
         if (result != ResultCode::eSuccess)
         {
             m_images.free_handle(handle);
@@ -921,19 +959,21 @@ namespace VGW_NAMESPACE
             return std::unexpected(result.error());
         }
 
-        auto* ptr = result.value();
-        VGW_ASSERT(ptr != nullptr);
-        return { *ptr };
+        return result.value();
     }
 
     void Device::destroy_image(HandleImage handle) noexcept
     {
-        // #TODO: Handle safe deletion? Or leave to library consumer?
-        auto result = m_images.set_resource(handle, nullptr);
-        if (result != ResultCode::eSuccess)
+        auto getResult = m_images.get_resource(handle);
+        if (!getResult)
         {
             return;
         }
+
+        // #TODO: Handle safe deletion? Or leave to library consumer?
+        auto imageRef = getResult.value().get();
+        imageRef = {};
+        //        m_allocator->destroyImage(imageRef.get_image(), imageRef.allocation);
 
         m_images.free_handle(handle);
     }
@@ -996,8 +1036,8 @@ namespace VGW_NAMESPACE
         auto queue = m_queues.at(queueIndex);
         VGW_ASSERT(queue);
 
-        std::vector swapChains = { swapChain.get_swap_chain() };
-        const auto imageIndex = swapChain.get_image_index();
+        std::vector swapChains = { swapChain.swapChain };
+        const auto imageIndex = swapChain.imageIndex;
         vk::PresentInfoKHR presentInfo{};
         presentInfo.setSwapchains(swapChains);
         presentInfo.setImageIndices(imageIndex);
