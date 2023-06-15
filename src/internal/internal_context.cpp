@@ -5,9 +5,11 @@
 #include <memory>
 #include <iostream>
 
-namespace VGW_NAMESPACE::internal
+namespace vgw::internal
 {
     constexpr const char* VGW_VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation";
+
+    static std::unique_ptr<ContextData> s_context{ nullptr };  // NOLINT(*-avoid-non-const-global-variables)
 
     auto VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                              VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -16,19 +18,25 @@ namespace VGW_NAMESPACE::internal
 
     ContextData::~ContextData()
     {
-        if (instance)
+        if (internal_is_context_valid())
         {
-            // #TODO: Throw error about not having destroyed the context
+            log_error("VGW context should be implicitly destroyed using `vgw::destroy_context()`!");
             internal_context_destroy();
         }
     }
 
     auto internal_context_init(const ContextInfo& contextInfo) -> ResultCode
     {
+        if (internal_is_context_valid())
+        {
+            log_warn("VGW context has already been initialised!");
+            return ResultCode::eSuccess;
+        }
+
+        s_context = std::make_unique<ContextData>();
         auto& contextRef = internal_context_get().value().get();
 
-        vk::DynamicLoader dl;
-        auto vkGetInstanceProcAddr = dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+        auto vkGetInstanceProcAddr = contextRef.loader.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
         VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
         vk::ApplicationInfo appInfo{
@@ -105,43 +113,73 @@ namespace VGW_NAMESPACE::internal
             instanceInfo.setPNext(&messengerCreateInfo);
         }
 
-        contextRef.instance = vk::createInstance(instanceInfo).value;
-        if (!contextRef.instance)
+        auto instanceCreateResult = vk::createInstance(instanceInfo);
+        if (instanceCreateResult.result != vk::Result::eSuccess)
         {
-            log_error("Failed to create vk::Instance!");
+            log_error("Failed to create vk::Instance: {}", vk::to_string(instanceCreateResult.result));
             return ResultCode::eFailedToCreate;
         }
+        contextRef.instance = instanceCreateResult.value;
 
         VULKAN_HPP_DEFAULT_DISPATCHER.init(contextRef.instance);
 
         if (debugCallbackSupported)
         {
-            contextRef.messenger = contextRef.instance.createDebugUtilsMessengerEXT(messengerCreateInfo).value;
-            if (!contextRef.messenger)
+            auto messengerCreateResult = contextRef.instance.createDebugUtilsMessengerEXT(messengerCreateInfo);
+            if (messengerCreateResult.result != vk::Result::eSuccess)
             {
-                log_error("Failed to create Vulkan debug messenger!");
+                log_error("Failed to create Vulkan debug messenger: {}", vk::to_string(instanceCreateResult.result));
             }
+
+            contextRef.messenger = messengerCreateResult.value;
         }
+
+        log_debug("VGW context created.");
 
         return ResultCode::eSuccess;
     }
 
     void internal_context_destroy()
     {
-        auto& contextRef = internal_context_get().value().get();
+        if (!internal_is_context_valid())
+        {
+            return;
+        }
+
+        auto getResult = internal_context_get();
+        if (!getResult)
+        {
+            return;
+        }
+        auto& contextRef = getResult.value().get();
 
         contextRef.instance.destroy(contextRef.messenger);
         contextRef.instance.destroy();
+
+        s_context = nullptr;
+
+        log_debug("VGW context destroyed.");
     }
 
     auto internal_context_get() -> std::expected<std::reference_wrapper<ContextData>, ResultCode>
     {
-        static std::unique_ptr<ContextData> s_context{ nullptr };
         if (s_context == nullptr)
         {
-            s_context = std::make_unique<ContextData>();
+            return std::unexpected(ResultCode::eNullptr);
         }
-        return std::ref(*s_context);
+        return *s_context;
+    }
+
+    bool internal_is_context_valid() noexcept
+    {
+        auto getResult = internal_context_get();
+        if (!getResult)
+        {
+            return false;
+        }
+        auto& contextRef = getResult.value().get();
+
+        return contextRef.instance;
     }
 
     auto VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -163,4 +201,5 @@ namespace VGW_NAMESPACE::internal
         log(msgType, pCallbackData->pMessage);
         return false;
     }
+
 }

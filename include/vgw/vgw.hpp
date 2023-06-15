@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "common.hpp"
+
 #include <functional>
 #include <string_view>
 
@@ -11,6 +13,7 @@ namespace vgw
     enum class ResultCode : std::uint8_t
     {
         eSuccess,
+        eNullptr,
         eFailedToCreate,
         eFailedToMapMemory,
         eNoHandleAvailable,

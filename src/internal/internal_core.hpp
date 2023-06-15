@@ -2,16 +2,6 @@
 
 #include "vgw/vgw.hpp"
 
-#define VULKAN_HPP_NO_EXCEPTIONS
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#ifdef _WIN32
-    #define VK_USE_PLATFORM_WIN32_KHR
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
-#endif
-#include <vulkan/vulkan.hpp>
-
 #include <format>
 #include <string_view>
 

@@ -19,4 +19,5 @@ namespace vgw
     {
         internal::internal_context_destroy();
     }
+
 }

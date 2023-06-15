@@ -11,8 +11,9 @@ namespace vgw::internal
 {
     struct ContextData
     {
-        vk::Instance instance;
-        vk::DebugUtilsMessengerEXT messenger;
+        vk::DynamicLoader loader{};
+        vk::Instance instance{};
+        vk::DebugUtilsMessengerEXT messenger{};
 
         ~ContextData();
     };
@@ -21,4 +22,7 @@ namespace vgw::internal
     void internal_context_destroy();
 
     auto internal_context_get() -> std::expected<std::reference_wrapper<ContextData>, ResultCode>;
+
+    bool internal_is_context_valid() noexcept;
+
 }

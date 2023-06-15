@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../include_old/base.hpp"
+#include "vgw/vgw.hpp"
 
-namespace VGW_NAMESPACE
+namespace vgw
 {
     bool is_instance_layer_supported(const char* layerName);
     bool is_instance_extension_supported(const char* extensionName);

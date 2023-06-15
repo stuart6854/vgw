@@ -1,4 +1,3 @@
-#include "../../include_old/vgw.hpp"
 #include <vgw/vgw.hpp>
 
 #define GLFW_INCLUDE_NONE
@@ -8,27 +7,6 @@
 #include <GLFW/glfw3native.h>
 
 #include <iostream>
-
-void LogCallback(vgw::LogLevel logLevel, const std::string_view& msg, const std::source_location& sourceLocation)
-{
-    auto formattedMsg = std::format("{}:{} | {}", sourceLocation.file_name(), sourceLocation.line(), msg);
-    if (logLevel == vgw::LogLevel::eError)
-    {
-        std::cerr << "[VGW][ERROR]" << formattedMsg << std::endl;
-    }
-    else
-    {
-        std::string levelStr;
-        switch (logLevel)
-        {
-            case vgw::LogLevel::eWarn: levelStr = "[VGW][Warn]"; break;
-            case vgw::LogLevel::eInfo: levelStr = "[VGW][Info]"; break;
-            case vgw::LogLevel::eDebug: levelStr = "[VGW][Debug]"; break;
-            default: break;
-        }
-        std::cout << levelStr << formattedMsg << std::endl;
-    }
-}
 
 constexpr auto WINDOW_WIDTH = 800;
 constexpr auto WINDOW_HEIGHT = 600;

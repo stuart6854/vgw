@@ -1,28 +1,6 @@
 #include <iostream>
 
-#include "../../include_old/vgw.hpp"
 #include <vgw/vgw.hpp>
-
-void LogCallback(vgw::LogLevel logLevel, const std::string_view& msg, const std::source_location& sourceLocation)
-{
-    auto formattedMsg = std::format("{}:{} | {}", sourceLocation.file_name(), sourceLocation.line(), msg);
-    if (logLevel == vgw::LogLevel::eError)
-    {
-        std::cerr << "[VGW][ERROR]" << formattedMsg << std::endl;
-    }
-    else
-    {
-        std::string levelStr;
-        switch (logLevel)
-        {
-            case vgw::LogLevel::eWarn: levelStr = "[VGW][Warn]"; break;
-            case vgw::LogLevel::eInfo: levelStr = "[VGW][Info]"; break;
-            case vgw::LogLevel::eDebug: levelStr = "[VGW][Debug]"; break;
-            default: break;
-        }
-        std::cout << levelStr << formattedMsg << std::endl;
-    }
-}
 
 void MessageCallbackFunc(vgw::MessageType msgType, std::string_view msg)
 {
@@ -44,9 +22,9 @@ int main(int argc, char** argv)
 
     vgw::ContextInfo contextInfo{
         .appName = "_app_name_",
-        .appVersion = VK_MAKE_VERSION(1, 0, 0),
+        .appVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
         .engineName = "_engine_name_",
-        .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+        .engineVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
         .enableSurfaces = false,
         .enableDebug = true,
     };

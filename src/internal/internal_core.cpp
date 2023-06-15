@@ -15,4 +15,5 @@ namespace vgw::internal
     {
         return s_messageCallbackFn;
     }
+
 }

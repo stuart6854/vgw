@@ -1,6 +1,6 @@
 #include "device_helpers.hpp"
 
-namespace VGW_NAMESPACE
+namespace vgw
 {
     bool is_device_extension_supported(vk::PhysicalDevice physicalDevice, const char* extensionName)
     {

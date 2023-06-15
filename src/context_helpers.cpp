@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.hpp>
 
-namespace VGW_NAMESPACE
+namespace vgw
 {
     bool is_instance_layer_supported(const char* layerName)
     {
