@@ -126,14 +126,23 @@ int main(int argc, char** argv)
     device->bind_buffer(descriptorSet.get(), 1, vk::DescriptorType::eStorageBuffer, outBufferHandle, 0, outBufferInfo.size);
 
     device->flush_descriptor_writes();
+#endif
 
-    auto mainCmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
-    mainCmd->begin();
-    mainCmd->bind_pipeline(computePipelineHandle);
-    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
-    mainCmd->dispatch(NumElements, 1, 1);
-    mainCmd->end();
+    vgw::CmdBufferAllocInfo cmdAllocInfo{
+        1,
+        vk::CommandBufferLevel::ePrimary,
+        vk::CommandPoolCreateFlagBits::eTransient,
+    };
+    auto mainCmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
 
+    vk::CommandBufferBeginInfo beginInfo{};
+    mainCmd.begin(beginInfo);
+    //    mainCmd->bind_pipeline(computePipelineHandle);
+    //    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
+    //    mainCmd->dispatch(NumElements, 1, 1);
+    mainCmd.end();
+
+#if 0
     vgw::Fence fence;
     device->submit(0, *mainCmd, &fence);
     fence.wait();

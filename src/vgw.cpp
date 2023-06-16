@@ -5,6 +5,7 @@
 #include "internal/internal_device.hpp"
 #include "internal/internal_layouts.hpp"
 #include "internal/internal_pipelines.hpp"
+#include "internal/internal_command_buffers.hpp"
 
 #include <vulkan/vulkan_hash.hpp>
 
@@ -48,6 +49,16 @@ namespace vgw
     auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>
     {
         return internal::internal_pipeline_compute_create(pipelineInfo);
+    }
+
+    auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<vk::CommandBuffer>, ResultCode>
+    {
+        return internal::internal_cmd_buffers_allocate(allocInfo);
+    }
+
+    auto free_command_buffers(const std::vector<vk::CommandBuffer>& cmdBuffers)
+    {
+        return internal::internal_cmd_buffers_free(cmdBuffers);
     }
 
 }

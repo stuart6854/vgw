@@ -66,6 +66,15 @@ namespace vgw
     };
     auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
 
+    struct CmdBufferAllocInfo
+    {
+        std::uint32_t count{};
+        vk::CommandBufferLevel level{};
+        vk::CommandPoolCreateFlagBits poolFlags{};
+    };
+    auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<vk::CommandBuffer>, ResultCode>;
+    auto free_command_buffers(const std::vector<vk::CommandBuffer>& cmdBuffers);
+
 }
 
 namespace std

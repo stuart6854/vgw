@@ -129,6 +129,12 @@ namespace vgw::internal
 
     void DeviceData::destroy()
     {
+        for (const auto& [_, pool] : cmdPoolMap)
+        {
+            device.destroy(pool);
+        }
+        cmdPoolMap.clear();
+
         for (const auto& [_, data] : pipelineMap)
         {
             device.destroy(data.pipeline);

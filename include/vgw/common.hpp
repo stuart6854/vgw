@@ -2,6 +2,7 @@
 #define VGW_COMMON_HPP
 
 #include <cstdint>
+#include <expected>
 
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
