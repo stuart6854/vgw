@@ -49,21 +49,21 @@ int main(int argc, char** argv)
         throw std::runtime_error("Failed to initialise VGW device!");
     }
 
-#if 0
     vgw::SetLayoutInfo setLayoutInfo{
         .bindings = {
             { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
             { 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },
         },
     };
-    auto setLayout = device->get_or_create_set_layout(setLayoutInfo).value();
+    auto setLayout = vgw::get_set_layout(setLayoutInfo).value();
 
     vgw::PipelineLayoutInfo pipelineLayoutInfo{
         .setLayouts = { setLayout },
         .constantRange = {},
     };
-    auto pipelineLayout = device->get_or_create_pipeline_layout(pipelineLayoutInfo).value();
+    auto pipelineLayout = vgw::get_pipeline_layout(pipelineLayoutInfo).value();
 
+#if 0
     // Create compute pipeline
     auto computeCode = vgw::read_shader_code("compute.comp").value();
     auto compiledComputeCode = vgw::compile_spirv(computeCode, shaderc_compute_shader, "compute.comp", false).value();

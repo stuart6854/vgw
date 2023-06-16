@@ -129,6 +129,18 @@ namespace vgw::internal
 
     void DeviceData::destroy()
     {
+        for (const auto& [_, layout] : pipelineLayoutMap)
+        {
+            device.destroy(layout);
+        }
+        pipelineLayoutMap.clear();
+
+        for (const auto& [_, layout] : setLayoutMap)
+        {
+            device.destroy(layout);
+        }
+        setLayoutMap.clear();
+
         vmaDestroyAllocator(allocator);
         allocator = nullptr;
 

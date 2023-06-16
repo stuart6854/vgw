@@ -1,11 +1,13 @@
 #pragma once
 
 #include "vgw/vgw.hpp"
+#include "internal_core.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vma/vk_mem_alloc.h>
 
 #include <expected>
+#include <unordered_map>
 
 namespace vgw::internal
 {
@@ -20,6 +22,9 @@ namespace vgw::internal
         std::vector<vk::Queue> queues;
 
         VmaAllocator allocator;
+
+        std::unordered_map<std::size_t, vk::DescriptorSetLayout> setLayoutMap;
+        std::unordered_map<std::size_t, vk::PipelineLayout> pipelineLayoutMap;
 
         ~DeviceData();
 

@@ -91,35 +91,6 @@ namespace VGW_NAMESPACE
 namespace std
 {
     template <>
-    struct hash<vgw::SetLayoutInfo>
-    {
-        std::size_t operator()(const vgw::SetLayoutInfo& setLayoutInfo) const
-        {
-            std::size_t seed{ 0 };
-            for (const auto& binding : setLayoutInfo.bindings)
-            {
-                vgw::hash_combine(seed, binding);
-            }
-            return seed;
-        }
-    };
-
-    template <>
-    struct hash<vgw::PipelineLayoutInfo>
-    {
-        std::size_t operator()(const vgw::PipelineLayoutInfo& pipelineLayoutInfo) const
-        {
-            std::size_t seed{ 0 };
-            for (const auto& setLayout : pipelineLayoutInfo.setLayouts)
-            {
-                vgw::hash_combine(seed, setLayout);
-            }
-            vgw::hash_combine(seed, pipelineLayoutInfo.constantRange);
-            return seed;
-        }
-    };
-
-    template <>
     struct hash<std::vector<vk::VertexInputAttributeDescription>>
     {
         std::size_t operator()(const std::vector<vk::VertexInputAttributeDescription>& attributes) const

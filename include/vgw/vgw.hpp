@@ -5,6 +5,7 @@
 
 #include "common.hpp"
 
+#include <expected>
 #include <functional>
 #include <string_view>
 
@@ -60,6 +61,34 @@ namespace vgw
     auto initialise_device(const DeviceInfo& deviceInfo) -> ResultCode;
     void destroy_device();
 
+    struct SetLayoutInfo
+    {
+        std::vector<vk::DescriptorSetLayoutBinding> bindings{};
+    };
+    auto get_set_layout(const SetLayoutInfo& layoutInfo) -> std::expected<vk::DescriptorSetLayout, ResultCode>;
+
+    struct PipelineLayoutInfo
+    {
+        std::vector<vk::DescriptorSetLayout> setLayouts{};
+        vk::PushConstantRange constantRange{};
+    };
+    auto get_pipeline_layout(const PipelineLayoutInfo& layoutInfo) -> std::expected<vk::PipelineLayout, ResultCode>;
+
+}
+
+namespace std
+{
+    template <>
+    struct hash<vgw::SetLayoutInfo>
+    {
+        std::size_t operator()(const vgw::SetLayoutInfo& setLayoutInfo) const;
+    };
+
+    template <>
+    struct hash<vgw::PipelineLayoutInfo>
+    {
+        std::size_t operator()(const vgw::PipelineLayoutInfo& pipelineLayoutInfo) const;
+    };
 }
 
 #endif  // VGW_VGW_HPP

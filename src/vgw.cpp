@@ -3,6 +3,9 @@
 #include "internal/internal_core.hpp"
 #include "internal/internal_context.hpp"
 #include "internal/internal_device.hpp"
+#include "internal/internal_layouts.hpp"
+
+#include <vulkan/vulkan_hash.hpp>
 
 namespace vgw
 {
@@ -31,4 +34,38 @@ namespace vgw
         internal::internal_device_destroy();
     }
 
+    auto get_set_layout(const SetLayoutInfo& layoutInfo) -> std::expected<vk::DescriptorSetLayout, ResultCode>
+    {
+        return internal::internal_set_layout_get(layoutInfo);
+    }
+
+    auto get_pipeline_layout(const PipelineLayoutInfo& layoutInfo) -> std::expected<vk::PipelineLayout, ResultCode>
+    {
+        return internal::internal_pipeline_layout_get(layoutInfo);
+    }
+
+}
+
+namespace std
+{
+    std::size_t std::hash<vgw::SetLayoutInfo>::operator()(const vgw::SetLayoutInfo& setLayoutInfo) const
+    {
+        std::size_t seed{ 0 };
+        for (const auto& binding : setLayoutInfo.bindings)
+        {
+            vgw::hash_combine(seed, binding);
+        }
+        return seed;
+    }
+
+    std::size_t std::hash<vgw::PipelineLayoutInfo>::operator()(const vgw::PipelineLayoutInfo& pipelineLayoutInfo) const
+    {
+        std::size_t seed{ 0 };
+        for (const auto& setLayout : pipelineLayoutInfo.setLayouts)
+        {
+            vgw::hash_combine(seed, setLayout);
+        }
+        vgw::hash_combine(seed, pipelineLayoutInfo.constantRange);
+        return seed;
+    }
 }
