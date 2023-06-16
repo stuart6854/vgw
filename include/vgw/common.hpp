@@ -1,6 +1,8 @@
 #ifndef VGW_COMMON_HPP
 #define VGW_COMMON_HPP
 
+#include <cstdint>
+
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #ifdef _WIN32

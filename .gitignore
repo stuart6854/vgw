@@ -3,6 +3,9 @@
 *.vcxproj
 *.vcxproj.user
 *.vcxproj.filters
+.vs/
+.vscode/
+.idea/
 
 # CMake Artifacts
 cmake-build-*/
