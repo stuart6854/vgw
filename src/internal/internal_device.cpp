@@ -83,8 +83,7 @@ namespace vgw::internal
         auto gather_queues(vk::Device device,
                            vk::PhysicalDevice physicalDevice,
                            const std::vector<std::int32_t>& wantedQueueFamiliesIndices,
-                           const std::vector<std::tuple<std::uint32_t, std::uint32_t>>& queueFamilyCountPairs)
-            -> std::tuple<std::vector<vk::Queue>>
+                           const std::vector<std::tuple<std::uint32_t, std::uint32_t>>& queueFamilyCountPairs) -> std::vector<vk::Queue>
         {
             auto queueFamilies = physicalDevice.getQueueFamilyProperties();
 
@@ -186,7 +185,7 @@ namespace vgw::internal
 
         const auto [wantedQueueFamilyIndices, queueFamilyPairs] = select_queue_families(physicalDevice, deviceInfo.wantedQueues);
 
-        const std::vector<float> QueuePriorities(32, 1.0f);
+        const std::vector<float> QueuePriorities(8, 1.0f);
         std::vector<vk::DeviceQueueCreateInfo> queueCreateInfoVec;
         for (const auto& [family, count] : queueFamilyPairs)
         {
@@ -215,7 +214,7 @@ namespace vgw::internal
             nextFeature = &dynamicRenderingFeatures;
         }
 
-        vk::PhysicalDeviceFeatures enabledFeatures;
+        vk::PhysicalDeviceFeatures enabledFeatures{};
         enabledFeatures.setFillModeNonSolid(true);
         enabledFeatures.setWideLines(true);
 
@@ -223,13 +222,14 @@ namespace vgw::internal
         deviceCreateInfo.setQueueCreateInfos(queueCreateInfoVec);
         deviceCreateInfo.setPEnabledExtensionNames(enabledExtensions);
         deviceCreateInfo.setPEnabledFeatures(&enabledFeatures);
-        deviceCreateInfo.setPNext(&nextFeature);
-        auto device = physicalDevice.createDevice(deviceCreateInfo).value;
-        if (!device)
+        deviceCreateInfo.setPNext(nextFeature);
+        auto deviceResult = physicalDevice.createDevice(deviceCreateInfo);
+        if (deviceResult.result != vk::Result::eSuccess)
         {
             log_error("Failed to create vk::Device!");
             return ResultCode::eFailedToCreate;
         }
+        auto device = deviceResult.value;
 
         VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
 
@@ -244,9 +244,18 @@ namespace vgw::internal
         auto allocatorResult = vmaCreateAllocator(&allocatorInfo, &allocator);
         if (allocatorResult != VK_SUCCESS)
         {
+            device.destroy();
+
             log_error("Failed to create vma::Allocator!");
             return ResultCode::eFailedToCreate;
         }
+
+        contextRef.device = std::make_unique<DeviceData>();
+        contextRef.device->context = &contextRef;
+        contextRef.device->physicalDevice = physicalDevice;
+        contextRef.device->device = device;
+        contextRef.device->allocator = allocator;
+        contextRef.device->queues = queues;
 
         return ResultCode::eSuccess;
     }
