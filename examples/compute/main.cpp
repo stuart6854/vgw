@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <vgw/vgw.hpp>
+#include <vgw/utility.hpp>
 
 void MessageCallbackFunc(vgw::MessageType msgType, std::string_view msg)
 {
@@ -12,6 +13,23 @@ void MessageCallbackFunc(vgw::MessageType msgType, std::string_view msg)
     {
         std::cout << msg << std::endl;
     }
+}
+
+auto read_shader_code(const std::string& filename) -> std::optional<std::string>
+{
+    auto fileIn = std::ifstream(filename, std::ios::in | std::ios::binary);
+    if (!fileIn.is_open())
+    {
+        return std::nullopt;
+    }
+
+    std::string buffer;
+    fileIn.seekg(0, std::ios::end);
+    buffer.resize(fileIn.tellg());
+    fileIn.seekg(0, std::ios::beg);
+    fileIn.read(buffer.data(), static_cast<std::uint32_t>(buffer.size()));
+    fileIn.close();
+    return buffer;
 }
 
 int main(int argc, char** argv)
@@ -65,8 +83,8 @@ int main(int argc, char** argv)
 
 #if 0
     // Create compute pipeline
-    auto computeCode = vgw::read_shader_code("compute.comp").value();
-    auto compiledComputeCode = vgw::compile_spirv(computeCode, shaderc_compute_shader, "compute.comp", false).value();
+    auto computeCode = read_shader_code("compute.comp").value();
+    auto compiledComputeCode = vgw::compile_glsl(computeCode, vk::ShaderStageFlagBits::eCompute, false, "compute.comp").value();
     vgw::ComputePipelineInfo computePipelineInfo{
         .pipelineLayout = pipelineLayout,
         .computeCode = compiledComputeCode,
