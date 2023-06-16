@@ -2,8 +2,10 @@
 
 #include "vgw/vgw.hpp"
 #include "internal_core.hpp"
+#include "internal_pipelines.hpp"
 
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_hash.hpp>
 #include <vma/vk_mem_alloc.h>
 
 #include <expected>
@@ -25,6 +27,7 @@ namespace vgw::internal
 
         std::unordered_map<std::size_t, vk::DescriptorSetLayout> setLayoutMap;
         std::unordered_map<std::size_t, vk::PipelineLayout> pipelineLayoutMap;
+        std::unordered_map<vk::Pipeline, PipelineData> pipelineMap;
 
         ~DeviceData();
 

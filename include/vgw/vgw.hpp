@@ -59,6 +59,13 @@ namespace vgw
     };
     auto get_pipeline_layout(const PipelineLayoutInfo& layoutInfo) -> std::expected<vk::PipelineLayout, ResultCode>;
 
+    struct ComputePipelineInfo
+    {
+        vk::PipelineLayout layout{};
+        std::vector<std::uint32_t> computeCode{};
+    };
+    auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
+
 }
 
 namespace std

@@ -1,7 +1,10 @@
-#include <iostream>
-
 #include <vgw/vgw.hpp>
 #include <vgw/utility.hpp>
+
+#include <string>
+#include <fstream>
+#include <optional>
+#include <iostream>
 
 void MessageCallbackFunc(vgw::MessageType msgType, std::string_view msg)
 {
@@ -81,15 +84,15 @@ int main(int argc, char** argv)
     };
     auto pipelineLayout = vgw::get_pipeline_layout(pipelineLayoutInfo).value();
 
-#if 0
     // Create compute pipeline
     auto computeCode = read_shader_code("compute.comp").value();
     auto compiledComputeCode = vgw::compile_glsl(computeCode, vk::ShaderStageFlagBits::eCompute, false, "compute.comp").value();
     vgw::ComputePipelineInfo computePipelineInfo{
-        .pipelineLayout = pipelineLayout,
+        .layout = pipelineLayout,
         .computeCode = compiledComputeCode,
     };
-    auto computePipelineHandle = device->create_compute_pipeline(computePipelineInfo).value();
+    auto computePipeline = vgw::create_compute_pipeline(computePipelineInfo).value();
+#if 0
 
     // Create input storage buffer
     const auto NumElements = 10u;

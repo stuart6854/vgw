@@ -129,6 +129,12 @@ namespace vgw::internal
 
     void DeviceData::destroy()
     {
+        for (const auto& [_, data] : pipelineMap)
+        {
+            device.destroy(data.pipeline);
+        }
+        pipelineMap.clear();
+
         for (const auto& [_, layout] : pipelineLayoutMap)
         {
             device.destroy(layout);

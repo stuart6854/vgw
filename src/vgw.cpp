@@ -4,6 +4,7 @@
 #include "internal/internal_context.hpp"
 #include "internal/internal_device.hpp"
 #include "internal/internal_layouts.hpp"
+#include "internal/internal_pipelines.hpp"
 
 #include <vulkan/vulkan_hash.hpp>
 
@@ -42,6 +43,11 @@ namespace vgw
     auto get_pipeline_layout(const PipelineLayoutInfo& layoutInfo) -> std::expected<vk::PipelineLayout, ResultCode>
     {
         return internal::internal_pipeline_layout_get(layoutInfo);
+    }
+
+    auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>
+    {
+        return internal::internal_pipeline_compute_create(pipelineInfo);
     }
 
 }

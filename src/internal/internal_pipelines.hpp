@@ -1,0 +1,16 @@
+#pragma once
+
+#include "vgw/vgw.hpp"
+#include "internal_core.hpp"
+
+namespace vgw::internal
+{
+    struct PipelineData
+    {
+        vk::PipelineLayout layout{};
+        vk::Pipeline pipeline{};
+        vk::PipelineBindPoint bindPoint{};
+    };
+
+    auto internal_pipeline_compute_create(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
+}
