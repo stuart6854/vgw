@@ -22,6 +22,9 @@ namespace vgw::internal
         VmaAllocator allocator;
 
         ~DeviceData();
+
+        bool is_valid() const;
+        void destroy();
     };
 
     auto internal_device_create(const DeviceInfo& deviceInfo) -> ResultCode;

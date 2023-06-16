@@ -115,11 +115,25 @@ namespace vgw::internal
 
     DeviceData::~DeviceData()
     {
-        if (internal_device_is_valid())
+        if (is_valid())
         {
             log_error("VGW device should be implicitly destroyed using `vgw::destroy_device()`!");
-            internal_device_destroy();
+            destroy();
         }
+    }
+
+    bool DeviceData::is_valid() const
+    {
+        return device;
+    }
+
+    void DeviceData::destroy()
+    {
+        vmaDestroyAllocator(allocator);
+        allocator = nullptr;
+
+        device.destroy();
+        device = nullptr;
     }
 
     auto internal_device_create(const DeviceInfo& deviceInfo) -> ResultCode
@@ -272,10 +286,9 @@ namespace vgw::internal
         {
             return;
         }
-        auto& deviceRef = getResult.value().get();
 
-        vmaDestroyAllocator(deviceRef.allocator);
-        deviceRef.device.destroy();
+        auto& deviceRef = getResult.value().get();
+        deviceRef.destroy();
 
         VGW_ASSERT(deviceRef.context != nullptr);
         auto& contextRef = *deviceRef.context;
@@ -309,7 +322,6 @@ namespace vgw::internal
             return false;
         }
         auto& deviceRef = getResult.value().get();
-
-        return deviceRef.device;
+        return deviceRef.is_valid();
     }
 }
