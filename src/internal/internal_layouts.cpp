@@ -23,6 +23,7 @@ namespace vgw::internal
         }
 
         vk::DescriptorSetLayoutCreateInfo layoutCreateInfo{};
+        layoutCreateInfo.setBindings(layoutInfo.bindings);
         auto createResult = deviceRef.device.createDescriptorSetLayout(layoutCreateInfo);
         if (createResult.result != vk::Result::eSuccess)
         {
@@ -53,6 +54,11 @@ namespace vgw::internal
         }
 
         vk::PipelineLayoutCreateInfo layoutCreateInfo{};
+        layoutCreateInfo.setSetLayouts(layoutInfo.setLayouts);
+        if (layoutInfo.constantRange.size > 0)
+        {
+            layoutCreateInfo.setPushConstantRanges(layoutInfo.constantRange);
+        }
         auto createResult = deviceRef.device.createPipelineLayout(layoutCreateInfo);
         if (createResult.result != vk::Result::eSuccess)
         {
@@ -63,4 +69,5 @@ namespace vgw::internal
         deviceRef.pipelineLayoutMap[layoutHash] = createResult.value;
         return createResult.value;
     }
+
 }
