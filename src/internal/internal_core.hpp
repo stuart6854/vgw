@@ -20,11 +20,14 @@
     #define VGW_DEBUG_BREAK()
 #endif
 
-#define VGW_ASSERT(_expr)                            \
-    do                                               \
-    {                                                \
-        log_error("Assertion failed: '{}'", #_expr); \
-        VGW_DEBUG_BREAK();                           \
+#define VGW_ASSERT(_expr)                                \
+    do                                                   \
+    {                                                    \
+        if (!(_expr))                                    \
+        {                                                \
+            log_error("Assertion failed: '{}'", #_expr); \
+            VGW_DEBUG_BREAK();                           \
+        }                                                \
     } while (false)
 
 namespace vgw::internal
