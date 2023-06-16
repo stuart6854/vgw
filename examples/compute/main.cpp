@@ -48,8 +48,8 @@ int main(int argc, char** argv)
     {
         throw std::runtime_error("Failed to initialise VGW device!");
     }
-#if 0
 
+#if 0
     vgw::SetLayoutInfo setLayoutInfo{
         .bindings = {
             { 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute },

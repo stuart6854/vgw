@@ -14,8 +14,10 @@ namespace vgw
     enum class ResultCode : std::uint8_t
     {
         eSuccess,
+        eFailed,
         eInvalidContext,
         eInvalidDevice,
+        eNoPhysicalDevices,
         eFailedToCreate,
         eFailedToMapMemory,
         eNoHandleAvailable,

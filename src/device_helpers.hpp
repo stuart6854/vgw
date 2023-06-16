@@ -6,6 +6,6 @@
 
 namespace vgw
 {
-    bool is_device_extension_supported(vk::PhysicalDevice physicalDevice, const char* extensionName);
+    bool is_device_extension_supported(vk::PhysicalDevice physicalDevice, std::string_view extensionName);
     auto get_family_of_wanted_queue(vk::PhysicalDevice physicalDevice, vk::QueueFlags wantedQueue) -> std::optional<std::uint32_t>;
 }

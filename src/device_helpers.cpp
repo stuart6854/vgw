@@ -2,12 +2,12 @@
 
 namespace vgw
 {
-    bool is_device_extension_supported(vk::PhysicalDevice physicalDevice, const char* extensionName)
+    bool is_device_extension_supported(vk::PhysicalDevice physicalDevice, std::string_view extensionName)
     {
         auto supportedExtensions = physicalDevice.enumerateDeviceExtensionProperties().value;
         for (const auto& extension : supportedExtensions)
         {
-            if (std::strcmp(extension.extensionName, extensionName) == 0)
+            if (std::string_view(extension.extensionName) == extensionName)
             {
                 return true;
             }
