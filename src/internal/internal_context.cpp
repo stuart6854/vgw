@@ -153,6 +153,7 @@ namespace vgw::internal
         }
         auto& contextRef = getResult.value().get();
 
+        contextRef.device = nullptr;
         contextRef.instance.destroy(contextRef.messenger);
         contextRef.instance.destroy();
 
