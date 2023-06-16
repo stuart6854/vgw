@@ -11,21 +11,6 @@
 
 namespace vgw
 {
-    // #TODO: add vgw::to_string(ResultCode) function
-    enum class ResultCode : std::uint8_t
-    {
-        eSuccess,
-        eFailed,
-        eInvalidContext,
-        eInvalidDevice,
-        eNoPhysicalDevices,
-        eFailedToCreate,
-        eFailedToMapMemory,
-        eNoHandleAvailable,
-        eInvalidHandle,
-        eInvalidIndex,
-    };
-
     enum class MessageType
     {
         eDebug,

@@ -14,6 +14,23 @@
 
 namespace vgw
 {
+    // #TODO: add vgw::to_string(ResultCode) function
+    enum class ResultCode : std::uint8_t
+    {
+        eSuccess,
+        eFailed,
+        eInvalidContext,
+        eInvalidDevice,
+        eNoPhysicalDevices,
+        eFailedToCreate,
+        eFailedToMapMemory,
+        eNoHandleAvailable,
+        eInvalidHandle,
+        eInvalidIndex,
+        eFailedIO,
+        eFailedToCompile
+    };
+
     template <typename T>
     constexpr void hash_combine(std::size_t& seed, const T& v) noexcept
     {
