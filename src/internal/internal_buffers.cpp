@@ -47,16 +47,84 @@ namespace vgw::internal
         }
         auto& deviceRef = deviceResult.value().get();
 
+        auto bufferResult = internal_buffer_get(buffer);
+        if (!bufferResult)
+        {
+            log_warn("Tried to destroy unknown buffer.");
+            return;
+        }
+        auto& bufferRef = bufferResult.value().get();
+
+        vmaDestroyBuffer(deviceRef.allocator, buffer, bufferRef.allocation);
+        deviceRef.bufferMap.erase(buffer);
+    }
+
+    auto internal_buffer_get(vk::Buffer buffer) -> std::expected<std::reference_wrapper<BufferData>, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
         const auto it = deviceRef.bufferMap.find(buffer);
         if (it == deviceRef.bufferMap.end())
         {
-            log_warn("Tried to destroyed unknown buffer.");
+            return std::unexpected(ResultCode::eInvalidHandle);
+        }
+
+        return it->second;
+    }
+
+    auto internal_buffer_map(vk::Buffer buffer) -> std::expected<void*, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        auto bufferResult = internal_buffer_get(buffer);
+        if (!bufferResult)
+        {
+            log_error("Cannot map unknown buffer!");
+            return std::unexpected(ResultCode::eInvalidHandle);
+        }
+        auto& bufferRef = bufferResult.value().get();
+
+        void* dataPtr{ nullptr };
+        auto mapResult = vmaMapMemory(deviceRef.allocator, bufferRef.allocation, &dataPtr);
+        if (mapResult != VK_SUCCESS)
+        {
+            log_error("Failed to map buffer allocation!");
+            return std::unexpected(ResultCode::eFailedToMapMemory);
+        }
+
+        return dataPtr;
+    }
+
+    void internal_buffer_unmap(vk::Buffer buffer)
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
             return;
         }
-        const auto& allocation = it->second.allocation;
+        auto& deviceRef = deviceResult.value().get();
 
-        vmaDestroyBuffer(deviceRef.allocator, buffer, allocation);
-        deviceRef.bufferMap.erase(buffer);
+        auto bufferResult = internal_buffer_get(buffer);
+        if (!bufferResult)
+        {
+            log_error("Cannot unmap unknown buffer!");
+            return;
+        }
+        auto& bufferRef = bufferResult.value().get();
+
+        vmaUnmapMemory(deviceRef.allocator, bufferRef.allocation);
     }
 
 }

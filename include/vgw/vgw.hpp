@@ -76,6 +76,9 @@ namespace vgw
     auto create_buffer(const BufferInfo& bufferInfo) -> std::expected<vk::Buffer, ResultCode>;
     void destroy_buffer(vk::Buffer buffer);
 
+    auto map_buffer(vk::Buffer buffer) -> std::expected<void*, ResultCode>;
+    void unmap_buffer(vk::Buffer buffer);
+
     using CommandBuffer = struct CommandBuffer_T*;
     struct CmdBufferAllocInfo
     {

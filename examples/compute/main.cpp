@@ -102,14 +102,12 @@ int main(int argc, char** argv)
         .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
     };
     auto inBuffer = vgw::create_buffer(inBufferInfo).value();
-#if 0
-    auto* mappedPtr = static_cast<std::int32_t*>(device->map_buffer(inBufferHandle).value());
+    auto* mappedPtr = static_cast<std::int32_t*>(vgw::map_buffer(inBuffer).value());
     for (auto i = 0; i < NumElements; ++i)
     {
         mappedPtr[i] = i;
     }
-    device->unmap_buffer(inBufferHandle);
-#endif
+    vgw::unmap_buffer(inBuffer);
 
     // Create output storage buffer
     vgw::BufferInfo outBufferInfo{
@@ -140,7 +138,7 @@ int main(int argc, char** argv)
     mainCmd->begin(beginInfo);
     mainCmd->bind_pipeline(computePipeline);
     //    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
-//    mainCmd->dispatch(NumElements, 1, 1);
+    //    mainCmd->dispatch(NumElements, 1, 1);
     mainCmd->end();
 
 #if 0

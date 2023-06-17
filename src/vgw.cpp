@@ -62,6 +62,16 @@ namespace vgw
         internal::internal_buffer_destroy(buffer);
     }
 
+    auto map_buffer(vk::Buffer buffer) -> std::expected<void*, ResultCode>
+    {
+        return internal::internal_buffer_map(buffer);
+    }
+
+    void unmap_buffer(vk::Buffer buffer)
+    {
+        internal::internal_buffer_unmap(buffer);
+    }
+
     auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>
     {
         return internal::internal_cmd_buffers_allocate(allocInfo);
