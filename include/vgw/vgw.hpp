@@ -122,6 +122,8 @@ namespace vgw
 
     private:
         vk::CommandBuffer m_commandBuffer;
+
+        vk::Pipeline m_boundPipeline;
     };
 
 }

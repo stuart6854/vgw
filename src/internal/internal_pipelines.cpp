@@ -45,4 +45,36 @@ namespace vgw::internal
         };
         return createResult.value;
     }
+
+    auto internal_pipeline_get(vk::Pipeline pipeline) -> std::expected<std::reference_wrapper<PipelineData>, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        const auto it = deviceRef.pipelineMap.find(pipeline);
+        if (it != deviceRef.pipelineMap.end())
+        {
+            auto pipelineRef = std::ref(it->second);
+            return pipelineRef;
+        }
+
+        return std::unexpected(ResultCode::eInvalidHandle);
+    }
+
+    void internal_pipeline_bind(vk::CommandBuffer cmdBuffer, vk::Pipeline pipeline)
+    {
+        auto getResult = internal_pipeline_get(pipeline);
+        if (!getResult)
+        {
+            log_error("Failed to get pipeline!");
+            return;
+        }
+        auto& pipelineRef = getResult.value().get();
+
+        cmdBuffer.bindPipeline(pipelineRef.bindPoint, pipelineRef.pipeline);
+    }
 }

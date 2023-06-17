@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     mainCmd->begin(beginInfo);
     mainCmd->bind_pipeline(computePipeline);
     //    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
-    //    mainCmd->dispatch(NumElements, 1, 1);
+    mainCmd->dispatch(NumElements, 1, 1);
     mainCmd->end();
 
 #if 0

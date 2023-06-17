@@ -13,4 +13,8 @@ namespace vgw::internal
     };
 
     auto internal_pipeline_compute_create(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
+
+    auto internal_pipeline_get(vk::Pipeline pipeline) -> std::expected<std::reference_wrapper<PipelineData>, ResultCode>;
+
+    void internal_pipeline_bind(vk::CommandBuffer cmdBuffer, vk::Pipeline pipeline);
 }

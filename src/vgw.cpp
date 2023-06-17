@@ -69,6 +69,7 @@ namespace vgw
     void CommandBuffer_T::begin(const vk::CommandBufferBeginInfo& beginInfo)
     {
         m_commandBuffer.begin(beginInfo);
+        m_boundPipeline = nullptr;
     }
 
     void CommandBuffer_T::end()
@@ -84,7 +85,15 @@ namespace vgw
 
     void CommandBuffer_T::set_scissor() {}
 
-    void CommandBuffer_T::bind_pipeline(vk::Pipeline pipeline) {}
+    void CommandBuffer_T::bind_pipeline(vk::Pipeline pipeline)
+    {
+        if (m_boundPipeline == pipeline)
+        {
+            return;
+        }
+        internal::internal_pipeline_bind(m_commandBuffer, pipeline);
+        m_boundPipeline = pipeline;
+    }
 
     void CommandBuffer_T::bind_vertex_buffer() {}
 
