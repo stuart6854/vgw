@@ -134,6 +134,7 @@ namespace vgw::internal
             device.destroy(pool);
         }
         cmdPoolMap.clear();
+        cmdBufferMap.clear();
 
         for (const auto& [_, data] : pipelineMap)
         {

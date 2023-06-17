@@ -92,10 +92,10 @@ int main(int argc, char** argv)
         .computeCode = compiledComputeCode,
     };
     auto computePipeline = vgw::create_compute_pipeline(computePipelineInfo).value();
-#if 0
 
     // Create input storage buffer
     const auto NumElements = 10u;
+#if 0
     vgw::BufferInfo inBufferInfo{
         .size = sizeof(std::int32_t) * NumElements,
         .usage = vk::BufferUsageFlagBits::eStorageBuffer,
@@ -136,11 +136,11 @@ int main(int argc, char** argv)
     auto mainCmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
 
     vk::CommandBufferBeginInfo beginInfo{};
-    mainCmd.begin(beginInfo);
-    //    mainCmd->bind_pipeline(computePipelineHandle);
+    mainCmd->begin(beginInfo);
+    mainCmd->bind_pipeline(computePipeline);
     //    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
     //    mainCmd->dispatch(NumElements, 1, 1);
-    mainCmd.end();
+    mainCmd->end();
 
 #if 0
     vgw::Fence fence;

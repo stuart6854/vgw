@@ -32,7 +32,7 @@ namespace vgw::internal
         return createResult.value;
     }
 
-    auto internal_cmd_buffers_allocate(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<vk::CommandBuffer>, ResultCode>
+    auto internal_cmd_buffers_allocate(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>
     {
         auto deviceResult = internal_device_get();
         if (!deviceResult)
@@ -63,14 +63,16 @@ namespace vgw::internal
         }
         const auto cmdBuffers = allocResult.value;
 
+        std::vector<CommandBuffer> outCmdBuffers{};
         for (auto cmd : cmdBuffers)
         {
-            deviceRef.cmdBufferMap[cmd] = CmdBufferData{ pool, cmd };
+            deviceRef.cmdBufferMap[cmd] = CmdBufferData{ pool, std::make_unique<CommandBuffer_T>(cmd) };
+            outCmdBuffers.push_back(deviceRef.cmdBufferMap.at(cmd).cmd.get());
         }
-        return cmdBuffers;
+        return outCmdBuffers;
     }
 
-    void internal_cmd_buffers_free(const std::vector<vk::CommandBuffer>& cmdBuffers)
+    void internal_cmd_buffers_free(const std::vector<CommandBuffer>& cmdBuffers)
     {
         auto deviceResult = internal_device_get();
         if (!deviceResult)
@@ -81,9 +83,11 @@ namespace vgw::internal
 
         for (const auto& cmd : cmdBuffers)
         {
-            auto pool = deviceRef.cmdBufferMap.at(cmd).pool;
-            deviceRef.device.free(pool, cmd);
-            deviceRef.cmdBufferMap.erase(cmd);
+            auto vkCmd = static_cast<vk::CommandBuffer>(*cmd);
+            auto pool = deviceRef.cmdBufferMap.at(vkCmd).pool;
+
+            deviceRef.device.free(pool, vkCmd);
+            deviceRef.cmdBufferMap.erase(vkCmd);
         }
     }
 }

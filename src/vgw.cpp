@@ -51,14 +51,52 @@ namespace vgw
         return internal::internal_pipeline_compute_create(pipelineInfo);
     }
 
-    auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<vk::CommandBuffer>, ResultCode>
+    auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>
     {
         return internal::internal_cmd_buffers_allocate(allocInfo);
     }
 
-    auto free_command_buffers(const std::vector<vk::CommandBuffer>& cmdBuffers)
+    auto free_command_buffers(const std::vector<CommandBuffer>& cmdBuffers)
     {
         return internal::internal_cmd_buffers_free(cmdBuffers);
+    }
+
+    void CommandBuffer_T::reset()
+    {
+        m_commandBuffer.reset();
+    }
+
+    void CommandBuffer_T::begin(const vk::CommandBufferBeginInfo& beginInfo)
+    {
+        m_commandBuffer.begin(beginInfo);
+    }
+
+    void CommandBuffer_T::end()
+    {
+        m_commandBuffer.end();
+    }
+
+    void CommandBuffer_T::begin_pass() {}
+
+    void CommandBuffer_T::end_pass() {}
+
+    void CommandBuffer_T::set_viewport() {}
+
+    void CommandBuffer_T::set_scissor() {}
+
+    void CommandBuffer_T::bind_pipeline(vk::Pipeline pipeline) {}
+
+    void CommandBuffer_T::bind_vertex_buffer() {}
+
+    void CommandBuffer_T::bind_index_buffer() {}
+
+    void CommandBuffer_T::draw() {}
+
+    void CommandBuffer_T::draw_indexed() {}
+
+    void CommandBuffer_T::dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ)
+    {
+        m_commandBuffer.dispatch(groupCountX, groupCountY, groupCountZ);
     }
 
 }

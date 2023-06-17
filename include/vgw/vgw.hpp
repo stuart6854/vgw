@@ -66,14 +66,63 @@ namespace vgw
     };
     auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
 
+    using CommandBuffer = struct CommandBuffer_T*;
     struct CmdBufferAllocInfo
     {
         std::uint32_t count{};
         vk::CommandBufferLevel level{};
         vk::CommandPoolCreateFlagBits poolFlags{};
     };
-    auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<vk::CommandBuffer>, ResultCode>;
-    auto free_command_buffers(const std::vector<vk::CommandBuffer>& cmdBuffers);
+    auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>;
+    auto free_command_buffers(const std::vector<CommandBuffer>& cmdBuffers);
+
+    class CommandBuffer_T
+    {
+    public:
+        CommandBuffer_T() = default;
+        CommandBuffer_T(std::nullptr_t) noexcept {}
+        CommandBuffer_T(vk::CommandBuffer commandBuffer) : m_commandBuffer(commandBuffer) {}
+
+        auto operator=(std::nullptr_t) noexcept -> CommandBuffer_T&
+        {
+            m_commandBuffer = nullptr;
+            return *this;
+        }
+        auto operator=(vk::CommandBuffer commandBuffer) noexcept -> CommandBuffer_T&
+        {
+            m_commandBuffer = commandBuffer;
+            return *this;
+        }
+
+        auto operator<=>(const CommandBuffer_T&) const = default;
+
+        void reset();
+        void begin(const vk::CommandBufferBeginInfo& beginInfo);
+        void end();
+
+        void begin_pass();
+        void end_pass();
+
+        void set_viewport();
+        void set_scissor();
+
+        void bind_pipeline(vk::Pipeline pipeline);
+        void bind_vertex_buffer();
+        void bind_index_buffer();
+
+        void draw();
+        void draw_indexed();
+        void dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ);
+
+        operator vk::CommandBuffer() const noexcept { return m_commandBuffer; }
+
+        explicit operator bool() const noexcept { return m_commandBuffer; }
+
+        bool operator!() const noexcept { return !m_commandBuffer; }
+
+    private:
+        vk::CommandBuffer m_commandBuffer;
+    };
 
 }
 
