@@ -3,6 +3,7 @@
 #include "vgw/vgw.hpp"
 #include "internal_core.hpp"
 #include "internal_pipelines.hpp"
+#include "internal_buffers.hpp"
 #include "internal_command_buffers.hpp"
 
 #include <vulkan/vulkan.hpp>
@@ -29,6 +30,7 @@ namespace vgw::internal
         std::unordered_map<std::size_t, vk::DescriptorSetLayout> setLayoutMap;
         std::unordered_map<std::size_t, vk::PipelineLayout> pipelineLayoutMap;
         std::unordered_map<vk::Pipeline, PipelineData> pipelineMap;
+        std::unordered_map<vk::Buffer, BufferData> bufferMap;
         std::unordered_map<vk::CommandPoolCreateFlags, vk::CommandPool> cmdPoolMap;
         std::unordered_map<vk::CommandBuffer, CmdBufferData> cmdBufferMap;
 

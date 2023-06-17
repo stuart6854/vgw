@@ -95,31 +95,32 @@ int main(int argc, char** argv)
 
     // Create input storage buffer
     const auto NumElements = 10u;
-#if 0
     vgw::BufferInfo inBufferInfo{
         .size = sizeof(std::int32_t) * NumElements,
         .usage = vk::BufferUsageFlagBits::eStorageBuffer,
-        .memoryUsage = vma::MemoryUsage::eAuto,
-        .allocationCreateFlags = vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
+        .memUsage = VMA_MEMORY_USAGE_AUTO,
+        .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
     };
-    auto inBufferHandle = device->create_buffer(inBufferInfo).value();
+    auto inBuffer = vgw::create_buffer(inBufferInfo).value();
+#if 0
     auto* mappedPtr = static_cast<std::int32_t*>(device->map_buffer(inBufferHandle).value());
     for (auto i = 0; i < NumElements; ++i)
     {
         mappedPtr[i] = i;
     }
     device->unmap_buffer(inBufferHandle);
+#endif
 
     // Create output storage buffer
     vgw::BufferInfo outBufferInfo{
         .size = sizeof(std::int32_t) * NumElements,
         .usage = vk::BufferUsageFlagBits::eStorageBuffer,
-        .memoryUsage = vma::MemoryUsage::eAuto,
-        .allocationCreateFlags = vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
+        .memUsage = VMA_MEMORY_USAGE_AUTO,
+        .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
     };
-    auto outBufferHandle = device->create_buffer(outBufferInfo).value();
-    auto& outBufferRef = device->get_buffer(outBufferHandle).value().get();
+    auto outBufferHandle = vgw::create_buffer(outBufferInfo).value();
 
+#if 0
     auto descriptorSet = std::move(device->create_descriptor_sets(1, setLayout)[0]);
 
     device->bind_buffer(descriptorSet.get(), 0, vk::DescriptorType::eStorageBuffer, inBufferHandle, 0, inBufferInfo.size);
@@ -139,7 +140,7 @@ int main(int argc, char** argv)
     mainCmd->begin(beginInfo);
     mainCmd->bind_pipeline(computePipeline);
     //    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
-    mainCmd->dispatch(NumElements, 1, 1);
+//    mainCmd->dispatch(NumElements, 1, 1);
     mainCmd->end();
 
 #if 0

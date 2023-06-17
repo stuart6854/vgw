@@ -66,6 +66,16 @@ namespace vgw
     };
     auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
 
+    struct BufferInfo
+    {
+        std::size_t size{};
+        vk::BufferUsageFlags usage{};
+        VmaMemoryUsage memUsage{};
+        VmaAllocationCreateFlags allocFlags{};
+    };
+    auto create_buffer(const BufferInfo& bufferInfo) -> std::expected<vk::Buffer, ResultCode>;
+    void destroy_buffer(vk::Buffer buffer);
+
     using CommandBuffer = struct CommandBuffer_T*;
     struct CmdBufferAllocInfo
     {

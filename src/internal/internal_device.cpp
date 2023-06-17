@@ -129,6 +129,12 @@ namespace vgw::internal
 
     void DeviceData::destroy()
     {
+        for (const auto& [_, data] : bufferMap)
+        {
+            vmaDestroyBuffer(allocator, data.buffer, data.allocation);
+        }
+        bufferMap.clear();
+
         for (const auto& [_, pool] : cmdPoolMap)
         {
             device.destroy(pool);

@@ -12,6 +12,7 @@
     #define NOMINMAX
 #endif
 #include <vulkan/vulkan.hpp>
+#include <vma/vk_mem_alloc.h>
 
 namespace vgw
 {
