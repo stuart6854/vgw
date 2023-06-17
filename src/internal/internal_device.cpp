@@ -160,6 +160,9 @@ namespace vgw::internal
         }
         setLayoutMap.clear();
 
+        device.destroy(descriptorPool);
+        descriptorPool = nullptr;
+
         vmaDestroyAllocator(allocator);
         allocator = nullptr;
 
@@ -295,11 +298,25 @@ namespace vgw::internal
             return ResultCode::eFailedToCreate;
         }
 
+        vk::DescriptorPoolCreateInfo setPoolCreateInfo{};
+        setPoolCreateInfo.setMaxSets(deviceInfo.maxDescriptorSets);
+        setPoolCreateInfo.setPoolSizes(deviceInfo.descriptorPoolSizes);
+        auto setPoolResult = device.createDescriptorPool(setPoolCreateInfo);
+        if (setPoolResult.result != vk::Result::eSuccess)
+        {
+            device.destroy();
+
+            log_error("Failed to create vma::DescriptorPool!");
+            return ResultCode::eFailedToCreate;
+        }
+        auto descriptorPool = setPoolResult.value;
+
         contextRef.device = std::make_unique<DeviceData>();
         contextRef.device->context = &contextRef;
         contextRef.device->physicalDevice = physicalDevice;
         contextRef.device->device = device;
         contextRef.device->allocator = allocator;
+        contextRef.device->descriptorPool = descriptorPool;
         contextRef.device->queues = queues;
 
         return ResultCode::eSuccess;

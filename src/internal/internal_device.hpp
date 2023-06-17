@@ -26,6 +26,7 @@ namespace vgw::internal
         std::vector<vk::Queue> queues;
 
         VmaAllocator allocator;
+        vk::DescriptorPool descriptorPool;
 
         std::unordered_map<std::size_t, vk::DescriptorSetLayout> setLayoutMap;
         std::unordered_map<std::size_t, vk::PipelineLayout> pipelineLayoutMap;
