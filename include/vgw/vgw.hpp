@@ -79,6 +79,13 @@ namespace vgw
     auto map_buffer(vk::Buffer buffer) -> std::expected<void*, ResultCode>;
     void unmap_buffer(vk::Buffer buffer);
 
+    struct SetAllocInfo
+    {
+        vk::DescriptorSetLayout layout{};
+        std::uint32_t count{};
+    };
+    auto allocate_sets(const SetAllocInfo& allocInfo) -> std::expected<std::vector<vk::DescriptorSet>, ResultCode>;
+    void free_sets(const std::vector<vk::DescriptorSet>& sets);
     using CommandBuffer = struct CommandBuffer_T*;
     struct CmdBufferAllocInfo
     {

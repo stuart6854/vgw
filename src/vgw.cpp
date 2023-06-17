@@ -6,6 +6,7 @@
 #include "internal/internal_layouts.hpp"
 #include "internal/internal_pipelines.hpp"
 #include "internal/internal_buffers.hpp"
+#include "internal/internal_sets.hpp"
 #include "internal/internal_command_buffers.hpp"
 
 #include <vulkan/vulkan_hash.hpp>
@@ -72,6 +73,15 @@ namespace vgw
         internal::internal_buffer_unmap(buffer);
     }
 
+    auto allocate_sets(const SetAllocInfo& allocInfo) -> std::expected<std::vector<vk::DescriptorSet>, ResultCode>
+    {
+        return internal::internal_sets_allocate(allocInfo);
+    }
+
+    void free_sets(const std::vector<vk::DescriptorSet>& sets)
+    {
+        internal::internal_sets_free(sets);
+    }
     auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>
     {
         return internal::internal_cmd_buffers_allocate(allocInfo);

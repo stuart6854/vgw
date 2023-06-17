@@ -118,9 +118,13 @@ int main(int argc, char** argv)
     };
     auto outBufferHandle = vgw::create_buffer(outBufferInfo).value();
 
-#if 0
-    auto descriptorSet = std::move(device->create_descriptor_sets(1, setLayout)[0]);
+    vgw::SetAllocInfo setAllocInfo{
+        .layout = { setLayout },
+        .count = 1,
+    };
+    auto descriptorSet = vgw::allocate_sets(setAllocInfo).value()[0];
 
+#if 0
     device->bind_buffer(descriptorSet.get(), 0, vk::DescriptorType::eStorageBuffer, inBufferHandle, 0, inBufferInfo.size);
     device->bind_buffer(descriptorSet.get(), 1, vk::DescriptorType::eStorageBuffer, outBufferHandle, 0, outBufferInfo.size);
 
