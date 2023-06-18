@@ -154,6 +154,13 @@ namespace vgw::internal
         auto& contextRef = getResult.value().get();
 
         contextRef.device = nullptr;
+
+        for (auto surface : contextRef.surfaces)
+        {
+            contextRef.instance.destroy(surface);
+        }
+        contextRef.surfaces.clear();
+
         contextRef.instance.destroy(contextRef.messenger);
         contextRef.instance.destroy();
 

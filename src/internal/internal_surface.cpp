@@ -27,6 +27,8 @@ namespace vgw::internal
             return std::unexpected(ResultCode::eFailedToCreate);
         }
         auto surface = surfaceResult.value;
+
+        contextRef.surfaces.insert(surface);
         return surface;
     }
 

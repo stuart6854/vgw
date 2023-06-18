@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <expected>
+#include <unordered_set>
 
 namespace vgw::internal
 {
@@ -16,6 +17,8 @@ namespace vgw::internal
         vk::DynamicLoader loader{};
         vk::Instance instance{};
         vk::DebugUtilsMessengerEXT messenger{};
+
+        std::unordered_set<vk::SurfaceKHR> surfaces{};
 
         std::unique_ptr<DeviceData> device{ nullptr };
 
