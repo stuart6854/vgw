@@ -8,6 +8,7 @@
 #include "internal/internal_buffers.hpp"
 #include "internal/internal_sets.hpp"
 #include "internal/internal_command_buffers.hpp"
+#include "internal/internal_synchronisation.hpp"
 
 #include <vulkan/vulkan_hash.hpp>
 
@@ -158,6 +159,21 @@ namespace vgw
     void CommandBuffer_T::dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ)
     {
         m_commandBuffer.dispatch(groupCountX, groupCountY, groupCountZ);
+    }
+
+    auto create_fence(const FenceInfo& fenceInfo) -> std::expected<vk::Fence, ResultCode>
+    {
+        return internal::internal_fence_create(fenceInfo);
+    }
+
+    void destroy_fence(vk::Fence fence)
+    {
+        internal::internal_fence_destroy(fence);
+    }
+
+    void wait_on_fence(vk::Fence fence)
+    {
+        internal::internal_fence_wait(fence);
     }
 
 }

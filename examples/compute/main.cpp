@@ -154,11 +154,9 @@ int main(int argc, char** argv)
     mainCmd->dispatch(NumElements, 1, 1);
     mainCmd->end();
 
-#if 0
-    vgw::Fence fence;
-    device->submit(0, *mainCmd, &fence);
-    fence.wait();
-#endif
+    auto fence = vgw::create_fence({}).value();
+    //    device->submit(0, *mainCmd, &fence);
+    vgw::wait_on_fence(fence);
 
     // Print storage buffer contents
     mappedPtr = static_cast<std::int32_t*>(vgw::map_buffer(inBuffer).value());
@@ -168,7 +166,6 @@ int main(int argc, char** argv)
     }
     vgw::unmap_buffer(inBuffer);
     std::cout << "\n";
-
 
     mappedPtr = static_cast<std::int32_t*>(vgw::map_buffer(outBuffer).value());
     for (auto i = 0; i < NumElements; ++i)

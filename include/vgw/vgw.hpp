@@ -161,6 +161,15 @@ namespace vgw
         vk::Pipeline m_boundPipeline;
     };
 
+    struct FenceInfo
+    {
+        vk::FenceCreateFlags flags{};
+    };
+    auto create_fence(const FenceInfo& fenceInfo) -> std::expected<vk::Fence, ResultCode>;
+    void destroy_fence(vk::Fence fence);
+
+    void wait_on_fence(vk::Fence fence);
+
 }
 
 namespace std

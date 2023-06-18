@@ -13,6 +13,7 @@
 
 #include <expected>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace vgw::internal
 {
@@ -38,6 +39,8 @@ namespace vgw::internal
 
         std::vector<vk::WriteDescriptorSet> setWrites;
         std::vector<SetWriteObject> setWriteObjects;
+
+        std::unordered_set<vk::Fence> fences;
 
         ~DeviceData();
 
