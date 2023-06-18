@@ -21,6 +21,7 @@ namespace vgw::internal
         }
 
         vk::CommandPoolCreateInfo poolCreateInfo{};
+        poolCreateInfo.setFlags(poolFlags);
         auto createResult = deviceRef.device.createCommandPool(poolCreateInfo);
         if (createResult.result != vk::Result::eSuccess)
         {
