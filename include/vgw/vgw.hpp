@@ -161,6 +161,14 @@ namespace vgw
         vk::Pipeline m_boundPipeline;
     };
 
+    struct SubmitInfo
+    {
+        std::uint32_t queueIndex{};
+        std::vector<vk::CommandBuffer> cmdBuffers{};
+        vk::Fence signalFence{};
+    };
+    void submit(const SubmitInfo& submitInfo);
+
     struct FenceInfo
     {
         vk::FenceCreateFlags flags{};

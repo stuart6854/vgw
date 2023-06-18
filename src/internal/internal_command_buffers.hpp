@@ -16,4 +16,6 @@ namespace vgw::internal
     };
     auto internal_cmd_buffers_allocate(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>;
     void internal_cmd_buffers_free(const std::vector<CommandBuffer>& cmdBuffers);
+
+    void internal_submit(const SubmitInfo& submitInfo);
 }

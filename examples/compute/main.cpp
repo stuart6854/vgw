@@ -155,7 +155,12 @@ int main(int argc, char** argv)
     mainCmd->end();
 
     auto fence = vgw::create_fence({}).value();
-    //    device->submit(0, *mainCmd, &fence);
+    vgw::SubmitInfo submitInfo{
+        .queueIndex = 0,
+        .cmdBuffers = { *mainCmd },
+        .signalFence = fence,
+    };
+    vgw::submit(submitInfo);
     vgw::wait_on_fence(fence);
 
     // Print storage buffer contents

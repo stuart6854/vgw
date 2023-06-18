@@ -90,4 +90,21 @@ namespace vgw::internal
             deviceRef.cmdBufferMap.erase(vkCmd);
         }
     }
+
+    void internal_submit(const SubmitInfo& submitInfo)
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return;
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        auto queue = deviceRef.queues.at(submitInfo.queueIndex);
+
+        vk::SubmitInfo vkSubmitInfo{};
+        vkSubmitInfo.setCommandBuffers(submitInfo.cmdBuffers);
+        queue.submit(vkSubmitInfo, submitInfo.signalFence);
+    }
 }

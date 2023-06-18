@@ -161,6 +161,11 @@ namespace vgw
         m_commandBuffer.dispatch(groupCountX, groupCountY, groupCountZ);
     }
 
+    void submit(const SubmitInfo& submitInfo)
+    {
+        internal::internal_submit(submitInfo);
+    }
+
     auto create_fence(const FenceInfo& fenceInfo) -> std::expected<vk::Fence, ResultCode>
     {
         return internal::internal_fence_create(fenceInfo);
