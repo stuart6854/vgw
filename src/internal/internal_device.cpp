@@ -129,6 +129,8 @@ namespace vgw::internal
 
     void DeviceData::destroy()
     {
+        device.waitIdle();
+
         for (const auto& fence : fences)
         {
             device.destroy(fence);
