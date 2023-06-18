@@ -177,6 +177,7 @@ namespace vgw
     void destroy_fence(vk::Fence fence);
 
     void wait_on_fence(vk::Fence fence);
+    void reset_fence(vk::Fence fence);
 
 }
 

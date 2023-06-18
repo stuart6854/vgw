@@ -10,4 +10,5 @@ namespace vgw::internal
     void internal_fence_destroy(vk::Fence fence);
 
     void internal_fence_wait(vk::Fence fence);
+    void internal_fence_reset(vk::Fence fence);
 }

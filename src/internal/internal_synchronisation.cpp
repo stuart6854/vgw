@@ -53,4 +53,17 @@ namespace vgw::internal
 
         deviceRef.device.waitForFences(fence, true, std::uint64_t(-1));
     }
+
+    void internal_fence_reset(vk::Fence fence)
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return;
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        deviceRef.device.resetFences(fence);
+    }
 }

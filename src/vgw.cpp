@@ -181,6 +181,11 @@ namespace vgw
         internal::internal_fence_wait(fence);
     }
 
+    void reset_fence(vk::Fence fence)
+    {
+        internal::internal_fence_reset(fence);
+    }
+
 }
 
 namespace std
