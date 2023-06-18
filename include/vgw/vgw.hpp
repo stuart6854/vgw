@@ -86,6 +86,20 @@ namespace vgw
     };
     auto allocate_sets(const SetAllocInfo& allocInfo) -> std::expected<std::vector<vk::DescriptorSet>, ResultCode>;
     void free_sets(const std::vector<vk::DescriptorSet>& sets);
+
+    struct SetBufferBindInfo
+    {
+        vk::DescriptorSet set{};
+        std::uint32_t binding{};
+        vk::DescriptorType type{};
+        vk::Buffer buffer{};
+        std::size_t offset{};
+        std::size_t range{};
+    };
+    void bind_buffer_to_set(const SetBufferBindInfo& bindInfo);
+
+    void flush_set_writes();
+
     using CommandBuffer = struct CommandBuffer_T*;
     struct CmdBufferAllocInfo
     {

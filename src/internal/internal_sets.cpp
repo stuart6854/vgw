@@ -32,11 +32,63 @@ namespace vgw::internal
         auto deviceResult = internal_device_get();
         if (!deviceResult)
         {
-            log_warn("Tried to free {} unknown descriptor sets.", sets.size());
+            log_error("Failed to get device.");
             return;
         }
         auto& deviceRef = deviceResult.value().get();
 
         deviceRef.device.free(deviceRef.descriptorPool, sets);
     }
+
+    void internal_sets_bind_buffer(const SetBufferBindInfo& bindInfo)
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device.");
+            return;
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        if (deviceRef.setWrites.size() == deviceRef.setWrites.capacity())
+        {
+            internal_sets_flush_writes();
+        }
+
+        vk::DescriptorBufferInfo bufferInfo{};
+        bufferInfo.setBuffer(bindInfo.buffer);
+        bufferInfo.setOffset(bindInfo.offset);
+        bufferInfo.setRange(bindInfo.range);
+        auto& objectRef = deviceRef.setWriteObjects.emplace_back(bufferInfo);
+        auto& bufferInfoRef = std::get<vk::DescriptorBufferInfo>(objectRef);
+
+        auto& writeRef = deviceRef.setWrites.emplace_back();
+        writeRef.setDstSet(bindInfo.set);
+        writeRef.setDstBinding(bindInfo.binding);
+        writeRef.setDstArrayElement(0);
+        writeRef.setDescriptorCount(1);
+        writeRef.setDescriptorType(bindInfo.type);
+        writeRef.setPBufferInfo(&bufferInfoRef);
+    }
+
+    void internal_sets_flush_writes()
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device.");
+            return;
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        if (deviceRef.setWrites.empty())
+        {
+            return;
+        }
+
+        deviceRef.device.updateDescriptorSets(deviceRef.setWrites, {});
+        deviceRef.setWrites.clear();
+        deviceRef.setWriteObjects.clear();
+    }
+
 }

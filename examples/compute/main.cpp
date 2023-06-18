@@ -116,7 +116,7 @@ int main(int argc, char** argv)
         .memUsage = VMA_MEMORY_USAGE_AUTO,
         .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
     };
-    auto outBufferHandle = vgw::create_buffer(outBufferInfo).value();
+    auto outBuffer = vgw::create_buffer(outBufferInfo).value();
 
     vgw::SetAllocInfo setAllocInfo{
         .layout = { setLayout },
@@ -124,12 +124,21 @@ int main(int argc, char** argv)
     };
     auto descriptorSet = vgw::allocate_sets(setAllocInfo).value()[0];
 
-#if 0
-    device->bind_buffer(descriptorSet.get(), 0, vk::DescriptorType::eStorageBuffer, inBufferHandle, 0, inBufferInfo.size);
-    device->bind_buffer(descriptorSet.get(), 1, vk::DescriptorType::eStorageBuffer, outBufferHandle, 0, outBufferInfo.size);
+    vgw::SetBufferBindInfo bufferBindInfo{
+        .set = descriptorSet,
+        .binding = 0,
+        .type = vk::DescriptorType::eStorageBuffer,
+        .buffer = inBuffer,
+        .offset = 0,
+        .range = inBufferInfo.size,
+    };
+    vgw::bind_buffer_to_set(bufferBindInfo);
 
-    device->flush_descriptor_writes();
-#endif
+    bufferBindInfo.binding = 1;
+    bufferBindInfo.buffer = outBuffer;
+    vgw::bind_buffer_to_set(bufferBindInfo);
+
+    vgw::flush_set_writes();
 
     vgw::CmdBufferAllocInfo cmdAllocInfo{
         1,

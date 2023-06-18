@@ -82,6 +82,17 @@ namespace vgw
     {
         internal::internal_sets_free(sets);
     }
+
+    void bind_buffer_to_set(const SetBufferBindInfo& bindInfo)
+    {
+        internal::internal_sets_bind_buffer(bindInfo);
+    }
+
+    void flush_set_writes()
+    {
+        internal::internal_sets_flush_writes();
+    }
+
     auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>
     {
         return internal::internal_cmd_buffers_allocate(allocInfo);

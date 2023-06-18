@@ -318,6 +318,8 @@ namespace vgw::internal
         contextRef.device->allocator = allocator;
         contextRef.device->descriptorPool = descriptorPool;
         contextRef.device->queues = queues;
+        contextRef.device->setWrites.reserve(MAX_SET_WRITES_COUNT);
+        contextRef.device->setWriteObjects.reserve(MAX_SET_WRITES_COUNT);
 
         return ResultCode::eSuccess;
     }
