@@ -91,4 +91,20 @@ namespace vgw::internal
         deviceRef.setWriteObjects.clear();
     }
 
+    void internal_sets_bind(vk::CommandBuffer cmdBuffer,
+                            vk::Pipeline pipeline,
+                            std::uint32_t firstSet,
+                            const std::vector<vk::DescriptorSet>& sets)
+    {
+        auto getResult = internal_pipeline_get(pipeline);
+        if (!getResult)
+        {
+            log_error("Failed to get pipeline!");
+            return;
+        }
+        auto& pipelineRef = getResult.value().get();
+
+        cmdBuffer.bindDescriptorSets(pipelineRef.bindPoint, pipelineRef.layout, firstSet, sets, {});
+    }
+
 }

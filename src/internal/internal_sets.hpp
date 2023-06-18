@@ -17,4 +17,9 @@ namespace vgw::internal
     void internal_sets_bind_buffer(const SetBufferBindInfo& bindInfo);
 
     void internal_sets_flush_writes();
+
+    void internal_sets_bind(vk::CommandBuffer cmdBuffer,
+                            vk::Pipeline pipeline,
+                            std::uint32_t firstSet,
+                            const std::vector<vk::DescriptorSet>& sets);
 }

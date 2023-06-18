@@ -137,6 +137,16 @@ namespace vgw
         m_boundPipeline = pipeline;
     }
 
+    void CommandBuffer_T::bind_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& sets)
+    {
+        if (!m_boundPipeline)
+        {
+            internal::log_error("No pipeline is bound!");
+            return;
+        }
+        internal::internal_sets_bind(m_commandBuffer, m_boundPipeline, firstSet, sets);
+    }
+
     void CommandBuffer_T::bind_vertex_buffer() {}
 
     void CommandBuffer_T::bind_index_buffer() {}

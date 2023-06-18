@@ -141,6 +141,7 @@ namespace vgw
         void set_scissor();
 
         void bind_pipeline(vk::Pipeline pipeline);
+        void bind_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& sets);
         void bind_vertex_buffer();
         void bind_index_buffer();
 

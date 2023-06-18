@@ -150,7 +150,7 @@ int main(int argc, char** argv)
     vk::CommandBufferBeginInfo beginInfo{};
     mainCmd->begin(beginInfo);
     mainCmd->bind_pipeline(computePipeline);
-    //    mainCmd->bind_descriptor_sets(0, { descriptorSet.get() });
+    mainCmd->bind_sets(0, { descriptorSet });
     //    mainCmd->dispatch(NumElements, 1, 1);
     mainCmd->end();
 
