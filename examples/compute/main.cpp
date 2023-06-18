@@ -151,32 +151,32 @@ int main(int argc, char** argv)
     mainCmd->begin(beginInfo);
     mainCmd->bind_pipeline(computePipeline);
     mainCmd->bind_sets(0, { descriptorSet });
-    //    mainCmd->dispatch(NumElements, 1, 1);
+    mainCmd->dispatch(NumElements, 1, 1);
     mainCmd->end();
 
 #if 0
     vgw::Fence fence;
     device->submit(0, *mainCmd, &fence);
     fence.wait();
-    fence.reset();
+#endif
 
     // Print storage buffer contents
-    mappedPtr = static_cast<std::int32_t*>(device->map_buffer(inBufferHandle).value());
+    mappedPtr = static_cast<std::int32_t*>(vgw::map_buffer(inBuffer).value());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
-    std::cout << std::endl;
-    device->unmap_buffer(inBufferHandle);
+    vgw::unmap_buffer(inBuffer);
+    std::cout << "\n";
 
-    mappedPtr = static_cast<std::int32_t*>(device->map_buffer(outBufferHandle).value());
+
+    mappedPtr = static_cast<std::int32_t*>(vgw::map_buffer(outBuffer).value());
     for (auto i = 0; i < NumElements; ++i)
     {
         std::cout << mappedPtr[i] << " ";
     }
-    std::cout << std::endl;
-    device->unmap_buffer(outBufferHandle);
-#endif
+    vgw::unmap_buffer(outBuffer);
+    std::cout << "\n";
 
     vgw::destroy_device();
     vgw::destroy_context();
