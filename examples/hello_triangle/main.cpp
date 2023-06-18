@@ -65,10 +65,9 @@ int main(int argc, char** argv)
         throw std::runtime_error("Failed to initialise VGW context!");
     }
 
-#if 0
     auto* windowHwnd = glfwGetWin32Window(window);
-    auto surface = context->windowHwnd(windowHwnd);
-#endif
+    auto surface = vgw::create_surface(windowHwnd);
+
     vgw::DeviceInfo deviceInfo{
         .wantedQueues = {
             vk::QueueFlagBits::eGraphics, // Graphics Queue

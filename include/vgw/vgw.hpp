@@ -35,6 +35,8 @@ namespace vgw
     auto initialise_context(const ContextInfo& contextInfo) -> ResultCode;
     void destroy_context();
 
+    auto create_surface(void* platformSurfaceHandle) -> std::expected<vk::SurfaceKHR, ResultCode>;
+
     struct DeviceInfo
     {
         std::vector<vk::QueueFlags> wantedQueues;

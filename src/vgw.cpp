@@ -2,6 +2,7 @@
 
 #include "internal/internal_core.hpp"
 #include "internal/internal_context.hpp"
+#include "internal/internal_surface.hpp"
 #include "internal/internal_device.hpp"
 #include "internal/internal_layouts.hpp"
 #include "internal/internal_pipelines.hpp"
@@ -27,6 +28,11 @@ namespace vgw
     void destroy_context()
     {
         internal::internal_context_destroy();
+    }
+
+    auto create_surface(void* platformSurfaceHandle) -> std::expected<vk::SurfaceKHR, ResultCode>
+    {
+        return internal::internal_surface_create(platformSurfaceHandle);
     }
 
     auto initialise_device(const DeviceInfo& deviceInfo) -> ResultCode
