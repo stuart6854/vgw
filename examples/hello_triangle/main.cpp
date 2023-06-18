@@ -1,4 +1,5 @@
 #include <vgw/vgw.hpp>
+#include <vgw/utility.hpp>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -7,6 +8,36 @@
 #include <GLFW/glfw3native.h>
 
 #include <iostream>
+#include <fstream>
+
+void MessageCallbackFunc(vgw::MessageType msgType, std::string_view msg)
+{
+    if (msgType == vgw::MessageType::eError)
+    {
+        std::cerr << msg << std::endl;
+    }
+    else
+    {
+        std::cout << msg << std::endl;
+    }
+}
+
+auto read_shader_code(const std::string& filename) -> std::optional<std::string>
+{
+    auto fileIn = std::ifstream(filename, std::ios::in | std::ios::binary);
+    if (!fileIn.is_open())
+    {
+        return std::nullopt;
+    }
+
+    std::string buffer;
+    fileIn.seekg(0, std::ios::end);
+    buffer.resize(fileIn.tellg());
+    fileIn.seekg(0, std::ios::beg);
+    fileIn.read(buffer.data(), static_cast<std::uint32_t>(buffer.size()));
+    fileIn.close();
+    return buffer;
+}
 
 constexpr auto WINDOW_WIDTH = 800;
 constexpr auto WINDOW_HEIGHT = 600;
@@ -19,6 +50,8 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     auto* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello Triangle", nullptr, nullptr);
 
+    vgw::set_message_callback(MessageCallbackFunc);
+
     vgw::ContextInfo contextInfo{
         .appName = "_app_name_",
         .appVersion = VK_MAKE_VERSION(1, 0, 0),
@@ -29,22 +62,13 @@ int main(int argc, char** argv)
     };
     if (vgw::initialise_context(contextInfo) != vgw::ResultCode::eSuccess)
     {
-        throw std::runtime_error("Failed to create VGW context!");
+        throw std::runtime_error("Failed to initialise VGW context!");
     }
 
 #if 0
-    auto context = vgw::create_context(contextInfo);
-    if (!context->is_valid())
-    {
-        throw std::runtime_error("Failed to create graphics context!");
-    }
-
-    context->set_log_level(vgw::LogLevel::eDebug);
-    context->set_log_callback(LogCallback);
-
     auto* windowHwnd = glfwGetWin32Window(window);
     auto surface = context->windowHwnd(windowHwnd);
-
+#endif
     vgw::DeviceInfo deviceInfo{
         .wantedQueues = {
             vk::QueueFlagBits::eGraphics, // Graphics Queue
@@ -53,12 +77,12 @@ int main(int argc, char** argv)
         .enableDynamicRendering = true,
         .maxDescriptorSets = 1,
     };
-    auto device = context->create_device(deviceInfo);
-    if (!device->is_valid())
+    if (vgw::initialise_device(deviceInfo) != vgw::ResultCode::eSuccess)
     {
-        throw std::runtime_error("Failed to create graphics device!");
+        throw std::runtime_error("Failed to initialise VGW device!");
     }
 
+#if 0
     vgw::SwapChainInfo swapChainInfo{
         .surface = surface.get(),
         .width = WINDOW_WIDTH,
@@ -66,25 +90,27 @@ int main(int argc, char** argv)
         .vsync = true,
     };
     auto swapChainHandle = device->create_swap_chain(swapChainInfo).value();
+#endif
 
     vgw::SetLayoutInfo setLayoutInfo{
         .bindings = {
             { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
         },
     };
-    auto setLayout = device->get_or_create_set_layout(setLayoutInfo).value();
+    auto setLayout = vgw::get_set_layout(setLayoutInfo).value();
 
     vgw::PipelineLayoutInfo pipelineLayoutInfo{
         .setLayouts = { setLayout },
         .constantRange = {},
     };
-    auto pipelineLayout = device->get_or_create_pipeline_layout(pipelineLayoutInfo).value();
+    auto pipelineLayout = vgw::get_pipeline_layout(pipelineLayoutInfo).value();
 
     // Create graphics pipeline
-    auto vertexCode = vgw::read_shader_code("triangle.vert").value();
-    auto compiledVertexCode = vgw::compile_spirv(vertexCode, shaderc_vertex_shader, "triangle.vert", false).value();
-    auto fragmentCode = vgw::read_shader_code("triangle.frag").value();
-    auto compiledFragmentCode = vgw::compile_spirv(fragmentCode, shaderc_fragment_shader, "triangle.frag", false).value();
+    auto vertexCode = read_shader_code("triangle.vert").value();
+    auto compiledVertexCode = vgw::compile_glsl(vertexCode, vk::ShaderStageFlagBits::eVertex, false, "triangle.vert").value();
+    auto fragmentCode = read_shader_code("triangle.frag").value();
+    auto compiledFragmentCode = vgw::compile_glsl(fragmentCode, vk::ShaderStageFlagBits::eFragment, false, "triangle.frag").value();
+#if 0
     vgw::GraphicsPipelineInfo graphicsPipelineInfo{
         .pipelineLayout = pipelineLayout,
         .vertexCode = compiledVertexCode,
@@ -130,18 +156,35 @@ int main(int argc, char** argv)
                        attachmentImageHandle,
                        { vk::ImageViewType::e2D, { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } },
                        attachmentSampler);
-    device->flush_descriptor_writes();
+#endif
+    vgw::flush_set_writes();
+
+    vgw::CmdBufferAllocInfo cmdAllocInfo{
+        1,
+        vk::CommandBufferLevel::ePrimary,
+        vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+    };
+    vgw::CommandBuffer cmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
+
+    auto fence = vgw::create_fence({ vk::FenceCreateFlagBits::eSignaled }).value();
 
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
+#if 0
         vk::UniqueSemaphore imageAcquireSemaphore{};
         device->acquire_next_swap_chain_image(swapChainHandle, &imageAcquireSemaphore);
+#endif
+
+        vgw::wait_on_fence(fence);
+        vgw::reset_fence(fence);
 
         // Record command buffer
-        auto cmd = std::move(device->create_command_buffers(1, vk::CommandPoolCreateFlagBits::eTransient)[0]);
-        cmd->begin();
+        cmd->reset();
+        vk::CommandBufferBeginInfo beginInfo{};
+        cmd->begin(beginInfo);
+#if 0
         // Render Offscreen
         {
             vgw::TransitionImage attachmentTransition{
@@ -206,21 +249,23 @@ int main(int argc, char** argv)
             };
             cmd->transition_image(swapChainHandle, presentTransition);
         }
+#endif
 
         cmd->end();
 
-        vgw::Fence fence;
-        device->submit(0, *cmd, &fence);
-        fence.wait();
+        vgw::SubmitInfo submitInfo{
+            .queueIndex = 0,
+            .cmdBuffers = { *cmd },
+            .signalFence = fence,
+        };
+        vgw::submit(submitInfo);
 
-        device->present_swap_chain(swapChainHandle, 0);
+        //        device->present_swap_chain(swapChainHandle, 0);
     }
-#endif
 
+    vgw::destroy_device();
     vgw::destroy_context();
 
     glfwDestroyWindow(window);
     glfwTerminate();
-
-    return 0;
 }

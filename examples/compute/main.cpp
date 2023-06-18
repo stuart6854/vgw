@@ -145,7 +145,7 @@ int main(int argc, char** argv)
         vk::CommandBufferLevel::ePrimary,
         vk::CommandPoolCreateFlagBits::eTransient,
     };
-    auto mainCmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
+    vgw::CommandBuffer mainCmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
 
     vk::CommandBufferBeginInfo beginInfo{};
     mainCmd->begin(beginInfo);
