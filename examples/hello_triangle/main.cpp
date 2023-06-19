@@ -167,6 +167,22 @@ int main(int argc, char** argv)
     auto imageReadySemaphore = vgw::create_semaphore().value();
     auto renderCompleteSemaphore = vgw::create_semaphore().value();
 
+    auto swapchainImages = vgw::get_swapchain_images(swapChain).value();
+    std::vector<vk::ImageView> swapchainImageViews(swapchainImages.size());
+    for (int i = 0; i < swapchainImages.size(); ++i)
+    {
+        vgw::ImageViewInfo viewInfo{
+            .image = swapchainImages.at(i),
+            .type = vk::ImageViewType::e2D,
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .mipLevelBase = 0,
+            .mipLevelCount = 1,
+            .arrayLayerBase = 0,
+            .arrayLayerCount = 1,
+        };
+        swapchainImageViews[i] = vgw::create_image_view(viewInfo).value();
+    }
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
