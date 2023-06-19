@@ -106,6 +106,9 @@ namespace vgw::internal
 
         vk::SubmitInfo vkSubmitInfo{};
         vkSubmitInfo.setCommandBuffers(submitInfo.cmdBuffers);
+        vkSubmitInfo.setWaitSemaphores(submitInfo.waitSemaphores);
+        vkSubmitInfo.setWaitDstStageMask(submitInfo.waitStageMasks);
+        vkSubmitInfo.setSignalSemaphores(submitInfo.signalSemaphores);
         queue.submit(vkSubmitInfo, submitInfo.signalFence);
     }
 }

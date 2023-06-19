@@ -207,6 +207,9 @@ namespace vgw
     {
         std::uint32_t queueIndex{};
         std::vector<vk::CommandBuffer> cmdBuffers{};
+        std::vector<vk::Semaphore> waitSemaphores{};
+        std::vector<vk::PipelineStageFlags> waitStageMasks{};
+        std::vector<vk::Semaphore> signalSemaphores{};
         vk::Fence signalFence{};
     };
     void submit(const SubmitInfo& submitInfo);

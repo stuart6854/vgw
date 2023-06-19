@@ -164,7 +164,8 @@ int main(int argc, char** argv)
     vgw::CommandBuffer cmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
 
     auto fence = vgw::create_fence({ vk::FenceCreateFlagBits::eSignaled }).value();
-    auto semaphore = vgw::create_semaphore().value();
+    auto imageReadySemaphore = vgw::create_semaphore().value();
+    auto renderCompleteSemaphore = vgw::create_semaphore().value();
 
     while (!glfwWindowShouldClose(window))
     {
@@ -172,7 +173,7 @@ int main(int argc, char** argv)
 
         vgw::AcquireInfo acquireInfo{
             .swapchain = swapChain,
-            .signalSemaphore = semaphore,
+            .signalSemaphore = imageReadySemaphore,
         };
         vgw::acquire_next_swapchain_image(acquireInfo);
 
@@ -255,6 +256,9 @@ int main(int argc, char** argv)
         vgw::SubmitInfo submitInfo{
             .queueIndex = 0,
             .cmdBuffers = { *cmd },
+            .waitSemaphores = { imageReadySemaphore },
+            .waitStageMasks = { vk::PipelineStageFlagBits::eColorAttachmentOutput },
+            .signalSemaphores = { renderCompleteSemaphore },
             .signalFence = fence,
         };
         vgw::submit(submitInfo);
@@ -262,7 +266,7 @@ int main(int argc, char** argv)
         vgw::PresentInfo presentInfo{
             .queueIndex = 0,
             .swapchain = swapChain,
-            .waitSemaphores = {},
+            .waitSemaphores = { renderCompleteSemaphore },
         };
         vgw::present_swapchain(presentInfo);
     }
