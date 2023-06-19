@@ -175,7 +175,7 @@ int main(int argc, char** argv)
             .swapchain = swapChain,
             .signalSemaphore = imageReadySemaphore,
         };
-        vgw::acquire_next_swapchain_image(acquireInfo);
+        auto imageIndex = vgw::acquire_next_swapchain_image(acquireInfo).value();
 
         vgw::wait_on_fence(fence);
         vgw::reset_fence(fence);

@@ -66,7 +66,7 @@ namespace vgw
         vk::Semaphore signalSemaphore{};
         vk::Fence signalFence{};
     };
-    auto acquire_next_swapchain_image(const AcquireInfo& acquireInfo) -> ResultCode;
+    auto acquire_next_swapchain_image(const AcquireInfo& acquireInfo) -> std::expected<std::uint32_t, ResultCode>;
 
     struct PresentInfo
     {

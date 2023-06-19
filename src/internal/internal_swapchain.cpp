@@ -138,13 +138,13 @@ namespace vgw::internal
         return it->second;
     }
 
-    auto internal_swapchain_acquire_next_image(const AcquireInfo& acquireInfo) -> ResultCode
+    auto internal_swapchain_acquire_next_image(const AcquireInfo& acquireInfo) -> std::expected<std::uint32_t, ResultCode>
     {
         auto deviceResult = internal_device_get();
         if (!deviceResult)
         {
             log_error("Failed to get device!");
-            return deviceResult.error();
+            return std::unexpected(deviceResult.error());
         }
         auto& deviceRef = deviceResult.value().get();
 
@@ -152,7 +152,7 @@ namespace vgw::internal
         if (!swapchainResult)
         {
             log_error("Failed to get swapchain!");
-            return deviceResult.error();
+            return std::unexpected(swapchainResult.error());
         }
         auto& swapchainRef = swapchainResult.value().get();
 
@@ -163,13 +163,13 @@ namespace vgw::internal
 
         if (acquireResult.result == vk::Result::eSuboptimalKHR)
         {
-            return ResultCode::eSwapchainSuboptimal;
+            return std::unexpected(ResultCode::eSwapchainSuboptimal);
         }
         if (acquireResult.result == vk::Result::eErrorOutOfDateKHR)
         {
-            return ResultCode::eSwapchainOutOfDate;
+            return std::unexpected(ResultCode::eSwapchainOutOfDate);
         }
-        return ResultCode::eSuccess;
+        return swapchainRef.imageIndex;
     }
 
     auto internal_swapchain_present(const PresentInfo& presentInfo) -> ResultCode
