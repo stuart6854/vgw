@@ -113,10 +113,11 @@ namespace vgw
     {
         vk::Image image{};
         vk::ImageViewType type{};
-        std::uint32_t mipLevel{};
-        std::uint32_t mipLevelCount{};
-        std::uint32_t arrayLayer{};
-        std::uint32_t arrayLayerCount{};
+        vk::ImageAspectFlags aspectMask{};
+        std::uint32_t mipLevelBase{ 0 };
+        std::uint32_t mipLevelCount{ 1 };
+        std::uint32_t arrayLayerBase{ 0 };
+        std::uint32_t arrayLayerCount{ 1 };
     };
     auto create_image_view(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>;
     void destroy_image_view(vk::ImageView imageView);
