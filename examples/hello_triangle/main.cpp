@@ -164,6 +164,7 @@ int main(int argc, char** argv)
     vgw::CommandBuffer cmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
 
     auto fence = vgw::create_fence({ vk::FenceCreateFlagBits::eSignaled }).value();
+    auto semaphore = vgw::create_semaphore().value();
 
     while (!glfwWindowShouldClose(window))
     {
@@ -171,7 +172,7 @@ int main(int argc, char** argv)
 
         vgw::AcquireInfo acquireInfo{
             .swapchain = swapChain,
-            .signalSemaphore = {},
+            .signalSemaphore = semaphore,
         };
         vgw::acquire_next_swapchain_image(acquireInfo);
 

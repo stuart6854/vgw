@@ -131,6 +131,12 @@ namespace vgw::internal
     {
         device.waitIdle();
 
+        for (const auto& semaphore : semaphores)
+        {
+            device.destroy(semaphore);
+        }
+        semaphores.clear();
+
         for (const auto& fence : fences)
         {
             device.destroy(fence);

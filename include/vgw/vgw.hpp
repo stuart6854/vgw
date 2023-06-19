@@ -209,6 +209,9 @@ namespace vgw
     void wait_on_fence(vk::Fence fence);
     void reset_fence(vk::Fence fence);
 
+    auto create_semaphore() -> std::expected<vk::Semaphore, ResultCode>;
+    void destroy_semaphore(vk::Semaphore semaphore);
+
 }
 
 namespace std

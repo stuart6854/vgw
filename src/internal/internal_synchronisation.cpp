@@ -66,4 +66,42 @@ namespace vgw::internal
 
         deviceRef.device.resetFences(fence);
     }
+
+    auto internal_semaphore_create() -> std::expected<vk::Semaphore, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+        auto semaphoreResult = deviceRef.device.createSemaphore(semaphoreCreateInfo);
+        if (semaphoreResult.result != vk::Result::eSuccess)
+        {
+            log_error("Failed to create vk::Semaphore!");
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+        auto semaphore = semaphoreResult.value;
+
+        deviceRef.semaphores.insert(semaphore);
+        return semaphore;
+    }
+
+    void internal_semaphore_destroy(vk::Semaphore semaphore)
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return;
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        deviceRef.device.destroy(semaphore);
+        deviceRef.semaphores.erase(semaphore);
+    }
+
 }

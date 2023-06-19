@@ -43,6 +43,7 @@ namespace vgw::internal
         std::vector<SetWriteObject> setWriteObjects;
 
         std::unordered_set<vk::Fence> fences;
+        std::unordered_set<vk::Semaphore> semaphores;
 
         ~DeviceData();
 

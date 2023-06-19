@@ -213,6 +213,16 @@ namespace vgw
         internal::internal_fence_reset(fence);
     }
 
+    auto create_semaphore() -> std::expected<vk::Semaphore, ResultCode>
+    {
+        return internal::internal_semaphore_create();
+    }
+
+    void destroy_semaphore(vk::Semaphore semaphore)
+    {
+        internal::internal_semaphore_destroy(semaphore);
+    }
+
 }
 
 namespace std
