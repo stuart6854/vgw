@@ -169,10 +169,11 @@ int main(int argc, char** argv)
     {
         glfwPollEvents();
 
-#if 0
-        vk::UniqueSemaphore imageAcquireSemaphore{};
-        device->acquire_next_swap_chain_image(swapChainHandle, &imageAcquireSemaphore);
-#endif
+        vgw::AcquireInfo acquireInfo{
+            .swapchain = swapChain,
+            .signalSemaphore = {},
+        };
+        vgw::acquire_next_swapchain_image(acquireInfo);
 
         vgw::wait_on_fence(fence);
         vgw::reset_fence(fence);

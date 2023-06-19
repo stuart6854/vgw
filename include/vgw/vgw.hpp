@@ -59,6 +59,15 @@ namespace vgw
     auto create_swapchain(const SwapchainInfo& swapchainInfo) -> std::expected<vk::SwapchainKHR, ResultCode>;
     void destroy_swapchain(vk::SwapchainKHR swapchain);
 
+    struct AcquireInfo
+    {
+        vk::SwapchainKHR swapchain{};
+        std::uint64_t timeout{ std::uint64_t(-1) };
+        vk::Semaphore signalSemaphore{};
+        vk::Fence signalFence{};
+    };
+    auto acquire_next_swapchain_image(const AcquireInfo& acquireInfo) -> ResultCode;
+
     struct PresentInfo
     {
         std::uint32_t queueIndex{};

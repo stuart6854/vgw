@@ -56,6 +56,11 @@ namespace vgw
         internal::internal_swapchain_destroy(swapchain);
     }
 
+    auto acquire_next_swapchain_image(const AcquireInfo& acquireInfo) -> ResultCode
+    {
+        return internal::internal_swapchain_acquire_next_image(acquireInfo);
+    }
+
     auto present_swapchain(const PresentInfo& presentInfo) -> ResultCode
     {
         return internal::internal_swapchain_present(presentInfo);

@@ -30,7 +30,9 @@ namespace vgw
         eInvalidHandle,
         eInvalidIndex,
         eFailedIO,
-        eFailedToCompile
+        eFailedToCompile,
+        eSwapchainSuboptimal,
+        eSwapchainOutOfDate,
     };
 
     template <typename T>

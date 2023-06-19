@@ -137,6 +137,41 @@ namespace vgw::internal
 
         return it->second;
     }
+
+    auto internal_swapchain_acquire_next_image(const AcquireInfo& acquireInfo) -> ResultCode
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return deviceResult.error();
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        auto swapchainResult = internal_swapchain_get(acquireInfo.swapchain);
+        if (!swapchainResult)
+        {
+            log_error("Failed to get swapchain!");
+            return deviceResult.error();
+        }
+        auto& swapchainRef = swapchainResult.value().get();
+
+        auto acquireResult = deviceRef.device.acquireNextImageKHR(
+            acquireInfo.swapchain, acquireInfo.timeout, acquireInfo.signalSemaphore, acquireInfo.signalFence);
+
+        swapchainRef.imageIndex = acquireResult.value;
+
+        if (acquireResult.result == vk::Result::eSuboptimalKHR)
+        {
+            return ResultCode::eSwapchainSuboptimal;
+        }
+        if (acquireResult.result == vk::Result::eErrorOutOfDateKHR)
+        {
+            return ResultCode::eSwapchainOutOfDate;
+        }
+        return ResultCode::eSuccess;
+    }
+
     auto internal_swapchain_present(const PresentInfo& presentInfo) -> ResultCode
     {
         auto deviceResult = internal_device_get();
