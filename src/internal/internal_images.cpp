@@ -27,9 +27,18 @@ namespace vgw::internal
         auto deviceResult = internal_device_get();
         if (!deviceResult)
         {
+            log_error("Failed to get device!");
             return std::unexpected(deviceResult.error());
         }
         auto& deviceRef = deviceResult.value().get();
+
+        auto imageResult = internal_image_get(imageViewInfo.image);
+        if (!imageResult)
+        {
+            log_error("Failed to get image!");
+            return std::unexpected(imageResult.error());
+        }
+        auto& imageRef = imageResult.value().get();
 
         VkBuffer vkBuffer{};
         VmaAllocation allocation{};
@@ -37,7 +46,7 @@ namespace vgw::internal
         vk::ImageViewCreateInfo viewCreateInfo{};
         viewCreateInfo.setImage(imageViewInfo.image);
         viewCreateInfo.setViewType(imageViewInfo.type);
-        viewCreateInfo.setFormat({});
+        viewCreateInfo.setFormat(imageRef.format);
         viewCreateInfo.subresourceRange.setAspectMask(imageViewInfo.aspectMask);
         viewCreateInfo.subresourceRange.setBaseMipLevel(imageViewInfo.mipLevelBase);
         viewCreateInfo.subresourceRange.setLevelCount(imageViewInfo.mipLevelCount);
