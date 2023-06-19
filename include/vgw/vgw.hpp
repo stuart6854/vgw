@@ -109,6 +109,18 @@ namespace vgw
     auto map_buffer(vk::Buffer buffer) -> std::expected<void*, ResultCode>;
     void unmap_buffer(vk::Buffer buffer);
 
+    struct ImageViewInfo
+    {
+        vk::Image image{};
+        vk::ImageViewType type{};
+        std::uint32_t mipLevel{};
+        std::uint32_t mipLevelCount{};
+        std::uint32_t arrayLayer{};
+        std::uint32_t arrayLayerCount{};
+    };
+    auto create_image_view(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>;
+    void destroy_image_view(vk::ImageView imageView);
+
     struct SetAllocInfo
     {
         vk::DescriptorSetLayout layout{};

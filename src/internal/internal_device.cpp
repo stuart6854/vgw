@@ -143,6 +143,12 @@ namespace vgw::internal
         }
         fences.clear();
 
+        for (const auto& view : imageViewMap)
+        {
+            device.destroy(view);
+        }
+        imageViewMap.clear();
+
         for (const auto& [_, data] : bufferMap)
         {
             vmaDestroyBuffer(allocator, data.buffer, data.allocation);

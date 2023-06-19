@@ -8,6 +8,7 @@
 #include "internal/internal_layouts.hpp"
 #include "internal/internal_pipelines.hpp"
 #include "internal/internal_buffers.hpp"
+#include "internal/internal_images.hpp"
 #include "internal/internal_sets.hpp"
 #include "internal/internal_command_buffers.hpp"
 #include "internal/internal_synchronisation.hpp"
@@ -99,6 +100,16 @@ namespace vgw
     void unmap_buffer(vk::Buffer buffer)
     {
         internal::internal_buffer_unmap(buffer);
+    }
+
+    auto create_image_view(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>
+    {
+        return internal::internal_image_view_create(imageViewInfo);
+    }
+
+    void destroy_image_view(vk::ImageView imageView)
+    {
+        internal::internal_image_view_destroy(imageView);
     }
 
     auto allocate_sets(const SetAllocInfo& allocInfo) -> std::expected<std::vector<vk::DescriptorSet>, ResultCode>
