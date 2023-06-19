@@ -59,6 +59,14 @@ namespace vgw
     auto create_swapchain(const SwapchainInfo& swapchainInfo) -> std::expected<vk::SwapchainKHR, ResultCode>;
     void destroy_swapchain(vk::SwapchainKHR swapchain);
 
+    struct PresentInfo
+    {
+        std::uint32_t queueIndex{};
+        vk::SwapchainKHR swapchain{};
+        std::vector<vk::Semaphore> waitSemaphores{};
+    };
+    auto present_swapchain(const PresentInfo& presentInfo) -> ResultCode;
+
     struct SetLayoutInfo
     {
         std::vector<vk::DescriptorSetLayoutBinding> bindings{};

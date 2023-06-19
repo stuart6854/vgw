@@ -120,4 +120,48 @@ namespace vgw::internal
         deviceRef.swapchainMap.erase(swapchain);
     }
 
+    auto internal_swapchain_get(vk::SwapchainKHR swapchain) -> std::expected<std::reference_wrapper<SwapchainData>, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        const auto it = deviceRef.swapchainMap.find(swapchain);
+        if (it == deviceRef.swapchainMap.end())
+        {
+            return std::unexpected(ResultCode::eInvalidHandle);
+        }
+
+        return it->second;
+    }
+    auto internal_swapchain_present(const PresentInfo& presentInfo) -> ResultCode
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return deviceResult.error();
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        auto swapchainResult = internal_swapchain_get(presentInfo.swapchain);
+        if (!swapchainResult)
+        {
+            log_error("Failed to get swapchain!");
+            return deviceResult.error();
+        }
+        auto& swapchainRef = swapchainResult.value().get();
+
+        auto queue = deviceRef.queues.at(presentInfo.queueIndex);
+
+        vk::PresentInfoKHR vkPresentInfo{};
+        vkPresentInfo.setSwapchains(presentInfo.swapchain);
+        vkPresentInfo.setImageIndices(swapchainRef.imageIndex);
+        vkPresentInfo.setWaitSemaphores(presentInfo.waitSemaphores);
+        queue.presentKHR(vkPresentInfo);
+    }
+
 }

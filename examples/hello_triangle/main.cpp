@@ -257,9 +257,12 @@ int main(int argc, char** argv)
         };
         vgw::submit(submitInfo);
 
-#if 0
-        device->present_swap_chain(swapChainHandle, 0);
-#endif
+        vgw::PresentInfo presentInfo{
+            .queueIndex = 0,
+            .swapchain = swapChain,
+            .waitSemaphores = {},
+        };
+        vgw::present_swapchain(presentInfo);
     }
 
     vgw::destroy_device();

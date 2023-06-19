@@ -56,6 +56,11 @@ namespace vgw
         internal::internal_swapchain_destroy(swapchain);
     }
 
+    auto present_swapchain(const PresentInfo& presentInfo) -> ResultCode
+    {
+        return internal::internal_swapchain_present(presentInfo);
+    }
+
     auto get_set_layout(const SetLayoutInfo& layoutInfo) -> std::expected<vk::DescriptorSetLayout, ResultCode>
     {
         return internal::internal_set_layout_get(layoutInfo);
