@@ -57,6 +57,11 @@ namespace vgw
         internal::internal_swapchain_destroy(swapchain);
     }
 
+    auto get_swapchain_images(vk::SwapchainKHR swapchain) -> std::expected<std::vector<vk::Image>, ResultCode>
+    {
+        return internal::internal_swapchain_images_get(swapchain);
+    }
+
     auto acquire_next_swapchain_image(const AcquireInfo& acquireInfo) -> std::expected<std::uint32_t, ResultCode>
     {
         return internal::internal_swapchain_acquire_next_image(acquireInfo);

@@ -4,6 +4,24 @@
 
 namespace vgw::internal
 {
+    auto internal_image_get(vk::Image image) -> std::expected<std::reference_wrapper<ImageData>, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        const auto it = deviceRef.imageMap.find(image);
+        if (it == deviceRef.imageMap.end())
+        {
+            return std::unexpected(ResultCode::eInvalidHandle);
+        }
+
+        return it->second;
+    }
+
     auto internal_image_view_create(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>
     {
         auto deviceResult = internal_device_get();

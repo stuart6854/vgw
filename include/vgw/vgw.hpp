@@ -59,6 +59,8 @@ namespace vgw
     auto create_swapchain(const SwapchainInfo& swapchainInfo) -> std::expected<vk::SwapchainKHR, ResultCode>;
     void destroy_swapchain(vk::SwapchainKHR swapchain);
 
+    auto get_swapchain_images(vk::SwapchainKHR swapchain) -> std::expected<std::vector<vk::Image>, ResultCode>;
+
     struct AcquireInfo
     {
         vk::SwapchainKHR swapchain{};

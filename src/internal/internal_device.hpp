@@ -5,6 +5,7 @@
 #include "internal_swapchain.hpp"
 #include "internal_pipelines.hpp"
 #include "internal_buffers.hpp"
+#include "internal_images.hpp"
 #include "internal_sets.hpp"
 #include "internal_command_buffers.hpp"
 
@@ -36,6 +37,7 @@ namespace vgw::internal
         std::unordered_map<std::size_t, vk::PipelineLayout> pipelineLayoutMap;
         std::unordered_map<vk::Pipeline, PipelineData> pipelineMap;
         std::unordered_map<vk::Buffer, BufferData> bufferMap;
+        std::unordered_map<vk::Image, ImageData> imageMap;
         std::unordered_set<vk::ImageView> imageViewMap;
         std::unordered_map<vk::CommandPoolCreateFlags, vk::CommandPool> cmdPoolMap;
         std::unordered_map<vk::CommandBuffer, CmdBufferData> cmdBufferMap;

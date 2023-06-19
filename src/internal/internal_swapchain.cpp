@@ -103,6 +103,20 @@ namespace vgw::internal
         auto swapchain = createResult.value;
 
         deviceRef.swapchainMap[swapchain] = { swapchainInfo.surface, swapchain };
+
+        auto imagesResult = internal_swapchain_images_get(swapchain);
+        if (!imagesResult)
+        {
+            log_error("Failed to get swapchain images!");
+            return std::unexpected(imagesResult.error());
+        }
+        auto images = imagesResult.value();
+
+        for (auto& image : images)
+        {
+            deviceRef.imageMap[image] = { .image = image, .format = surfaceFormat.format };
+        }
+
         return swapchain;
     }
 
@@ -115,6 +129,19 @@ namespace vgw::internal
             return;
         }
         auto& deviceRef = deviceResult.value().get();
+
+        auto imagesResult = internal_swapchain_images_get(swapchain);
+        if (!imagesResult)
+        {
+            log_error("Failed to get swapchain images!");
+            return;
+        }
+        auto images = imagesResult.value();
+
+        for (auto& image : images)
+        {
+            deviceRef.imageMap.erase(image);
+        }
 
         deviceRef.device.destroy(swapchain);
         deviceRef.swapchainMap.erase(swapchain);
@@ -136,6 +163,34 @@ namespace vgw::internal
         }
 
         return it->second;
+    }
+
+    auto internal_swapchain_images_get(vk::SwapchainKHR swapchain) -> std::expected<std::vector<vk::Image>, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        auto swapchainResult = internal_swapchain_get(swapchain);
+        if (!swapchainResult)
+        {
+            log_error("Failed to get swapchain!");
+            return std::unexpected(swapchainResult.error());
+        }
+        auto& swapchainRef = swapchainResult.value().get();
+
+        auto getResult = deviceRef.device.getSwapchainImagesKHR(swapchain);
+        if (getResult.result != vk::Result::eSuccess)
+        {
+            log_error("Failed to get swapchain images!");
+            return std::unexpected(ResultCode::eFailed);
+        }
+        auto& images = getResult.value;
+        return images;
     }
 
     auto internal_swapchain_acquire_next_image(const AcquireInfo& acquireInfo) -> std::expected<std::uint32_t, ResultCode>

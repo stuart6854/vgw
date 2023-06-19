@@ -17,6 +17,8 @@ namespace vgw::internal
 
     auto internal_swapchain_get(vk::SwapchainKHR swapchain) -> std::expected<std::reference_wrapper<SwapchainData>, ResultCode>;
 
+    auto internal_swapchain_images_get(vk::SwapchainKHR swapchain) -> std::expected<std::vector<vk::Image>, ResultCode>;
+
     auto internal_swapchain_acquire_next_image(const AcquireInfo& acquireInfo) -> std::expected<std::uint32_t, ResultCode>;
     auto internal_swapchain_present(const PresentInfo& presentInfo) -> ResultCode;
 
