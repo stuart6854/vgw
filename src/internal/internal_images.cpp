@@ -17,6 +17,14 @@ namespace vgw::internal
         VmaAllocation allocation{};
 
         vk::ImageViewCreateInfo viewCreateInfo{};
+        viewCreateInfo.setImage(imageViewInfo.image);
+        viewCreateInfo.setViewType(imageViewInfo.type);
+        viewCreateInfo.setFormat({});
+        viewCreateInfo.subresourceRange.setAspectMask(imageViewInfo.aspectMask);
+        viewCreateInfo.subresourceRange.setBaseMipLevel(imageViewInfo.mipLevelBase);
+        viewCreateInfo.subresourceRange.setLevelCount(imageViewInfo.mipLevelCount);
+        viewCreateInfo.subresourceRange.setBaseArrayLayer(imageViewInfo.arrayLayerBase);
+        viewCreateInfo.subresourceRange.setLayerCount(imageViewInfo.arrayLayerCount);
         auto createResult = deviceRef.device.createImageView(viewCreateInfo);
         if (createResult.result != vk::Result::eSuccess)
         {
