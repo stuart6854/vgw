@@ -87,6 +87,11 @@ namespace vgw
         return internal::internal_pipeline_compute_create(pipelineInfo);
     }
 
+    auto create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>
+    {
+        return internal::internal_pipeline_graphics_create(pipelineInfo);
+    }
+
     auto create_buffer(const BufferInfo& bufferInfo) -> std::expected<vk::Buffer, ResultCode>
     {
         return internal::internal_buffer_create(bufferInfo);

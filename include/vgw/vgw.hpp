@@ -98,6 +98,23 @@ namespace vgw
     };
     auto create_compute_pipeline(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
 
+    struct GraphicsPipelineInfo
+    {
+        vk::PipelineLayout layout{};
+        std::vector<std::uint32_t> vertexCode{};
+        std::vector<std::uint32_t> fragmentCode{};
+        std::vector<vk::Format> colorAttachmentFormats;
+        vk::Format depthStencilFormat;
+
+        vk::PrimitiveTopology topology;
+        vk::FrontFace frontFace;
+        vk::CullModeFlags cullMode{ vk::CullModeFlagBits::eNone };
+        float lineWidth{ 1.0f };
+        bool depthTest;
+        bool depthWrite;
+    };
+    auto create_graphics_pipeline(const GraphicsPipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
+
     struct BufferInfo
     {
         std::size_t size{};

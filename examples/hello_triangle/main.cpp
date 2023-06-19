@@ -107,21 +107,21 @@ int main(int argc, char** argv)
     auto compiledVertexCode = vgw::compile_glsl(vertexCode, vk::ShaderStageFlagBits::eVertex, false, "triangle.vert").value();
     auto fragmentCode = read_shader_code("triangle.frag").value();
     auto compiledFragmentCode = vgw::compile_glsl(fragmentCode, vk::ShaderStageFlagBits::eFragment, false, "triangle.frag").value();
-#if 0
     vgw::GraphicsPipelineInfo graphicsPipelineInfo{
-        .pipelineLayout = pipelineLayout,
+        .layout = pipelineLayout,
         .vertexCode = compiledVertexCode,
         .fragmentCode = compiledFragmentCode,
+        .colorAttachmentFormats = { vk::Format::eR8G8B8A8Unorm },
         .topology = vk::PrimitiveTopology::eTriangleList,
         .frontFace = vk::FrontFace::eClockwise,
         .cullMode = vk::CullModeFlagBits::eNone,
         .lineWidth = 1.0f,
         .depthTest = false,
         .depthWrite = false,
-        .colorAttachmentFormats = { vk::Format::eR8G8B8A8Unorm },
     };
-    auto trianglePipelineHandle = device->create_graphics_pipeline(graphicsPipelineInfo).value();
+    auto trianglePipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
 
+#if 0
     vgw::RenderPassInfo renderPassInfo{
         .width = WINDOW_WIDTH,
         .height = WINDOW_HEIGHT,

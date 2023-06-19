@@ -13,6 +13,7 @@ namespace vgw::internal
     };
 
     auto internal_pipeline_compute_create(const ComputePipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
+    auto internal_pipeline_graphics_create(const GraphicsPipelineInfo& pipelineInfo) -> std::expected<vk::Pipeline, ResultCode>;
 
     auto internal_pipeline_get(vk::Pipeline pipeline) -> std::expected<std::reference_wrapper<PipelineData>, ResultCode>;
 
