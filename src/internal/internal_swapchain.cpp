@@ -241,7 +241,7 @@ namespace vgw::internal
         if (!swapchainResult)
         {
             log_error("Failed to get swapchain!");
-            return deviceResult.error();
+            return swapchainResult.error();
         }
         auto& swapchainRef = swapchainResult.value().get();
 
