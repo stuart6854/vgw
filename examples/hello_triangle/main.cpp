@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     }
 
     auto* windowHwnd = glfwGetWin32Window(window);
-    auto surface = vgw::create_surface(windowHwnd);
+    auto surface = vgw::create_surface(windowHwnd).value();
 
     vgw::DeviceInfo deviceInfo{
         .wantedQueues = {
@@ -81,15 +81,13 @@ int main(int argc, char** argv)
         throw std::runtime_error("Failed to initialise VGW device!");
     }
 
-#if 0
-    vgw::SwapChainInfo swapChainInfo{
-        .surface = surface.get(),
+    vgw::SwapchainInfo swapchainInfo{
+        .surface = surface,
         .width = WINDOW_WIDTH,
         .height = WINDOW_HEIGHT,
         .vsync = true,
     };
-    auto swapChainHandle = device->create_swap_chain(swapChainInfo).value();
-#endif
+    auto swapChain = vgw::create_swapchain(swapchainInfo).value();
 
     vgw::SetLayoutInfo setLayoutInfo{
         .bindings = {
@@ -259,7 +257,9 @@ int main(int argc, char** argv)
         };
         vgw::submit(submitInfo);
 
-        //        device->present_swap_chain(swapChainHandle, 0);
+#if 0
+        device->present_swap_chain(swapChainHandle, 0);
+#endif
     }
 
     vgw::destroy_device();

@@ -168,6 +168,12 @@ namespace vgw::internal
         }
         setLayoutMap.clear();
 
+        for (const auto& [_, data] : swapchainMap)
+        {
+            device.destroy(data.swapchain);
+        }
+        swapchainMap.clear();
+
         device.destroy(descriptorPool);
         descriptorPool = nullptr;
 

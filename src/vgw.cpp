@@ -4,6 +4,7 @@
 #include "internal/internal_context.hpp"
 #include "internal/internal_surface.hpp"
 #include "internal/internal_device.hpp"
+#include "internal/internal_swapchain.hpp"
 #include "internal/internal_layouts.hpp"
 #include "internal/internal_pipelines.hpp"
 #include "internal/internal_buffers.hpp"
@@ -43,6 +44,16 @@ namespace vgw
     void destroy_device()
     {
         internal::internal_device_destroy();
+    }
+
+    auto create_swapchain(const SwapchainInfo& swapchainInfo) -> std::expected<vk::SwapchainKHR, ResultCode>
+    {
+        return internal::internal_swapchain_create(swapchainInfo);
+    }
+
+    void destroy_swapchain(vk::SwapchainKHR swapchain)
+    {
+        internal::internal_swapchain_destroy(swapchain);
     }
 
     auto get_set_layout(const SetLayoutInfo& layoutInfo) -> std::expected<vk::DescriptorSetLayout, ResultCode>

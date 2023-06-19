@@ -48,6 +48,17 @@ namespace vgw
     auto initialise_device(const DeviceInfo& deviceInfo) -> ResultCode;
     void destroy_device();
 
+    struct SwapchainInfo
+    {
+        vk::SurfaceKHR surface{};
+        std::uint32_t width{};
+        std::uint32_t height{};
+        bool vsync{};
+        vk::SwapchainKHR oldSwapchain{};
+    };
+    auto create_swapchain(const SwapchainInfo& swapchainInfo) -> std::expected<vk::SwapchainKHR, ResultCode>;
+    void destroy_swapchain(vk::SwapchainKHR swapchain);
+
     struct SetLayoutInfo
     {
         std::vector<vk::DescriptorSetLayoutBinding> bindings{};

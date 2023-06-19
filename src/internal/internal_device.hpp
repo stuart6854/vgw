@@ -2,6 +2,7 @@
 
 #include "vgw/vgw.hpp"
 #include "internal_core.hpp"
+#include "internal_swapchain.hpp"
 #include "internal_pipelines.hpp"
 #include "internal_buffers.hpp"
 #include "internal_sets.hpp"
@@ -30,6 +31,7 @@ namespace vgw::internal
         VmaAllocator allocator;
         vk::DescriptorPool descriptorPool;
 
+        std::unordered_map<vk::SwapchainKHR, SwapchainData> swapchainMap;
         std::unordered_map<std::size_t, vk::DescriptorSetLayout> setLayoutMap;
         std::unordered_map<std::size_t, vk::PipelineLayout> pipelineLayoutMap;
         std::unordered_map<vk::Pipeline, PipelineData> pipelineMap;
