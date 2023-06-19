@@ -160,10 +160,14 @@ namespace vgw
 
     void CommandBuffer_T::end()
     {
+        flush_pending_barriers();
         m_commandBuffer.end();
     }
 
-    void CommandBuffer_T::begin_pass() {}
+    void CommandBuffer_T::begin_pass()
+    {
+        flush_pending_barriers();
+    }
 
     void CommandBuffer_T::end_pass() {}
 
@@ -195,13 +199,54 @@ namespace vgw
 
     void CommandBuffer_T::bind_index_buffer() {}
 
-    void CommandBuffer_T::draw() {}
+    void CommandBuffer_T::draw()
+    {
+        flush_pending_barriers();
+    }
 
-    void CommandBuffer_T::draw_indexed() {}
+    void CommandBuffer_T::draw_indexed()
+    {
+        flush_pending_barriers();
+    }
 
     void CommandBuffer_T::dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ)
     {
+        flush_pending_barriers();
         m_commandBuffer.dispatch(groupCountX, groupCountY, groupCountZ);
+    }
+
+    void CommandBuffer_T::transition_image(const ImageTransitionInfo& transitionInfo)
+    {
+        m_pendingImageTransitions.push_back(transitionInfo);
+    }
+
+    void CommandBuffer_T::flush_pending_barriers()
+    {
+        if (m_pendingImageTransitions.empty())
+        {
+            return;
+        }
+
+        std::vector<vk::ImageMemoryBarrier2> imageBarriers(m_pendingImageTransitions.size());
+        for (int i = 0; i < m_pendingImageTransitions.size(); ++i)
+        {
+            const auto& transition = m_pendingImageTransitions.at(i);
+            auto& barrier = imageBarriers.at(i);
+            barrier.setImage(transition.image);
+            barrier.setOldLayout(transition.oldLayout);
+            barrier.setNewLayout(transition.newLayout);
+            barrier.setSrcAccessMask(transition.srcAccess);
+            barrier.setDstAccessMask(transition.dstAccess);
+            barrier.setSrcStageMask(transition.srcStage);
+            barrier.setDstStageMask(transition.dstStage);
+            barrier.setSubresourceRange(transition.subresourceRange);
+        }
+
+        vk::DependencyInfo depInfo{};
+        depInfo.setImageMemoryBarriers(imageBarriers);
+        m_commandBuffer.pipelineBarrier2(depInfo);
+
+        m_pendingImageTransitions.clear();
     }
 
     void submit(const SubmitInfo& submitInfo)

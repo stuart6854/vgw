@@ -221,10 +221,12 @@ int main(int argc, char** argv)
             cmd->draw(3, 1, 0, 0);
             cmd->end_render_pass();
         }
+#endif
 
         // Render SwapChain
         {
-            vgw::TransitionImage attachmentTransition{
+            vgw::ImageTransitionInfo attachmentTransition{
+                .image = swapchainImages.at(imageIndex),
                 .oldLayout = vk::ImageLayout::eUndefined,
                 .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 .srcAccess = vk::AccessFlagBits2::eNone,
@@ -233,9 +235,10 @@ int main(int argc, char** argv)
                 .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
-            cmd->transition_image(swapChainHandle, attachmentTransition);
+            cmd->transition_image(attachmentTransition);
 
-            vgw::TransitionImage sampledAttachmentTransition{
+#if 0
+            vgw::ImageTransitionInfo sampledAttachmentTransition{
                 .oldLayout = vk::ImageLayout::eAttachmentOptimal,
                 .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
                 .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
@@ -244,8 +247,9 @@ int main(int argc, char** argv)
                 .dstStage = vk::PipelineStageFlagBits2::eFragmentShader,
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
-            cmd->transition_image(attachmentImageHandle, sampledAttachmentTransition);
-
+            cmd->transition_image(sampledAttachmentTransition);
+#endif
+#if 0
             cmd->begin_render_pass(swapChainHandle);
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -253,8 +257,10 @@ int main(int argc, char** argv)
             cmd->bind_descriptor_sets(0, { fullscreenDescriptorSet.get() });
             cmd->draw(3, 1, 0, 0);
             cmd->end_render_pass();
+#endif
 
-            vgw::TransitionImage presentTransition{
+            vgw::ImageTransitionInfo presentTransition{
+                .image = swapchainImages.at(imageIndex),
                 .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 .newLayout = vk::ImageLayout::ePresentSrcKHR,
                 .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
@@ -263,9 +269,8 @@ int main(int argc, char** argv)
                 .dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe,
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
-            cmd->transition_image(swapChainHandle, presentTransition);
+            cmd->transition_image(presentTransition);
         }
-#endif
 
         cmd->end();
 

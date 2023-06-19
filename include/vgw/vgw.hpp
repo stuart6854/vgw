@@ -155,6 +155,18 @@ namespace vgw
     auto allocate_command_buffers(const CmdBufferAllocInfo& allocInfo) -> std::expected<std::vector<CommandBuffer>, ResultCode>;
     auto free_command_buffers(const std::vector<CommandBuffer>& cmdBuffers);
 
+    struct ImageTransitionInfo
+    {
+        vk::Image image{};
+        vk::ImageLayout oldLayout{};
+        vk::ImageLayout newLayout{};
+        vk::AccessFlags2 srcAccess{};
+        vk::AccessFlags2 dstAccess{};
+        vk::PipelineStageFlags2 srcStage{};
+        vk::PipelineStageFlags2 dstStage{};
+        vk::ImageSubresourceRange subresourceRange{};
+    };
+
     class CommandBuffer_T
     {
     public:
@@ -194,6 +206,8 @@ namespace vgw
         void draw_indexed();
         void dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ);
 
+        void transition_image(const ImageTransitionInfo& transitionInfo);
+
         operator vk::CommandBuffer() const noexcept { return m_commandBuffer; }
 
         explicit operator bool() const noexcept { return m_commandBuffer; }
@@ -201,9 +215,13 @@ namespace vgw
         bool operator!() const noexcept { return !m_commandBuffer; }
 
     private:
+        void flush_pending_barriers();
+
+    private:
         vk::CommandBuffer m_commandBuffer;
 
         vk::Pipeline m_boundPipeline;
+        std::vector<ImageTransitionInfo> m_pendingImageTransitions;
     };
 
     struct SubmitInfo
