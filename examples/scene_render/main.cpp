@@ -1,9 +1,9 @@
-// #TODO: Vertex/Index buffers
 // #TODO: Uniform buffers (view & projection)
 // #TODO: Depth buffer
 // #TODO: Basic lighting
 // #TODO: Texturing
 // #TODO: Window resize
+// #TODO: Antialiasing
 
 #include <vgw/vgw.hpp>
 #include <vgw/utility.hpp>
@@ -60,70 +60,15 @@ struct Vertex
     glm::vec3 texCoord;
 };
 
-bool read_obj_model(const std::string& filename, std::vector<Vertex>& outVertices, std::vector<std::uint32_t>& outTriangles)
+bool read_obj_model(const std::string& filename, std::vector<Vertex>& outVertices, std::vector<std::uint32_t>& outTriangles);
+
+struct Mesh
 {
-    tinyobj::ObjReaderConfig readerConfig{};
-    readerConfig.mtl_search_path = "./";  // Path to material files
-    readerConfig.triangulate = true;
-    tinyobj::ObjReader reader{};
-    if (!reader.ParseFromFile(filename, readerConfig))
-    {
-        if (!reader.Error().empty())
-        {
-            std::cerr << reader.Error() << std::endl;
-        }
-        return false;
-    }
-    if (!reader.Warning().empty())
-    {
-        std::cerr << reader.Warning() << std::endl;
-    }
-
-    const auto& attrib = reader.GetAttrib();
-    const auto& shapes = reader.GetShapes();
-    //	const auto& materials = reader.GetMaterials();
-
-    for (const auto& shape : shapes)
-    {
-        std::uint64_t indexOffset{};
-        for (auto faceIndex = 0; faceIndex < shape.mesh.num_face_vertices.size(); ++faceIndex)
-        {
-            auto faceVertexCount = shape.mesh.num_face_vertices[faceIndex];
-            assert(faceVertexCount == 3);
-
-            outTriangles.push_back(outVertices.size());
-            outTriangles.push_back(outVertices.size() + 1);
-            outTriangles.push_back(outVertices.size() + 2);
-            for (auto vertexIndex = 0; vertexIndex < faceVertexCount; ++vertexIndex)
-            {
-                auto& vertex = outVertices.emplace_back();
-
-                const auto idx = shape.mesh.indices[indexOffset + vertexIndex];
-                vertex.pos.x = attrib.vertices[3 * idx.vertex_index + 0];
-                vertex.pos.y = attrib.vertices[3 * idx.vertex_index + 1];
-                vertex.pos.z = attrib.vertices[3 * idx.vertex_index + 2];
-
-                const bool hasNormals = idx.normal_index >= 0;
-                if (hasNormals)
-                {
-                    vertex.normal.x = attrib.normals[3 * idx.normal_index + 0];
-                    vertex.normal.y = attrib.normals[3 * idx.normal_index + 1];
-                    vertex.normal.z = attrib.normals[3 * idx.normal_index + 2];
-                }
-
-                const bool hasTexCoords = idx.texcoord_index >= 0;
-                if (hasTexCoords)
-                {
-                    vertex.texCoord.x = attrib.texcoords[2 * idx.texcoord_index + 0];
-                    vertex.texCoord.y = attrib.texcoords[2 * idx.texcoord_index + 1];
-                }
-            }
-            indexOffset += faceVertexCount;
-        }
-    }
-
-    return true;
-}
+    vk::Buffer vertexBuffer{};
+    vk::Buffer indexBuffer{};
+    std::uint64_t indexCount{};
+};
+auto create_mesh(const std::vector<Vertex>& vertices, const std::vector<std::uint32_t>& indices) -> Mesh;
 
 int main(int argc, char** argv)
 {
@@ -203,7 +148,7 @@ int main(int argc, char** argv)
         .depthTest = false,
         .depthWrite = false,
     };
-    auto trianglePipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
+    auto geometryPipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
 
     std::vector<Vertex> vertices{};
     std::vector<std::uint32_t> triangles{};
@@ -211,6 +156,7 @@ int main(int argc, char** argv)
     {
         throw std::runtime_error("Failed to load OBJ model!");
     }
+    auto mesh = create_mesh(vertices, triangles);
 
     vgw::CmdBufferAllocInfo cmdAllocInfo{
         1,
@@ -279,8 +225,10 @@ int main(int argc, char** argv)
         cmd->begin_pass(swapchainRenderPasses.at(imageIndex));
         cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-        cmd->bind_pipeline(trianglePipeline);
-        cmd->draw(3, 1, 0, 0);
+        cmd->bind_pipeline(geometryPipeline);
+        cmd->bind_vertex_buffer(mesh.vertexBuffer);
+        cmd->bind_index_buffer(mesh.indexBuffer, vk::IndexType::eUint32);
+        cmd->draw_indexed(mesh.indexCount, 1, 0, 0, 0);
         cmd->end_pass();
 
         vgw::ImageTransitionInfo presentTransition{
@@ -320,4 +268,98 @@ int main(int argc, char** argv)
 
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+bool read_obj_model(const std::string& filename, std::vector<Vertex>& outVertices, std::vector<std::uint32_t>& outTriangles)
+{
+    tinyobj::ObjReaderConfig readerConfig{};
+    readerConfig.mtl_search_path = "./";  // Path to material files
+    readerConfig.triangulate = true;
+    tinyobj::ObjReader reader{};
+    if (!reader.ParseFromFile(filename, readerConfig))
+    {
+        if (!reader.Error().empty())
+        {
+            std::cerr << reader.Error() << std::endl;
+        }
+        return false;
+    }
+    if (!reader.Warning().empty())
+    {
+        std::cerr << reader.Warning() << std::endl;
+    }
+
+    const auto& attrib = reader.GetAttrib();
+    const auto& shapes = reader.GetShapes();
+    //	const auto& materials = reader.GetMaterials();
+
+    for (const auto& shape : shapes)
+    {
+        std::uint64_t indexOffset{};
+        for (auto faceIndex = 0; faceIndex < shape.mesh.num_face_vertices.size(); ++faceIndex)
+        {
+            auto faceVertexCount = shape.mesh.num_face_vertices[faceIndex];
+            assert(faceVertexCount == 3);
+
+            outTriangles.push_back(outVertices.size());
+            outTriangles.push_back(outVertices.size() + 1);
+            outTriangles.push_back(outVertices.size() + 2);
+            for (auto vertexIndex = 0; vertexIndex < faceVertexCount; ++vertexIndex)
+            {
+                auto& vertex = outVertices.emplace_back();
+
+                const auto idx = shape.mesh.indices[indexOffset + vertexIndex];
+                vertex.pos.x = attrib.vertices[3 * idx.vertex_index + 0];
+                vertex.pos.y = attrib.vertices[3 * idx.vertex_index + 1];
+                vertex.pos.z = attrib.vertices[3 * idx.vertex_index + 2];
+
+                const bool hasNormals = idx.normal_index >= 0;
+                if (hasNormals)
+                {
+                    vertex.normal.x = attrib.normals[3 * idx.normal_index + 0];
+                    vertex.normal.y = attrib.normals[3 * idx.normal_index + 1];
+                    vertex.normal.z = attrib.normals[3 * idx.normal_index + 2];
+                }
+
+                const bool hasTexCoords = idx.texcoord_index >= 0;
+                if (hasTexCoords)
+                {
+                    vertex.texCoord.x = attrib.texcoords[2 * idx.texcoord_index + 0];
+                    vertex.texCoord.y = attrib.texcoords[2 * idx.texcoord_index + 1];
+                }
+            }
+            indexOffset += faceVertexCount;
+        }
+    }
+
+    return true;
+}
+
+auto create_mesh(const std::vector<Vertex>& vertices, const std::vector<std::uint32_t>& indices) -> Mesh
+{
+    void* mappedPtr{ nullptr };
+
+    vgw::BufferInfo vertexBufferInfo{
+        .size = sizeof(Vertex) * vertices.size(),
+        .usage = vk::BufferUsageFlagBits::eVertexBuffer,
+        .memUsage = VMA_MEMORY_USAGE_AUTO,
+        .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+    };
+    auto vertexBuffer = vgw::create_buffer(vertexBufferInfo).value();
+    mappedPtr = vgw::map_buffer(vertexBuffer).value();
+    std::memcpy(mappedPtr, vertices.data(), vertexBufferInfo.size);
+    vgw::unmap_buffer(vertexBuffer);
+
+    vgw::BufferInfo indexBufferInfo{
+        .size = sizeof(std::uint32_t) * indices.size(),
+        .usage = vk::BufferUsageFlagBits::eIndexBuffer,
+        .memUsage = VMA_MEMORY_USAGE_AUTO,
+        .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+    };
+    auto indexBuffer = vgw::create_buffer(indexBufferInfo).value();
+    mappedPtr = vgw::map_buffer(indexBuffer).value();
+    std::memcpy(mappedPtr, indices.data(), indexBufferInfo.size);
+    vgw::unmap_buffer(indexBuffer);
+
+    return { vertexBuffer, indexBuffer, indices.size() };
 }
