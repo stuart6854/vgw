@@ -190,9 +190,25 @@ namespace vgw
         m_commandBuffer.endRendering();
     }
 
-    void CommandBuffer_T::set_viewport() {}
+    void CommandBuffer_T::set_viewport(float x, float y, float width, float height, float minDepth, float maxDepth)
+    {
+        vk::Viewport viewport{};
+        viewport.setX(x);
+        viewport.setY(y);
+        viewport.setWidth(width);
+        viewport.setHeight(height);
+        viewport.setMinDepth(minDepth);
+        viewport.setMaxDepth(maxDepth);
+        m_commandBuffer.setViewport(0, viewport);
+    }
 
-    void CommandBuffer_T::set_scissor() {}
+    void CommandBuffer_T::set_scissor(std::int32_t x, std::int32_t y, std::uint32_t width, std::uint32_t height)
+    {
+        vk::Rect2D scissor{};
+        scissor.setOffset({ x, y });
+        scissor.setExtent({ width, height });
+        m_commandBuffer.setScissor(0, scissor);
+    }
 
     void CommandBuffer_T::bind_pipeline(vk::Pipeline pipeline)
     {
@@ -218,9 +234,13 @@ namespace vgw
 
     void CommandBuffer_T::bind_index_buffer() {}
 
-    void CommandBuffer_T::draw()
+    void CommandBuffer_T::draw(std::uint32_t vertexCount,
+                               std::uint32_t instanceCount,
+                               std::uint32_t firstVertex,
+                               std::uint32_t firstInstance)
     {
         flush_pending_barriers();
+        m_commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
     void CommandBuffer_T::draw_indexed()
@@ -302,7 +322,6 @@ namespace vgw
     {
         internal::internal_semaphore_destroy(semaphore);
     }
-
 }
 
 namespace std

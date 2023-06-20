@@ -260,9 +260,9 @@ int main(int argc, char** argv)
             cmd->transition_image(sampledAttachmentTransition);
 #endif
             cmd->begin_pass(swapchainRenderPasses.at(imageIndex));
-#if 0
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+#if 0
             cmd->bind_pipeline(fullscreenQuadPipelineHandle);
             cmd->bind_descriptor_sets(0, { fullscreenDescriptorSet.get() });
             cmd->draw(3, 1, 0, 0);
