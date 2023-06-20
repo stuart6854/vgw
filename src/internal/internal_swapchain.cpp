@@ -251,7 +251,17 @@ namespace vgw::internal
         vkPresentInfo.setSwapchains(presentInfo.swapchain);
         vkPresentInfo.setImageIndices(swapchainRef.imageIndex);
         vkPresentInfo.setWaitSemaphores(presentInfo.waitSemaphores);
-        queue.presentKHR(vkPresentInfo);
+        auto presentResult = queue.presentKHR(vkPresentInfo);
+
+        if (presentResult == vk::Result::eSuboptimalKHR)
+        {
+            return ResultCode::eSwapchainSuboptimal;
+        }
+        if (presentResult == vk::Result::eErrorOutOfDateKHR)
+        {
+            return ResultCode::eSwapchainOutOfDate;
+        }
+        return ResultCode::eSuccess;
     }
 
 }
