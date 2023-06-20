@@ -245,9 +245,15 @@ namespace vgw
         internal::internal_sets_bind(m_commandBuffer, m_boundPipeline, firstSet, sets);
     }
 
-    void CommandBuffer_T::bind_vertex_buffer() {}
+    void CommandBuffer_T::bind_vertex_buffer(vk::Buffer buffer)
+    {
+        m_commandBuffer.bindVertexBuffers(0, buffer, { 0 });
+    }
 
-    void CommandBuffer_T::bind_index_buffer() {}
+    void CommandBuffer_T::bind_index_buffer(vk::Buffer buffer, vk::IndexType indexType)
+    {
+        m_commandBuffer.bindIndexBuffer(buffer, 0, indexType);
+    }
 
     void CommandBuffer_T::draw(std::uint32_t vertexCount,
                                std::uint32_t instanceCount,
@@ -258,9 +264,14 @@ namespace vgw
         m_commandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
-    void CommandBuffer_T::draw_indexed()
+    void CommandBuffer_T::draw_indexed(std::uint32_t indexCount,
+                                       std::uint32_t instanceCount,
+                                       std::uint32_t firstIndex,
+                                       std::int32_t vertexOffset,
+                                       std::uint32_t firstInstance)
     {
         flush_pending_barriers();
+        m_commandBuffer.drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
     }
 
     void CommandBuffer_T::dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ)

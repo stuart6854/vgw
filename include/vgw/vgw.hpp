@@ -1,7 +1,5 @@
 // #TODO: Upload to buffers
 // #TODO: Upload to images
-// #TODO: Index/Vertex buffer binding
-// #TODO: Indexed drawing
 // #TODO: Binding images to sets
 // #TODO: Mip-mapping? Generating mip-levels.
 // #TODO: vgw::wait_device_idle() & vgw::wait_queue_idle(std::uint32_t)
@@ -267,11 +265,15 @@ namespace vgw
 
         void bind_pipeline(vk::Pipeline pipeline);
         void bind_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& sets);
-        void bind_vertex_buffer();
-        void bind_index_buffer();
+        void bind_vertex_buffer(vk::Buffer buffer);
+        void bind_index_buffer(vk::Buffer buffer, vk::IndexType indexType);
 
         void draw(std::uint32_t vertexCount, std::uint32_t instanceCount, std::uint32_t firstVertex, std::uint32_t firstInstance);
-        void draw_indexed();
+        void draw_indexed(std::uint32_t indexCount,
+                          std::uint32_t instanceCount,
+                          std::uint32_t firstIndex,
+                          std::int32_t vertexOffset,
+                          std::uint32_t firstInstance);
         void dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ);
 
         void transition_image(const ImageTransitionInfo& transitionInfo);
