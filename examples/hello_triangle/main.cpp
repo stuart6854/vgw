@@ -88,6 +88,7 @@ int main(int argc, char** argv)
         .vsync = true,
     };
     auto swapChain = vgw::create_swapchain(swapchainInfo).value();
+    auto swapchainFormat = vgw::get_swapchain_format(swapChain).value();
 
     vgw::SetLayoutInfo setLayoutInfo{
         .bindings = {
@@ -111,7 +112,7 @@ int main(int argc, char** argv)
         .layout = pipelineLayout,
         .vertexCode = compiledVertexCode,
         .fragmentCode = compiledFragmentCode,
-        .colorAttachmentFormats = { vk::Format::eR8G8B8A8Unorm },
+        .colorAttachmentFormats = { swapchainFormat },
         .topology = vk::PrimitiveTopology::eTriangleList,
         .frontFace = vk::FrontFace::eClockwise,
         .cullMode = vk::CullModeFlagBits::eNone,
@@ -120,63 +121,6 @@ int main(int argc, char** argv)
         .depthWrite = false,
     };
     auto trianglePipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
-
-    vgw::ImageInfo offscreenAttachmentInfo{
-        .type = vk::ImageType::e2D,
-        .width = WINDOW_WIDTH,
-        .height = WINDOW_HEIGHT,
-        .depth = 1,
-        .mipLevels = 1,
-        .format = vk::Format::eR8G8B8A8Unorm,
-        .usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
-    };
-    auto offscreenAttachmentImage = vgw::create_image(offscreenAttachmentInfo).value();
-    vgw::ImageViewInfo offscreenAttachmentViewInfo{
-        .image = offscreenAttachmentImage,
-        .type = vk::ImageViewType::e2D,
-        .aspectMask = vk::ImageAspectFlagBits::eColor,
-    };
-    auto offscreenAttachmentView = vgw::create_image_view(offscreenAttachmentViewInfo).value();
-
-    vgw::RenderPassInfo renderPassInfo{
-        .width = WINDOW_WIDTH,
-        .height = WINDOW_HEIGHT,
-        .colorAttachments = { {
-            .imageView = offscreenAttachmentView,
-            .loadOp = vk::AttachmentLoadOp::eClear,
-            .storeOp = vk::AttachmentStoreOp::eStore,
-            .clearColor = { 1, 0.3f, 0.4f, 1.0f },
-        } },
-    };
-    vgw::RenderPass offscreenRenderPass = vgw::create_render_pass(renderPassInfo).value();
-
-#if 0
-    auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb).value();
-#endif
-    vgw::SetAllocInfo setAllocInfo{
-        .layout = setLayout,
-        .count = 1,
-    };
-    auto fullscreenDescriptorSet = vgw::allocate_sets(setAllocInfo).value()[0];
-
-#if 0
-    vgw::SamplerInfo samplerInfo{
-        .addressModeU = vk::SamplerAddressMode::eRepeat,
-        .addressModeV = vk::SamplerAddressMode::eRepeat,
-        .addressModeW = vk::SamplerAddressMode::eRepeat,
-        .minFilter = vk::Filter::eLinear,
-        .magFilter = vk::Filter::eLinear,
-    };
-    auto attachmentSampler = device->get_or_create_sampler(samplerInfo).value();
-
-    device->bind_image(fullscreenDescriptorSet.get(),
-                       0,
-                       vk::DescriptorType::eCombinedImageSampler,
-                       attachmentImageHandle,
-                       { vk::ImageViewType::e2D, { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 } },
-                       attachmentSampler);
-#endif
-    vgw::flush_set_writes();
 
     vgw::CmdBufferAllocInfo cmdAllocInfo{
         1,
@@ -230,76 +174,36 @@ int main(int argc, char** argv)
         cmd->reset();
         vk::CommandBufferBeginInfo beginInfo{};
         cmd->begin(beginInfo);
-        // Render Offscreen
-        {
-            vgw::ImageTransitionInfo attachmentTransition{
-                .image = offscreenAttachmentImage,
-                .oldLayout = vk::ImageLayout::eUndefined,
-                .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                .srcAccess = vk::AccessFlagBits2::eNone,
-                .dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
-                .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
-                .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
-            };
-            cmd->transition_image(attachmentTransition);
+        vgw::ImageTransitionInfo attachmentTransition{
+            .image = swapchainImages.at(imageIndex),
+            .oldLayout = vk::ImageLayout::eUndefined,
+            .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .srcAccess = vk::AccessFlagBits2::eNone,
+            .dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+            .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
+            .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+        };
+        cmd->transition_image(attachmentTransition);
 
-            cmd->begin_pass(offscreenRenderPass);
-            cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-            cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-            cmd->bind_pipeline(trianglePipeline);
-            cmd->draw(3, 1, 0, 0);
-            cmd->end_pass();
-        }
+        cmd->begin_pass(swapchainRenderPasses.at(imageIndex));
+        cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        cmd->bind_pipeline(trianglePipeline);
+        cmd->draw(3, 1, 0, 0);
+        cmd->end_pass();
 
-        // Render SwapChain
-        {
-            vgw::ImageTransitionInfo attachmentTransition{
-                .image = swapchainImages.at(imageIndex),
-                .oldLayout = vk::ImageLayout::eUndefined,
-                .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                .srcAccess = vk::AccessFlagBits2::eNone,
-                .dstAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
-                .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
-                .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
-            };
-            cmd->transition_image(attachmentTransition);
-
-            vgw::ImageTransitionInfo sampledAttachmentTransition{
-                .image = offscreenAttachmentImage,
-                .oldLayout = vk::ImageLayout::eAttachmentOptimal,
-                .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-                .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
-                .dstAccess = vk::AccessFlagBits2::eShaderRead,
-                .srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                .dstStage = vk::PipelineStageFlagBits2::eFragmentShader,
-                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
-            };
-            cmd->transition_image(sampledAttachmentTransition);
-
-            cmd->begin_pass(swapchainRenderPasses.at(imageIndex));
-            cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-            cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-#if 0
-            cmd->bind_pipeline(fullscreenQuadPipelineHandle);
-#endif
-            cmd->bind_sets(0, { fullscreenDescriptorSet });
-            cmd->draw(3, 1, 0, 0);
-            cmd->end_pass();
-
-            vgw::ImageTransitionInfo presentTransition{
-                .image = swapchainImages.at(imageIndex),
-                .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                .newLayout = vk::ImageLayout::ePresentSrcKHR,
-                .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
-                .dstAccess = vk::AccessFlagBits2::eNone,
-                .srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                .dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe,
-                .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
-            };
-            cmd->transition_image(presentTransition);
-        }
+        vgw::ImageTransitionInfo presentTransition{
+            .image = swapchainImages.at(imageIndex),
+            .oldLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .newLayout = vk::ImageLayout::ePresentSrcKHR,
+            .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
+            .dstAccess = vk::AccessFlagBits2::eNone,
+            .srcStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+            .dstStage = vk::PipelineStageFlagBits2::eBottomOfPipe,
+            .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+        };
+        cmd->transition_image(presentTransition);
 
         cmd->end();
 
