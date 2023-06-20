@@ -1,3 +1,10 @@
+// #TODO: Vertex/Index buffers
+// #TODO: Uniform buffers (view & projection)
+// #TODO: Depth buffer
+// #TODO: Basic lighting
+// #TODO: Texturing
+// #TODO: Window resize
+
 #include <vgw/vgw.hpp>
 #include <vgw/utility.hpp>
 

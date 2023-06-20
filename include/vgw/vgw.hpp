@@ -1,3 +1,11 @@
+// #TODO: Upload to buffers
+// #TODO: Upload to images
+// #TODO: Index/Vertex buffer binding
+// #TODO: Indexed drawing
+// #TODO: Binding images to sets
+// #TODO: Mip-mapping? Generating mip-levels.
+// #TODO: vgw::wait_device_idle() & vgw::wait_queue_idle(std::uint32_t)
+
 #ifndef VGW_VGW_HPP
 #define VGW_VGW_HPP
 
