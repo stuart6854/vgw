@@ -152,8 +152,14 @@ int main(int argc, char** argv)
 
 #if 0
     auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb).value();
-    auto fullscreenDescriptorSet = std::move(device->create_descriptor_sets(1, setLayout)[0]);
+#endif
+    vgw::SetAllocInfo setAllocInfo{
+        .layout = setLayout,
+        .count = 1,
+    };
+    auto fullscreenDescriptorSet = vgw::allocate_sets(setAllocInfo).value()[0];
 
+#if 0
     vgw::SamplerInfo samplerInfo{
         .addressModeU = vk::SamplerAddressMode::eRepeat,
         .addressModeV = vk::SamplerAddressMode::eRepeat,
@@ -163,7 +169,6 @@ int main(int argc, char** argv)
     };
     auto attachmentSampler = device->get_or_create_sampler(samplerInfo).value();
 
-    auto attachmentImageHandle = device->get_render_pass_color_image(renderPassHandle, 0).value();
     device->bind_image(fullscreenDescriptorSet.get(),
                        0,
                        vk::DescriptorType::eCombinedImageSampler,
@@ -278,9 +283,9 @@ int main(int argc, char** argv)
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 #if 0
             cmd->bind_pipeline(fullscreenQuadPipelineHandle);
-            cmd->bind_descriptor_sets(0, { fullscreenDescriptorSet.get() });
-            cmd->draw(3, 1, 0, 0);
 #endif
+            cmd->bind_sets(0, { fullscreenDescriptorSet });
+            cmd->draw(3, 1, 0, 0);
             cmd->end_pass();
 
             vgw::ImageTransitionInfo presentTransition{
