@@ -122,6 +122,16 @@ namespace vgw
         internal::internal_image_view_destroy(imageView);
     }
 
+    auto create_render_pass(const RenderPassInfo& renderPassInfo) -> std::expected<RenderPass, ResultCode>
+    {
+        return internal::internal_render_pass_create(renderPassInfo);
+    }
+
+    void destroy_render_pass(RenderPass renderPass)
+    {
+        internal::internal_render_pass_destroy(renderPass);
+    }
+
     auto allocate_sets(const SetAllocInfo& allocInfo) -> std::expected<std::vector<vk::DescriptorSet>, ResultCode>
     {
         return internal::internal_sets_allocate(allocInfo);
@@ -169,12 +179,16 @@ namespace vgw
         m_commandBuffer.end();
     }
 
-    void CommandBuffer_T::begin_pass()
+    void CommandBuffer_T::begin_pass(RenderPass renderPass)
     {
         flush_pending_barriers();
+        internal::internal_render_pass_begin(m_commandBuffer, renderPass);
     }
 
-    void CommandBuffer_T::end_pass() {}
+    void CommandBuffer_T::end_pass()
+    {
+        m_commandBuffer.endRendering();
+    }
 
     void CommandBuffer_T::set_viewport() {}
 
@@ -313,4 +327,5 @@ namespace std
         vgw::hash_combine(seed, pipelineLayoutInfo.constantRange);
         return seed;
     }
+
 }

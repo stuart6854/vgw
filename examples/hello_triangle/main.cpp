@@ -121,18 +121,16 @@ int main(int argc, char** argv)
     };
     auto trianglePipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
 
-#if 0
     vgw::RenderPassInfo renderPassInfo{
-        .width = WINDOW_WIDTH,
-        .height = WINDOW_HEIGHT,
         .colorAttachments = { {
-            .format = vk::Format::eR8G8B8A8Unorm,
-            .resolutionScale = 1.0f,
+            .imageView = {},
+            .loadOp = vk::AttachmentLoadOp::eClear,
+            .storeOp = vk::AttachmentStoreOp::eStore,
             .clearColor = { 1, 0.3f, 0.4f, 1.0f },
-            .sampled = true,
         } },
     };
-    auto renderPassHandle = device->create_render_pass(renderPassInfo).value();
+    vgw::RenderPass offscreenRenderPass = vgw::create_render_pass(renderPassInfo).value();
+#if 0
 
     auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb).value();
     auto fullscreenDescriptorSet = std::move(device->create_descriptor_sets(1, setLayout)[0]);
@@ -169,6 +167,7 @@ int main(int argc, char** argv)
 
     auto swapchainImages = vgw::get_swapchain_images(swapChain).value();
     std::vector<vk::ImageView> swapchainImageViews(swapchainImages.size());
+    std::vector<vgw::RenderPass> swapchainRenderPasses(swapchainImages.size());
     for (int i = 0; i < swapchainImages.size(); ++i)
     {
         vgw::ImageViewInfo viewInfo{
@@ -181,6 +180,17 @@ int main(int argc, char** argv)
             .arrayLayerCount = 1,
         };
         swapchainImageViews[i] = vgw::create_image_view(viewInfo).value();
+        vgw::RenderPassInfo swapchainRenderPassInfo{
+            .width = WINDOW_WIDTH,
+            .height = WINDOW_HEIGHT,
+            .colorAttachments = { {
+                .imageView = swapchainImageViews.at(i),
+                .loadOp = vk::AttachmentLoadOp::eClear,
+                .storeOp = vk::AttachmentStoreOp::eStore,
+                .clearColor = { 1, 0.3f, 0.4f, 1.0f },
+            } },
+        };
+        swapchainRenderPasses[i] = vgw::create_render_pass(swapchainRenderPassInfo).value();
     }
 
     while (!glfwWindowShouldClose(window))
@@ -249,15 +259,15 @@ int main(int argc, char** argv)
             };
             cmd->transition_image(sampledAttachmentTransition);
 #endif
+            cmd->begin_pass(swapchainRenderPasses.at(imageIndex));
 #if 0
-            cmd->begin_render_pass(swapChainHandle);
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->bind_pipeline(fullscreenQuadPipelineHandle);
             cmd->bind_descriptor_sets(0, { fullscreenDescriptorSet.get() });
             cmd->draw(3, 1, 0, 0);
-            cmd->end_render_pass();
 #endif
+            cmd->end_pass();
 
             vgw::ImageTransitionInfo presentTransition{
                 .image = swapchainImages.at(imageIndex),

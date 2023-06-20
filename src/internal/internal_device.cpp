@@ -143,6 +143,8 @@ namespace vgw::internal
         }
         fences.clear();
 
+        renderPassMap.clear();
+
         for (const auto& view : imageViewMap)
         {
             device.destroy(view);

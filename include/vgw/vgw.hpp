@@ -141,6 +141,35 @@ namespace vgw
     auto create_image_view(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>;
     void destroy_image_view(vk::ImageView imageView);
 
+    struct RenderPassColorAttachmentInfo
+    {
+        vk::ImageView imageView{};
+        vk::AttachmentLoadOp loadOp{ vk::AttachmentLoadOp::eDontCare };
+        vk::AttachmentStoreOp storeOp{ vk::AttachmentStoreOp::eDontCare };
+        std::array<float, 4> clearColor{ 0.0f, 0.0f, 0.0f, 1.0f };
+    };
+    struct RenderPassDepthAttachmentInfo
+    {
+        vk::ImageView imageView{};
+        vk::AttachmentLoadOp loadOp{ vk::AttachmentLoadOp::eDontCare };
+        vk::AttachmentStoreOp storeOp{ vk::AttachmentStoreOp::eDontCare };
+        float clearDepth = 1.0f;
+    };
+    struct RenderPassInfo
+    {
+        std::uint32_t width{};
+        std::uint32_t height{};
+        std::vector<RenderPassColorAttachmentInfo> colorAttachments{};
+        RenderPassDepthAttachmentInfo depthAttachment{};
+    };
+    namespace internal
+    {
+        struct RenderPassData;
+    }
+    using RenderPass = struct internal::RenderPassData*;
+    auto create_render_pass(const RenderPassInfo& renderPassInfo) -> std::expected<RenderPass, ResultCode>;
+    void destroy_render_pass(RenderPass renderPass);
+
     struct SetAllocInfo
     {
         vk::DescriptorSetLayout layout{};
@@ -208,7 +237,7 @@ namespace vgw
         void begin(const vk::CommandBufferBeginInfo& beginInfo);
         void end();
 
-        void begin_pass();
+        void begin_pass(RenderPass renderPass);
         void end_pass();
 
         void set_viewport();
@@ -280,6 +309,7 @@ namespace std
     {
         std::size_t operator()(const vgw::PipelineLayoutInfo& pipelineLayoutInfo) const;
     };
+
 }
 
 #endif  // VGW_VGW_HPP

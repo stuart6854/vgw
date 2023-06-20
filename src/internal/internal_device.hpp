@@ -6,6 +6,7 @@
 #include "internal_pipelines.hpp"
 #include "internal_buffers.hpp"
 #include "internal_images.hpp"
+#include "internal_render_pass.hpp"
 #include "internal_sets.hpp"
 #include "internal_command_buffers.hpp"
 
@@ -13,6 +14,7 @@
 #include <vulkan/vulkan_hash.hpp>
 #include <vma/vk_mem_alloc.h>
 
+#include <memory>
 #include <expected>
 #include <unordered_map>
 #include <unordered_set>
@@ -39,6 +41,7 @@ namespace vgw::internal
         std::unordered_map<vk::Buffer, BufferData> bufferMap;
         std::unordered_map<vk::Image, ImageData> imageMap;
         std::unordered_set<vk::ImageView> imageViewMap;
+        std::unordered_map<RenderPassData*, std::unique_ptr<RenderPassData>> renderPassMap;
         std::unordered_map<vk::CommandPoolCreateFlags, vk::CommandPool> cmdPoolMap;
         std::unordered_map<vk::CommandBuffer, CmdBufferData> cmdBufferMap;
 
