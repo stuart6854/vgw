@@ -112,6 +112,16 @@ namespace vgw
         internal::internal_buffer_unmap(buffer);
     }
 
+    auto create_image(const ImageInfo& imageInfo) -> std::expected<vk::Image, ResultCode>
+    {
+        return internal::internal_image_create(imageInfo);
+    }
+
+    void destroy_image(vk::Image image)
+    {
+        internal::internal_image_destroy(image);
+    }
+
     auto create_image_view(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>
     {
         return internal::internal_image_view_create(imageViewInfo);

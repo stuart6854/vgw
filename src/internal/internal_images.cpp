@@ -4,6 +4,66 @@
 
 namespace vgw::internal
 {
+    auto internal_image_create(const ImageInfo& imageInfo) -> std::expected<vk::Image, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        VkImage vkImage{};
+        VmaAllocation allocation{};
+
+        vk::ImageCreateInfo imageCreateInfo{};
+        imageCreateInfo.setImageType(imageInfo.type);
+        imageCreateInfo.setFormat(imageInfo.format);
+        imageCreateInfo.setExtent({ imageInfo.width, imageInfo.height, imageInfo.depth });
+        imageCreateInfo.setMipLevels(imageInfo.mipLevels);
+        imageCreateInfo.setArrayLayers(1);
+        imageCreateInfo.setSamples(vk::SampleCountFlagBits::e1);
+        imageCreateInfo.setUsage(imageInfo.usage);
+
+        VmaAllocationCreateInfo allocCreateInfo{};
+        allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+
+        VkImageCreateInfo vkImageCreateInfo = imageCreateInfo;
+        auto createResult = vmaCreateImage(deviceRef.allocator, &vkImageCreateInfo, &allocCreateInfo, &vkImage, &allocation, nullptr);
+        if (createResult != VK_SUCCESS)
+        {
+            log_error("Failed to create vk::Image and/or allocate VmaAllocation!");
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+
+        const vk::Image image = vkImage;
+        deviceRef.imageMap[image] = { image, allocation, imageInfo.format };
+        return image;
+    }
+
+    void internal_image_destroy(vk::Image image)
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return;
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        auto imageResult = internal_image_get(image);
+        if (!imageResult)
+        {
+            log_error("Failed to get image!");
+            return;
+        }
+        auto& imageRef = imageResult.value().get();
+
+        vmaDestroyImage(deviceRef.allocator, image, imageRef.allocation);
+        deviceRef.imageMap.erase(image);
+    }
+
     auto internal_image_get(vk::Image image) -> std::expected<std::reference_wrapper<ImageData>, ResultCode>
     {
         auto deviceResult = internal_device_get();

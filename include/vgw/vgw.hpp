@@ -128,6 +128,19 @@ namespace vgw
     auto map_buffer(vk::Buffer buffer) -> std::expected<void*, ResultCode>;
     void unmap_buffer(vk::Buffer buffer);
 
+    struct ImageInfo
+    {
+        vk::ImageType type{};
+        std::uint32_t width{};
+        std::uint32_t height{};
+        std::uint32_t depth{};
+        std::uint32_t mipLevels{};
+        vk::Format format{};
+        vk::ImageUsageFlags usage{};
+    };
+    auto create_image(const ImageInfo& imageInfo) -> std::expected<vk::Image, ResultCode>;
+    void destroy_image(vk::Image image);
+
     struct ImageViewInfo
     {
         vk::Image image{};

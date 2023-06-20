@@ -8,8 +8,11 @@ namespace vgw::internal
     struct ImageData
     {
         vk::Image image{};
+        VmaAllocation allocation{};
         vk::Format format{};
     };
+    auto internal_image_create(const ImageInfo& imageInfo) -> std::expected<vk::Image, ResultCode>;
+    void internal_image_destroy(vk::Image image);
 
     auto internal_image_get(vk::Image image) -> std::expected<std::reference_wrapper<ImageData>, ResultCode>;
 
