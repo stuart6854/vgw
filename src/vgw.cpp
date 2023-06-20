@@ -62,6 +62,11 @@ namespace vgw
         return internal::internal_swapchain_images_get(swapchain);
     }
 
+    auto get_swapchain_format(vk::SwapchainKHR swapchain) -> std::expected<vk::Format, ResultCode>
+    {
+        return internal::internal_swapchain_format_get(swapchain);
+    }
+
     auto acquire_next_swapchain_image(const AcquireInfo& acquireInfo) -> std::expected<std::uint32_t, ResultCode>
     {
         return internal::internal_swapchain_acquire_next_image(acquireInfo);

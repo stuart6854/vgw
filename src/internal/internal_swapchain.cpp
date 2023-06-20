@@ -102,7 +102,11 @@ namespace vgw::internal
         }
         auto swapchain = createResult.value;
 
-        deviceRef.swapchainMap[swapchain] = { swapchainInfo.surface, swapchain };
+        deviceRef.swapchainMap[swapchain] = {
+            .surface = swapchainInfo.surface,
+            .swapchain = swapchain,
+            .surfaceFormat = surfaceFormat,
+        };
 
         auto imagesResult = internal_swapchain_images_get(swapchain);
         if (!imagesResult)
@@ -191,6 +195,19 @@ namespace vgw::internal
         }
         auto& images = getResult.value;
         return images;
+    }
+
+    auto internal_swapchain_format_get(vk::SwapchainKHR swapchain) -> std::expected<vk::Format, ResultCode>
+    {
+        auto swapchainResult = internal_swapchain_get(swapchain);
+        if (!swapchainResult)
+        {
+            log_error("Failed to get swapchain!");
+            return std::unexpected(swapchainResult.error());
+        }
+        auto& swapchainRef = swapchainResult.value().get();
+
+        return swapchainRef.surfaceFormat.format;
     }
 
     auto internal_swapchain_acquire_next_image(const AcquireInfo& acquireInfo) -> std::expected<std::uint32_t, ResultCode>
