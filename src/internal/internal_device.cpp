@@ -145,11 +145,38 @@ namespace vgw::internal
 
         renderPassMap.clear();
 
+        // Destroy swapchains before images, so only non-swapchain images remain in imageMap
+        for (const auto& [_, data] : swapchainMap)
+        {
+            auto imagesResult = internal_swapchain_images_get(data.swapchain);
+            if (!imagesResult)
+            {
+                log_error("Failed to get swapchain images!");
+            }
+            else
+            {
+                auto& images = imagesResult.value();
+                for (auto image : images)
+                {
+                    imageMap.erase(image);
+                }
+            }
+
+            device.destroy(data.swapchain);
+        }
+        swapchainMap.clear();
+
         for (const auto& view : imageViewMap)
         {
             device.destroy(view);
         }
         imageViewMap.clear();
+
+        for (const auto& [_, data] : imageMap)
+        {
+            vmaDestroyImage(allocator, data.image, data.allocation);
+        }
+        imageMap.clear();
 
         for (const auto& [_, data] : bufferMap)
         {
@@ -181,12 +208,6 @@ namespace vgw::internal
             device.destroy(layout);
         }
         setLayoutMap.clear();
-
-        for (const auto& [_, data] : swapchainMap)
-        {
-            device.destroy(data.swapchain);
-        }
-        swapchainMap.clear();
 
         device.destroy(descriptorPool);
         descriptorPool = nullptr;
