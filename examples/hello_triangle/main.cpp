@@ -121,17 +121,36 @@ int main(int argc, char** argv)
     };
     auto trianglePipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
 
+    vgw::ImageInfo offscreenAttachmentInfo{
+        .type = vk::ImageType::e2D,
+        .width = WINDOW_WIDTH,
+        .height = WINDOW_HEIGHT,
+        .depth = 1,
+        .mipLevels = 1,
+        .format = vk::Format::eR8G8B8A8Unorm,
+        .usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+    };
+    auto offscreenAttachmentImage = vgw::create_image(offscreenAttachmentInfo).value();
+    vgw::ImageViewInfo offscreenAttachmentViewInfo{
+        .image = offscreenAttachmentImage,
+        .type = vk::ImageViewType::e2D,
+        .aspectMask = vk::ImageAspectFlagBits::eColor,
+    };
+    auto offscreenAttachmentView = vgw::create_image_view(offscreenAttachmentViewInfo).value();
+
     vgw::RenderPassInfo renderPassInfo{
+        .width = WINDOW_WIDTH,
+        .height = WINDOW_HEIGHT,
         .colorAttachments = { {
-            .imageView = {},
+            .imageView = offscreenAttachmentView,
             .loadOp = vk::AttachmentLoadOp::eClear,
             .storeOp = vk::AttachmentStoreOp::eStore,
             .clearColor = { 1, 0.3f, 0.4f, 1.0f },
         } },
     };
     vgw::RenderPass offscreenRenderPass = vgw::create_render_pass(renderPassInfo).value();
-#if 0
 
+#if 0
     auto fullscreenQuadPipelineHandle = device->get_fullscreen_quad_pipeline(vk::Format::eB8G8R8A8Srgb).value();
     auto fullscreenDescriptorSet = std::move(device->create_descriptor_sets(1, setLayout)[0]);
 
@@ -174,10 +193,6 @@ int main(int argc, char** argv)
             .image = swapchainImages.at(i),
             .type = vk::ImageViewType::e2D,
             .aspectMask = vk::ImageAspectFlagBits::eColor,
-            .mipLevelBase = 0,
-            .mipLevelCount = 1,
-            .arrayLayerBase = 0,
-            .arrayLayerCount = 1,
         };
         swapchainImageViews[i] = vgw::create_image_view(viewInfo).value();
         vgw::RenderPassInfo swapchainRenderPassInfo{
@@ -210,10 +225,10 @@ int main(int argc, char** argv)
         cmd->reset();
         vk::CommandBufferBeginInfo beginInfo{};
         cmd->begin(beginInfo);
-#if 0
         // Render Offscreen
         {
-            vgw::TransitionImage attachmentTransition{
+            vgw::ImageTransitionInfo attachmentTransition{
+                .image = offscreenAttachmentImage,
                 .oldLayout = vk::ImageLayout::eUndefined,
                 .newLayout = vk::ImageLayout::eColorAttachmentOptimal,
                 .srcAccess = vk::AccessFlagBits2::eNone,
@@ -222,16 +237,15 @@ int main(int argc, char** argv)
                 .dstStage = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
-            cmd->transition_image(attachmentImageHandle, attachmentTransition);
+            cmd->transition_image(attachmentTransition);
 
-            cmd->begin_render_pass(renderPassHandle);
+            cmd->begin_pass(offscreenRenderPass);
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-            cmd->bind_pipeline(trianglePipelineHandle);
+            cmd->bind_pipeline(trianglePipeline);
             cmd->draw(3, 1, 0, 0);
-            cmd->end_render_pass();
+            cmd->end_pass();
         }
-#endif
 
         // Render SwapChain
         {
@@ -247,8 +261,8 @@ int main(int argc, char** argv)
             };
             cmd->transition_image(attachmentTransition);
 
-#if 0
             vgw::ImageTransitionInfo sampledAttachmentTransition{
+                .image = offscreenAttachmentImage,
                 .oldLayout = vk::ImageLayout::eAttachmentOptimal,
                 .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
                 .srcAccess = vk::AccessFlagBits2::eColorAttachmentWrite,
@@ -258,7 +272,7 @@ int main(int argc, char** argv)
                 .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
             };
             cmd->transition_image(sampledAttachmentTransition);
-#endif
+
             cmd->begin_pass(swapchainRenderPasses.at(imageIndex));
             cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
