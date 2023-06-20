@@ -6,7 +6,9 @@
 #define GLFW_NATIVE_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#include <glm/glm.hpp>
 
+#define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
 #include <iostream>
@@ -43,6 +45,78 @@ auto read_shader_code(const std::string& filename) -> std::optional<std::string>
 
 constexpr auto WINDOW_WIDTH = 800;
 constexpr auto WINDOW_HEIGHT = 600;
+
+struct Vertex
+{
+    glm::vec3 pos;
+    glm::vec3 normal;
+    glm::vec3 texCoord;
+};
+
+bool read_obj_model(const std::string& filename, std::vector<Vertex>& outVertices, std::vector<std::uint32_t>& outTriangles)
+{
+    tinyobj::ObjReaderConfig readerConfig{};
+    readerConfig.mtl_search_path = "./";  // Path to material files
+    readerConfig.triangulate = true;
+    tinyobj::ObjReader reader{};
+    if (!reader.ParseFromFile(filename, readerConfig))
+    {
+        if (!reader.Error().empty())
+        {
+            std::cerr << reader.Error() << std::endl;
+        }
+        return false;
+    }
+    if (!reader.Warning().empty())
+    {
+        std::cerr << reader.Warning() << std::endl;
+    }
+
+    const auto& attrib = reader.GetAttrib();
+    const auto& shapes = reader.GetShapes();
+    //	const auto& materials = reader.GetMaterials();
+
+    for (const auto& shape : shapes)
+    {
+        std::uint64_t indexOffset{};
+        for (auto faceIndex = 0; faceIndex < shape.mesh.num_face_vertices.size(); ++faceIndex)
+        {
+            auto faceVertexCount = shape.mesh.num_face_vertices[faceIndex];
+            assert(faceVertexCount == 3);
+
+            outTriangles.push_back(outVertices.size());
+            outTriangles.push_back(outVertices.size() + 1);
+            outTriangles.push_back(outVertices.size() + 2);
+            for (auto vertexIndex = 0; vertexIndex < faceVertexCount; ++vertexIndex)
+            {
+                auto& vertex = outVertices.emplace_back();
+
+                const auto idx = shape.mesh.indices[indexOffset + vertexIndex];
+                vertex.pos.x = attrib.vertices[3 * idx.vertex_index + 0];
+                vertex.pos.y = attrib.vertices[3 * idx.vertex_index + 1];
+                vertex.pos.z = attrib.vertices[3 * idx.vertex_index + 2];
+
+                const bool hasNormals = idx.normal_index >= 0;
+                if (hasNormals)
+                {
+                    vertex.normal.x = attrib.normals[3 * idx.normal_index + 0];
+                    vertex.normal.y = attrib.normals[3 * idx.normal_index + 1];
+                    vertex.normal.z = attrib.normals[3 * idx.normal_index + 2];
+                }
+
+                const bool hasTexCoords = idx.texcoord_index >= 0;
+                if (hasTexCoords)
+                {
+                    vertex.texCoord.x = attrib.texcoords[2 * idx.texcoord_index + 0];
+                    vertex.texCoord.y = attrib.texcoords[2 * idx.texcoord_index + 1];
+                }
+            }
+            indexOffset += faceVertexCount;
+        }
+    }
+
+    return true;
+}
 
 int main(int argc, char** argv)
 {
@@ -123,6 +197,13 @@ int main(int argc, char** argv)
         .depthWrite = false,
     };
     auto trianglePipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
+
+    std::vector<Vertex> vertices{};
+    std::vector<std::uint32_t> triangles{};
+    if (!read_obj_model("./viking_room.obj", vertices, triangles))
+    {
+        throw std::runtime_error("Failed to load OBJ model!");
+    }
 
     vgw::CmdBufferAllocInfo cmdAllocInfo{
         1,
