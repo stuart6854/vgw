@@ -226,7 +226,7 @@ int main(int argc, char** argv)
     }
 
     vgw::SamplerInfo samplerInfo{};
-    auto sampler = vgw::get_sampler(samplerInfo);
+    auto sampler = vgw::get_sampler(samplerInfo).value();
 
     std::uint32_t imageWidth{};
     std::uint32_t imageHeight{};
@@ -249,6 +249,7 @@ int main(int argc, char** argv)
     PushConstants pushConstants{};
 
     auto uniformBuffer = create_uniform_buffer();
+
     vgw::SetBufferBindInfo bufferBindInfo{
         .set = set,
         .binding = 0,
@@ -258,6 +259,15 @@ int main(int argc, char** argv)
         .range = sizeof(uniformData),
     };
     vgw::bind_buffer_to_set(bufferBindInfo);
+    vgw::SetImageBindInfo imageBindInfo{
+        .set = set,
+        .binding = 1,
+        .type = vk::DescriptorType::eCombinedImageSampler,
+        .sampler = sampler,
+        .imageView = texture.view,
+        .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+    };
+    vgw::bind_image_to_set(imageBindInfo);
     vgw::flush_set_writes();
 
     while (!glfwWindowShouldClose(window))

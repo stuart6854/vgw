@@ -167,6 +167,11 @@ namespace vgw
         internal::internal_sets_bind_buffer(bindInfo);
     }
 
+    void bind_image_to_set(const SetImageBindInfo& bindInfo)
+    {
+        internal::internal_sets_bind_image(bindInfo);
+    }
+
     void flush_set_writes()
     {
         internal::internal_sets_flush_writes();

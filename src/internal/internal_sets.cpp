@@ -71,6 +71,37 @@ namespace vgw::internal
         writeRef.setPBufferInfo(&bufferInfoRef);
     }
 
+    void internal_sets_bind_image(const SetImageBindInfo& bindInfo)
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device.");
+            return;
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        if (deviceRef.setWrites.size() == deviceRef.setWrites.capacity())
+        {
+            internal_sets_flush_writes();
+        }
+
+        vk::DescriptorImageInfo imageInfo{};
+        imageInfo.setSampler(bindInfo.sampler);
+        imageInfo.setImageView(bindInfo.imageView);
+        imageInfo.setImageLayout(bindInfo.imageLayout);
+        auto& objectRef = deviceRef.setWriteObjects.emplace_back(imageInfo);
+        auto& imageInfoRef = std::get<vk::DescriptorImageInfo>(objectRef);
+
+        auto& writeRef = deviceRef.setWrites.emplace_back();
+        writeRef.setDstSet(bindInfo.set);
+        writeRef.setDstBinding(bindInfo.binding);
+        writeRef.setDstArrayElement(0);
+        writeRef.setDescriptorCount(1);
+        writeRef.setDescriptorType(bindInfo.type);
+        writeRef.setPImageInfo(&imageInfoRef);
+    }
+
     void internal_sets_flush_writes()
     {
         auto deviceResult = internal_device_get();

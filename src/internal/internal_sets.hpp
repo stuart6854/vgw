@@ -15,6 +15,7 @@ namespace vgw::internal
     void internal_sets_free(const std::vector<vk::DescriptorSet>& sets);
 
     void internal_sets_bind_buffer(const SetBufferBindInfo& bindInfo);
+    void internal_sets_bind_image(const SetImageBindInfo& bindInfo);
 
     void internal_sets_flush_writes();
 

@@ -219,6 +219,16 @@ namespace vgw
         std::size_t range{};
     };
     void bind_buffer_to_set(const SetBufferBindInfo& bindInfo);
+    struct SetImageBindInfo
+    {
+        vk::DescriptorSet set{};
+        std::uint32_t binding{};
+        vk::DescriptorType type{};
+        vk::Sampler sampler{};
+        vk::ImageView imageView{};
+        vk::ImageLayout imageLayout{};
+    };
+    void bind_image_to_set(const SetImageBindInfo& bindInfo);
 
     void flush_set_writes();
 
