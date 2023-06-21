@@ -216,7 +216,7 @@ int main(int argc, char** argv)
         cmd->transition_image(attachmentTransition);
 
         cmd->begin_pass(swapchainRenderPasses.at(imageIndex));
-        cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        cmd->set_viewport(0, WINDOW_HEIGHT, WINDOW_WIDTH, -WINDOW_HEIGHT);
         cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         cmd->bind_pipeline(geometryPipeline);
         cmd->set_constants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &pushConstants);
