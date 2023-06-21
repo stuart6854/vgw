@@ -53,6 +53,8 @@ auto read_shader_code(const std::string& filename) -> std::optional<std::string>
 constexpr auto WINDOW_WIDTH = 800;
 constexpr auto WINDOW_HEIGHT = 600;
 
+auto create_geometry_pipeline(vk::PipelineLayout layout, vk::Format targetFormat) -> vk::Pipeline;
+
 struct Vertex
 {
     glm::vec3 pos;
@@ -120,35 +122,19 @@ int main(int argc, char** argv)
 
     vgw::SetLayoutInfo setLayoutInfo{
         .bindings = {
-            { 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
+            { 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },
+            { 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },
         },
     };
     auto setLayout = vgw::get_set_layout(setLayoutInfo).value();
 
     vgw::PipelineLayoutInfo pipelineLayoutInfo{
         .setLayouts = { setLayout },
-        .constantRange = {},
+        .constantRange = { vk::ShaderStageFlagBits::eVertex, 0, sizeof(glm::mat4) },
     };
     auto pipelineLayout = vgw::get_pipeline_layout(pipelineLayoutInfo).value();
 
-    // Create graphics pipeline
-    auto vertexCode = read_shader_code("geometry.vert").value();
-    auto compiledVertexCode = vgw::compile_glsl(vertexCode, vk::ShaderStageFlagBits::eVertex, false, "geometry.vert").value();
-    auto fragmentCode = read_shader_code("geometry.frag").value();
-    auto compiledFragmentCode = vgw::compile_glsl(fragmentCode, vk::ShaderStageFlagBits::eFragment, false, "geometry.frag").value();
-    vgw::GraphicsPipelineInfo graphicsPipelineInfo{
-        .layout = pipelineLayout,
-        .vertexCode = compiledVertexCode,
-        .fragmentCode = compiledFragmentCode,
-        .colorAttachmentFormats = { swapchainFormat },
-        .topology = vk::PrimitiveTopology::eTriangleList,
-        .frontFace = vk::FrontFace::eClockwise,
-        .cullMode = vk::CullModeFlagBits::eNone,
-        .lineWidth = 1.0f,
-        .depthTest = false,
-        .depthWrite = false,
-    };
-    auto geometryPipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
+    auto geometryPipeline = create_geometry_pipeline(pipelineLayout, swapchainFormat);
 
     std::vector<Vertex> vertices{};
     std::vector<std::uint32_t> triangles{};
@@ -268,6 +254,37 @@ int main(int argc, char** argv)
 
     glfwDestroyWindow(window);
     glfwTerminate();
+}
+
+auto create_geometry_pipeline(vk::PipelineLayout layout, vk::Format targetFormat) -> vk::Pipeline
+{
+    // Create graphics pipeline
+    auto vertexCode = read_shader_code("geometry.vert").value();
+    auto compiledVertexCode = vgw::compile_glsl(vertexCode, vk::ShaderStageFlagBits::eVertex, false, "geometry.vert").value();
+    auto fragmentCode = read_shader_code("geometry.frag").value();
+    auto compiledFragmentCode = vgw::compile_glsl(fragmentCode, vk::ShaderStageFlagBits::eFragment, false, "geometry.frag").value();
+    vgw::GraphicsPipelineInfo graphicsPipelineInfo{
+        .layout = layout,
+        .vertexCode = compiledVertexCode,
+        .fragmentCode = compiledFragmentCode,
+        .inputBindings = {
+            {0, sizeof(Vertex), vk::VertexInputRate::eVertex},
+        },
+        .inputAttributes = {
+            { 0, 0, vk::Format::eR32G32B32Sfloat, std::uint32_t (offsetof(Vertex, pos)) },
+            { 1, 0, vk::Format::eR32G32B32Sfloat, std::uint32_t (offsetof(Vertex, normal)) },
+            { 2, 0, vk::Format::eR32G32Sfloat, std::uint32_t (offsetof(Vertex, texCoord)) },
+        },
+        .colorAttachmentFormats = { targetFormat },
+        .topology = vk::PrimitiveTopology::eTriangleList,
+        .frontFace = vk::FrontFace::eClockwise,
+        .cullMode = vk::CullModeFlagBits::eBack,
+        .lineWidth = 1.0f,
+        .depthTest = false,
+        .depthWrite = false,
+    };
+    auto pipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
+    return pipeline;
 }
 
 bool read_obj_model(const std::string& filename, std::vector<Vertex>& outVertices, std::vector<std::uint32_t>& outTriangles)

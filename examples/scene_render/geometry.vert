@@ -1,22 +1,19 @@
 #version 450
 
-layout(location = 0) out vec3 out_color;
+layout(location = 0) in vec3 attr_position;
+layout(location = 1) in vec3 attr_normal;
+layout(location = 2) in vec2 attr_texCoord;
+
+layout(location = 0) out vec2 out_texCoord;
+
+layout (push_constant) uniform Constants
+{
+    mat4 worldMatrix;
+} constants;
 
 void main()
 {
-    vec3 positions[3] = 
-    {
-        {  0.0, 0.5, 0.0 },
-        {  0.5, -0.5, 0.0 },
-        { -0.5, -0.5, 0.0 }
-    };
-    vec3 colors[3] = 
-    { 
-        { 1.0, 0.0, 0.0 }, 
-        { 0.0, 1.0, 0.0 }, 
-        { 0.0, 0.0, 1.0 } 
-    };
-
-    out_color = colors[gl_VertexIndex];
-    gl_Position = vec4(positions[gl_VertexIndex], 1.0);
+    vec4 worldPosition = constants.worldMatrix * vec4(attr_position, 1.0);
+    gl_Position = worldPosition;
+    out_texCoord = attr_texCoord;
 }
