@@ -163,6 +163,16 @@ namespace vgw
     auto create_image_view(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>;
     void destroy_image_view(vk::ImageView imageView);
 
+    struct SamplerInfo
+    {
+        vk::SamplerAddressMode addressModeU{ vk::SamplerAddressMode::eRepeat };
+        vk::SamplerAddressMode addressModeV{ vk::SamplerAddressMode::eRepeat };
+        vk::SamplerAddressMode addressModeW{ vk::SamplerAddressMode::eRepeat };
+        vk::Filter minFilter{ vk::Filter::eLinear };
+        vk::Filter magFilter{ vk::Filter::eLinear };
+    };
+    auto get_sampler(const SamplerInfo& samplerInfo) -> std::expected<vk::Sampler, ResultCode>;
+
     struct RenderPassColorAttachmentInfo
     {
         vk::ImageView imageView{};
@@ -337,6 +347,12 @@ namespace std
     struct hash<vgw::PipelineLayoutInfo>
     {
         std::size_t operator()(const vgw::PipelineLayoutInfo& pipelineLayoutInfo) const;
+    };
+
+    template <>
+    struct hash<vgw::SamplerInfo>
+    {
+        std::size_t operator()(const vgw::SamplerInfo& samplerInfo) const;
     };
 
 }

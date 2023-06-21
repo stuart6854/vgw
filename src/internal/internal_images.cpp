@@ -137,4 +137,40 @@ namespace vgw::internal
         deviceRef.device.destroy(imageView);
         deviceRef.imageViewMap.erase(imageView);
     }
+
+    auto internal_sampler_get(const SamplerInfo& samplerInfo) -> std::expected<vk::Sampler, ResultCode>
+    {
+        auto deviceResult = internal_device_get();
+        if (!deviceResult)
+        {
+            log_error("Failed to get device!");
+            return std::unexpected(deviceResult.error());
+        }
+        auto& deviceRef = deviceResult.value().get();
+
+        const auto samplerHash = std::hash<SamplerInfo>{}(samplerInfo);
+
+        const auto it = deviceRef.samplerMap.find(samplerHash);
+        if (it != deviceRef.samplerMap.end())
+        {
+            return it->second;
+        }
+
+        vk::SamplerCreateInfo samplerCreateInfo{};
+        samplerCreateInfo.setAddressModeU(samplerInfo.addressModeU);
+        samplerCreateInfo.setAddressModeU(samplerInfo.addressModeV);
+        samplerCreateInfo.setAddressModeU(samplerInfo.addressModeW);
+        samplerCreateInfo.setMinFilter(samplerInfo.minFilter);
+        samplerCreateInfo.setMinFilter(samplerInfo.magFilter);
+        auto createResult = deviceRef.device.createSampler(samplerCreateInfo);
+        if (createResult.result != vk::Result::eSuccess)
+        {
+            log_error("Failed to create vk::Sampler!");
+            return std::unexpected(ResultCode::eFailedToCreate);
+        }
+        auto sampler = createResult.value;
+
+        deviceRef.samplerMap[samplerHash] = sampler;
+        return sampler;
+    }
 }

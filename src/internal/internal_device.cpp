@@ -166,6 +166,12 @@ namespace vgw::internal
         }
         swapchainMap.clear();
 
+        for (const auto& [_, sampler] : samplerMap)
+        {
+            device.destroy(sampler);
+        }
+        samplerMap.clear();
+
         for (const auto& view : imageViewMap)
         {
             device.destroy(view);

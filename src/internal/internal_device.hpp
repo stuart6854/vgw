@@ -41,6 +41,7 @@ namespace vgw::internal
         std::unordered_map<vk::Buffer, BufferData> bufferMap;
         std::unordered_map<vk::Image, ImageData> imageMap;
         std::unordered_set<vk::ImageView> imageViewMap;
+        std::unordered_map<std::size_t, vk::Sampler> samplerMap;
         std::unordered_map<RenderPassData*, std::unique_ptr<RenderPassData>> renderPassMap;
         std::unordered_map<vk::CommandPoolCreateFlags, vk::CommandPool> cmdPoolMap;
         std::unordered_map<vk::CommandBuffer, CmdBufferData> cmdBufferMap;

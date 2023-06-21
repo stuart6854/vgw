@@ -19,4 +19,6 @@ namespace vgw::internal
     auto internal_image_view_create(const ImageViewInfo& imageViewInfo) -> std::expected<vk::ImageView, ResultCode>;
     void internal_image_view_destroy(vk::ImageView imageView);
 
+    auto internal_sampler_get(const SamplerInfo& samplerInfo) -> std::expected<vk::Sampler, ResultCode>;
+
 }

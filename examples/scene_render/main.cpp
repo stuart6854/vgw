@@ -1,4 +1,3 @@
-// #TODO: Uniform buffers (view & projection)
 // #TODO: Depth buffer
 // #TODO: Basic lighting
 // #TODO: Texturing
@@ -196,6 +195,9 @@ int main(int argc, char** argv)
         };
         swapchainRenderPasses[i] = vgw::create_render_pass(swapchainRenderPassInfo).value();
     }
+
+    vgw::SamplerInfo samplerInfo{};
+    auto sampler = vgw::get_sampler(samplerInfo);
 
     vgw::SetAllocInfo setAllocInfo{
         .layout = setLayout,

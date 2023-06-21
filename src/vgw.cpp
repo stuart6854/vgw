@@ -137,6 +137,11 @@ namespace vgw
         internal::internal_image_view_destroy(imageView);
     }
 
+    auto get_sampler(const SamplerInfo& samplerInfo) -> std::expected<vk::Sampler, ResultCode>
+    {
+        return internal::internal_sampler_get(samplerInfo);
+    }
+
     auto create_render_pass(const RenderPassInfo& renderPassInfo) -> std::expected<RenderPass, ResultCode>
     {
         return internal::internal_render_pass_create(renderPassInfo);
@@ -253,7 +258,7 @@ namespace vgw
             return;
         }
         auto pipelineResult = internal::internal_pipeline_get(m_boundPipeline);
-        if(!pipelineResult)
+        if (!pipelineResult)
         {
             internal::log_error("Failed to get pipeline!");
             return;
@@ -388,6 +393,17 @@ namespace std
             vgw::hash_combine(seed, setLayout);
         }
         vgw::hash_combine(seed, pipelineLayoutInfo.constantRange);
+        return seed;
+    }
+
+    std::size_t std::hash<vgw::SamplerInfo>::operator()(const vgw::SamplerInfo& samplerInfo) const
+    {
+        std::size_t seed{ 0 };
+        vgw::hash_combine(seed, samplerInfo.addressModeU);
+        vgw::hash_combine(seed, samplerInfo.addressModeV);
+        vgw::hash_combine(seed, samplerInfo.addressModeW);
+        vgw::hash_combine(seed, samplerInfo.minFilter);
+        vgw::hash_combine(seed, samplerInfo.magFilter);
         return seed;
     }
 
