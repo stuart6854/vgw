@@ -110,7 +110,9 @@ namespace vgw
         vk::PipelineLayout layout{};
         std::vector<std::uint32_t> vertexCode{};
         std::vector<std::uint32_t> fragmentCode{};
-        std::vector<vk::Format> colorAttachmentFormats;
+        std::vector<vk::VertexInputBindingDescription> inputBindings{};
+        std::vector<vk::VertexInputAttributeDescription> inputAttributes{};
+        std::vector<vk::Format> colorAttachmentFormats{};
         vk::Format depthStencilFormat;
 
         vk::PrimitiveTopology topology;

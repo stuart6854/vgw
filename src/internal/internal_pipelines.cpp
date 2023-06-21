@@ -86,33 +86,9 @@ namespace vgw::internal
 
         const std::vector stages = { vertexShaderStageCreateInfo, fragmentShaderStageCreateInfo };
 
-#if 0
-        std::uint32_t stride{};
-        std::vector<vk::VertexInputAttributeDescription> vk_attributes(pipelineInfo.a.size());
-        for (auto i = 0; i < vk_attributes.size(); ++i)
-        {
-            const auto& attribute = graphicsPipelineInfo.vertexAttributes.at(i);
-            auto& vk_attribute = vk_attributes.at(i);
-            vk_attribute.setBinding(0);
-            vk_attribute.setLocation(i);
-            vk_attribute.setFormat(convert_format_to_vk_format(attribute.format));
-            vk_attribute.setOffset(stride);
-
-            stride += convert_format_to_byte_size(attribute.format);
-        }
-#endif
-
-        vk::VertexInputBindingDescription vk_binding{};
-        vk_binding.setBinding(0);
-        vk_binding.setInputRate(vk::VertexInputRate::eVertex);
-        //        vk_binding.setStride(reflectionData.inputAttributesStride);
-
         vk::PipelineVertexInputStateCreateInfo vertex_input_state{};
-        //        if (!reflectionData.inputAttributes.empty())
-        //        {
-        //            vertex_input_state.setVertexAttributeDescriptions(reflectionData.inputAttributes);
-        //            vertex_input_state.setVertexBindingDescriptions(vk_binding);
-        //        }
+        vertex_input_state.setVertexBindingDescriptions(pipelineInfo.inputBindings);
+        vertex_input_state.setVertexAttributeDescriptions(pipelineInfo.inputAttributes);
 
         vk::PipelineInputAssemblyStateCreateInfo input_assembly_state{};
         input_assembly_state.setTopology(pipelineInfo.topology);
