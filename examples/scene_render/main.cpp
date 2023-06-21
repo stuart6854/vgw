@@ -487,6 +487,7 @@ bool read_image(const std::string& filename, std::uint32_t& outWidth, std::uint3
     int width{};
     int height{};
     int comp{};
+    stbi_set_flip_vertically_on_load(true);
     auto* data = stbi_load(filename.c_str(), &width, &height, &comp, 4);
     if (data == nullptr)
     {
