@@ -1,6 +1,4 @@
-// #TODO: Basic lighting
-// #TODO: Window resize
-// #TODO: Antialiasing
+// #TODO: Cleanup
 
 #include <vgw/vgw.hpp>
 #include <vgw/utility.hpp>
