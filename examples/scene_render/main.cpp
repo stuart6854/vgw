@@ -72,6 +72,11 @@ struct Mesh
 };
 auto create_mesh(const std::vector<Vertex>& vertices, const std::vector<std::uint32_t>& indices) -> Mesh;
 
+struct PushConstants
+{
+    glm::mat4 worldMatrix{ 1.0f };
+};
+
 int main(int argc, char** argv)
 {
     std::cout << "VGW Scene Render Example" << std::endl;
@@ -179,6 +184,8 @@ int main(int argc, char** argv)
         swapchainRenderPasses[i] = vgw::create_render_pass(swapchainRenderPassInfo).value();
     }
 
+    PushConstants pushConstants{};
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -212,6 +219,7 @@ int main(int argc, char** argv)
         cmd->set_viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         cmd->bind_pipeline(geometryPipeline);
+        cmd->set_constants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &pushConstants);
         cmd->bind_vertex_buffer(mesh.vertexBuffer);
         cmd->bind_index_buffer(mesh.indexBuffer, vk::IndexType::eUint32);
         cmd->draw_indexed(mesh.indexCount, 1, 0, 0, 0);

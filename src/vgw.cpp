@@ -245,6 +245,24 @@ namespace vgw
         internal::internal_sets_bind(m_commandBuffer, m_boundPipeline, firstSet, sets);
     }
 
+    void CommandBuffer_T::set_constants(vk::ShaderStageFlags shadeStages, std::uint64_t offset, std::uint64_t size, const void* data)
+    {
+        if (!m_boundPipeline)
+        {
+            internal::log_error("No pipeline is bound!");
+            return;
+        }
+        auto pipelineResult = internal::internal_pipeline_get(m_boundPipeline);
+        if(!pipelineResult)
+        {
+            internal::log_error("Failed to get pipeline!");
+            return;
+        }
+        const auto& pipelineRef = pipelineResult.value().get();
+
+        m_commandBuffer.pushConstants(pipelineRef.layout, shadeStages, offset, size, data);
+    }
+
     void CommandBuffer_T::bind_vertex_buffer(vk::Buffer buffer)
     {
         m_commandBuffer.bindVertexBuffers(0, buffer, { 0 });

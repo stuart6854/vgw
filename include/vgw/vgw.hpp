@@ -266,7 +266,10 @@ namespace vgw
         void set_scissor(std::int32_t x, std::int32_t y, std::uint32_t width, std::uint32_t height);
 
         void bind_pipeline(vk::Pipeline pipeline);
+
         void bind_sets(std::uint32_t firstSet, const std::vector<vk::DescriptorSet>& sets);
+        void set_constants(vk::ShaderStageFlags shadeStages, std::uint64_t offset, std::uint64_t size, const void* data);
+
         void bind_vertex_buffer(vk::Buffer buffer);
         void bind_index_buffer(vk::Buffer buffer, vk::IndexType indexType);
 
