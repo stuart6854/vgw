@@ -113,7 +113,7 @@ namespace vgw
         std::vector<vk::VertexInputBindingDescription> inputBindings{};
         std::vector<vk::VertexInputAttributeDescription> inputAttributes{};
         std::vector<vk::Format> colorAttachmentFormats{};
-        vk::Format depthStencilFormat;
+        vk::Format depthStencilAttachmentFormat;
 
         vk::PrimitiveTopology topology;
         vk::FrontFace frontFace;

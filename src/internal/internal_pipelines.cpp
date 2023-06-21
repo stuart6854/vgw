@@ -131,9 +131,9 @@ namespace vgw::internal
 
         vk::PipelineRenderingCreateInfo rendering_info{};
         rendering_info.setColorAttachmentFormats(pipelineInfo.colorAttachmentFormats);
-        if (pipelineInfo.depthTest)
+        if (pipelineInfo.depthTest | pipelineInfo.depthWrite)
         {
-            rendering_info.setDepthAttachmentFormat(pipelineInfo.depthStencilFormat);
+            rendering_info.setDepthAttachmentFormat(pipelineInfo.depthStencilAttachmentFormat);
         }
 
         vk::GraphicsPipelineCreateInfo pipelineCreateInfo{};

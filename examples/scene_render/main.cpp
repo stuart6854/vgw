@@ -89,6 +89,16 @@ struct PushConstants
 auto create_uniform_buffer() -> vk::Buffer;
 void update_uniform_buffer(vk::Buffer buffer, const UniformData& uniformData);
 
+struct Attachment
+{
+    vk::Image image{};
+    vk::ImageView view{};
+};
+
+Attachment depthBufferAttachment{};
+
+void setup_depth_buffer();
+
 int main(int argc, char** argv)
 {
     std::cout << "VGW Scene Render Example" << std::endl;
@@ -172,6 +182,8 @@ int main(int argc, char** argv)
     auto imageReadySemaphore = vgw::create_semaphore().value();
     auto renderCompleteSemaphore = vgw::create_semaphore().value();
 
+    setup_depth_buffer();
+
     auto swapchainImages = vgw::get_swapchain_images(swapChain).value();
     std::vector<vk::ImageView> swapchainImageViews(swapchainImages.size());
     std::vector<vgw::RenderPass> swapchainRenderPasses(swapchainImages.size());
@@ -192,6 +204,11 @@ int main(int argc, char** argv)
                 .storeOp = vk::AttachmentStoreOp::eStore,
                 .clearColor = { 0.045f, 0.03f, 0.05f, 1.0f },
             } },
+            .depthAttachment = {
+                .imageView = depthBufferAttachment.view,
+                .loadOp = vk::AttachmentLoadOp::eClear,
+                .storeOp = vk::AttachmentStoreOp::eDontCare,
+            },
         };
         swapchainRenderPasses[i] = vgw::create_render_pass(swapchainRenderPassInfo).value();
     }
@@ -328,12 +345,13 @@ auto create_geometry_pipeline(vk::PipelineLayout layout, vk::Format targetFormat
             { 2, 0, vk::Format::eR32G32Sfloat, std::uint32_t (offsetof(Vertex, texCoord)) },
         },
         .colorAttachmentFormats = { targetFormat },
+        .depthStencilAttachmentFormat = vk::Format::eD16Unorm,
         .topology = vk::PrimitiveTopology::eTriangleList,
         .frontFace = vk::FrontFace::eClockwise,
         .cullMode = vk::CullModeFlagBits::eBack,
         .lineWidth = 1.0f,
-        .depthTest = false,
-        .depthWrite = false,
+        .depthTest = true,
+        .depthWrite = true,
     };
     auto pipeline = vgw::create_graphics_pipeline(graphicsPipelineInfo).value();
     return pipeline;
@@ -450,4 +468,25 @@ void update_uniform_buffer(vk::Buffer buffer, const UniformData& uniformData)
     auto* mappedPtr = vgw::map_buffer(buffer).value();
     std::memcpy(mappedPtr, &uniformData, sizeof(uniformData));
     vgw::unmap_buffer(buffer);
+}
+
+void setup_depth_buffer()
+{
+    vgw::ImageInfo imageInfo{
+        .type = vk::ImageType::e2D,
+        .width = WINDOW_WIDTH,
+        .height = WINDOW_HEIGHT,
+        .depth = 1,
+        .mipLevels = 1,
+        .format = vk::Format::eD16Unorm,
+        .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
+    };
+    depthBufferAttachment.image = vgw::create_image(imageInfo).value();
+
+    vgw::ImageViewInfo viewInfo{
+        .image = depthBufferAttachment.image,
+        .type = vk::ImageViewType::e2D,
+        .aspectMask = vk::ImageAspectFlagBits::eDepth,
+    };
+    depthBufferAttachment.view = vgw::create_image_view(viewInfo).value();
 }
