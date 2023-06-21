@@ -22,6 +22,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <iostream>
 #include <fstream>
 
@@ -75,6 +78,15 @@ struct Mesh
     std::uint64_t indexCount{};
 };
 auto create_mesh(const std::vector<Vertex>& vertices, const std::vector<std::uint32_t>& indices) -> Mesh;
+
+bool read_image(const std::string& filename, std::uint32_t& outWidth, std::uint32_t& outHeight, std::vector<std::uint8_t>& outPixels);
+
+struct Texture
+{
+    vk::Image image{};
+    vk::ImageView view{};
+};
+auto create_texture(std::uint32_t width, std::uint32_t height, const std::vector<std::uint8_t>& pixels) -> Texture;
 
 struct UniformData
 {
@@ -215,6 +227,15 @@ int main(int argc, char** argv)
 
     vgw::SamplerInfo samplerInfo{};
     auto sampler = vgw::get_sampler(samplerInfo);
+
+    std::uint32_t imageWidth{};
+    std::uint32_t imageHeight{};
+    std::vector<std::uint8_t> imagePixels{};
+    if (!read_image("viking_room.png", imageWidth, imageHeight, imagePixels))
+    {
+        throw std::runtime_error("Failed to load image!");
+    }
+    auto texture = create_texture(imageWidth, imageHeight, imagePixels);
 
     vgw::SetAllocInfo setAllocInfo{
         .layout = setLayout,
@@ -449,6 +470,120 @@ auto create_mesh(const std::vector<Vertex>& vertices, const std::vector<std::uin
     vgw::unmap_buffer(indexBuffer);
 
     return { vertexBuffer, indexBuffer, indices.size() };
+}
+
+bool read_image(const std::string& filename, std::uint32_t& outWidth, std::uint32_t& outHeight, std::vector<std::uint8_t>& outPixels)
+{
+    int width{};
+    int height{};
+    int comp{};
+    auto* data = stbi_load(filename.c_str(), &width, &height, &comp, 4);
+    if (data == nullptr)
+    {
+        return false;
+    }
+
+    outWidth = width;
+    outHeight = height;
+    outPixels = { data, data + width * height * 4 };
+
+    stbi_image_free(data);
+    return true;
+}
+
+auto create_texture(std::uint32_t width, std::uint32_t height, const std::vector<std::uint8_t>& pixels) -> Texture
+{
+    vgw::BufferInfo bufferInfo{
+        .size = pixels.size(),
+        .usage = vk::BufferUsageFlagBits::eTransferSrc,
+        .memUsage = VMA_MEMORY_USAGE_AUTO,
+        .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+    };
+    auto stagingBuffer = vgw::create_buffer(bufferInfo).value();
+    auto* mappedData = vgw::map_buffer(stagingBuffer).value();
+    std::memcpy(mappedData, pixels.data(), bufferInfo.size);
+    vgw::unmap_buffer(stagingBuffer);
+
+    vgw::ImageInfo imageInfo{
+        .type = vk::ImageType::e2D,
+        .width = width,
+        .height = height,
+        .depth = 1,
+        .mipLevels = 1,
+        .format = vk::Format::eR8G8B8A8Srgb,
+        .usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+    };
+    auto image = vgw::create_image(imageInfo).value();
+
+    vgw::ImageViewInfo viewInfo{
+        .image = image,
+        .type = vk::ImageViewType::e2D,
+        .aspectMask = vk::ImageAspectFlagBits::eColor,
+    };
+    auto view = vgw::create_image_view(viewInfo).value();
+
+    vgw::CmdBufferAllocInfo cmdAllocInfo{
+        .count = 1,
+        .level = vk::CommandBufferLevel::ePrimary,
+        .poolFlags = vk::CommandPoolCreateFlagBits::eTransient,
+    };
+    auto* cmd = vgw::allocate_command_buffers(cmdAllocInfo).value()[0];
+
+    vgw::ImageTransitionInfo transferTransition{
+        .image = image,
+        .oldLayout = vk::ImageLayout::eUndefined,
+        .newLayout = vk::ImageLayout::eTransferDstOptimal,
+        .srcAccess = vk::AccessFlagBits2::eNone,
+        .dstAccess = vk::AccessFlagBits2::eTransferWrite,
+        .srcStage = vk::PipelineStageFlagBits2::eTopOfPipe,
+        .dstStage = vk::PipelineStageFlagBits2::eTransfer,
+        .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+    };
+
+    vgw::CopyBufferToImageInfo copyInfo{
+        .srcBuffer = stagingBuffer,
+        .dstImage = image,
+        .dstImageLayout = vk::ImageLayout::eTransferDstOptimal,
+        .regions = { { 0,
+                       0,
+                       0,
+                       {
+                           vk::ImageAspectFlagBits::eColor,
+                           0,
+                           0,
+                           1,
+                       },
+                       { 0, 0, 0 },
+                       { width, height, 1 } } },
+    };
+
+    vgw::ImageTransitionInfo shaderReadOnlyTransition{
+        .image = image,
+        .oldLayout = vk::ImageLayout::eTransferDstOptimal,
+        .newLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        .srcAccess = vk::AccessFlagBits2::eTransferWrite,
+        .dstAccess = vk::AccessFlagBits2::eShaderRead,
+        .srcStage = vk::PipelineStageFlagBits2::eTransfer,
+        .dstStage = vk::PipelineStageFlagBits2::eFragmentShader,
+        .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 },
+    };
+
+    cmd->begin({});
+    cmd->transition_image(transferTransition);
+    cmd->copy_buffer_to_image(copyInfo);
+    cmd->transition_image(shaderReadOnlyTransition);
+    cmd->end();
+
+    auto fence = vgw::create_fence({}).value();
+    vgw::SubmitInfo submitInfo{
+        .queueIndex = 0,
+        .cmdBuffers = { *cmd },
+        .signalFence = fence,
+    };
+    vgw::submit(submitInfo);
+    vgw::wait_on_fence(fence);
+
+    return { image, view };
 }
 
 auto create_uniform_buffer() -> vk::Buffer

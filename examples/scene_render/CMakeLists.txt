@@ -4,6 +4,7 @@ set(VGW_EXAMPLE_NAME "vgw_example_scene_render")
 add_executable(${VGW_EXAMPLE_NAME} main.cpp)
 
 target_link_libraries(${VGW_EXAMPLE_NAME} PRIVATE vgw glfw tinyobjloader::tinyobjloader)
+target_include_directories(${VGW_EXAMPLE_NAME} PRIVATE ${Stb_INCLUDE_DIR})
 
 add_custom_command(
         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/geometry.vert"
@@ -34,3 +35,13 @@ add_custom_command(
 )
 add_custom_target("${VGW_EXAMPLE_NAME}_model" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/viking_room.obj")
 add_dependencies(${VGW_EXAMPLE_NAME} "${VGW_EXAMPLE_NAME}_model")
+
+add_custom_command(
+        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/viking_room.png"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "viking_room.png" "${CMAKE_CURRENT_BINARY_DIR}/viking_room.png"
+        DEPENDS "viking_room.png"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Copying texture."
+)
+add_custom_target("${VGW_EXAMPLE_NAME}_texture" DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/viking_room.png")
+add_dependencies(${VGW_EXAMPLE_NAME} "${VGW_EXAMPLE_NAME}_texture")
