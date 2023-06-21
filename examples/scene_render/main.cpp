@@ -13,7 +13,12 @@
 #define GLFW_NATIVE_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
 #include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -72,10 +77,18 @@ struct Mesh
 };
 auto create_mesh(const std::vector<Vertex>& vertices, const std::vector<std::uint32_t>& indices) -> Mesh;
 
+struct UniformData
+{
+    glm::mat4 projMatrix{ 1.0f };
+    glm::mat4 viewMatrix{ 1.0f };
+};
 struct PushConstants
 {
     glm::mat4 worldMatrix{ 1.0f };
 };
+
+auto create_uniform_buffer() -> vk::Buffer;
+void update_uniform_buffer(vk::Buffer buffer, const UniformData& uniformData);
 
 int main(int argc, char** argv)
 {
@@ -184,11 +197,36 @@ int main(int argc, char** argv)
         swapchainRenderPasses[i] = vgw::create_render_pass(swapchainRenderPassInfo).value();
     }
 
+    vgw::SetAllocInfo setAllocInfo{
+        .layout = setLayout,
+        .count = 1,
+    };
+    auto set = vgw::allocate_sets(setAllocInfo).value()[0];
+
+    UniformData uniformData{ .projMatrix = glm::perspective(glm::radians(70.0f), float(WINDOW_WIDTH) / float(WINDOW_HEIGHT), 0.1f, 100.0f),
+                             .viewMatrix =
+                                 glm::lookAt(glm::vec3(-1.0f, 1.0f, -0.5f), glm::vec3(0.0f, 0.2f, 0.1f), glm::vec3(0.0f, 1.0f, 0.0f)) };
     PushConstants pushConstants{};
+
+    auto uniformBuffer = create_uniform_buffer();
+    vgw::SetBufferBindInfo bufferBindInfo{
+        .set = set,
+        .binding = 0,
+        .type = vk::DescriptorType::eUniformBuffer,
+        .buffer = uniformBuffer,
+        .offset = 0,
+        .range = sizeof(uniformData),
+    };
+    vgw::bind_buffer_to_set(bufferBindInfo);
+    vgw::flush_set_writes();
 
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+
+        // Logic
+        {
+        }
 
         vgw::AcquireInfo acquireInfo{
             .swapchain = swapChain,
@@ -198,6 +236,9 @@ int main(int argc, char** argv)
 
         vgw::wait_on_fence(fence);
         vgw::reset_fence(fence);
+
+        // Update buffers
+        update_uniform_buffer(uniformBuffer, uniformData);
 
         // Record command buffer
         cmd->reset();
@@ -219,6 +260,7 @@ int main(int argc, char** argv)
         cmd->set_viewport(0, WINDOW_HEIGHT, WINDOW_WIDTH, -WINDOW_HEIGHT);
         cmd->set_scissor(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         cmd->bind_pipeline(geometryPipeline);
+        cmd->bind_sets(0, { set });
         cmd->set_constants(vk::ShaderStageFlagBits::eVertex, 0, sizeof(PushConstants), &pushConstants);
         cmd->bind_vertex_buffer(mesh.vertexBuffer);
         cmd->bind_index_buffer(mesh.indexBuffer, vk::IndexType::eUint32);
@@ -387,4 +429,23 @@ auto create_mesh(const std::vector<Vertex>& vertices, const std::vector<std::uin
     vgw::unmap_buffer(indexBuffer);
 
     return { vertexBuffer, indexBuffer, indices.size() };
+}
+
+auto create_uniform_buffer() -> vk::Buffer
+{
+    vgw::BufferInfo bufferInfo{
+        .size = sizeof(UniformData),
+        .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+        .memUsage = VMA_MEMORY_USAGE_AUTO,
+        .allocFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+    };
+    auto buffer = vgw::create_buffer(bufferInfo).value();
+    return buffer;
+}
+
+void update_uniform_buffer(vk::Buffer buffer, const UniformData& uniformData)
+{
+    auto* mappedPtr = vgw::map_buffer(buffer).value();
+    std::memcpy(mappedPtr, &uniformData, sizeof(uniformData));
+    vgw::unmap_buffer(buffer);
 }
