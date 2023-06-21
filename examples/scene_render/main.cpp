@@ -178,7 +178,7 @@ int main(int argc, char** argv)
                 .imageView = swapchainImageViews.at(i),
                 .loadOp = vk::AttachmentLoadOp::eClear,
                 .storeOp = vk::AttachmentStoreOp::eStore,
-                .clearColor = { 1, 0.3f, 0.4f, 1.0f },
+                .clearColor = { 0.045f, 0.03f, 0.05f, 1.0f },
             } },
         };
         swapchainRenderPasses[i] = vgw::create_render_pass(swapchainRenderPassInfo).value();
