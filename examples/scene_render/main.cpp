@@ -1,6 +1,5 @@
 // #TODO: Depth buffer
 // #TODO: Basic lighting
-// #TODO: Texturing
 // #TODO: Window resize
 // #TODO: Antialiasing
 
