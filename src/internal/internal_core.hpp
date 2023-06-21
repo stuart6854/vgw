@@ -38,7 +38,16 @@ namespace vgw::internal
     template <typename... Args>
     void log(MessageType msgType, std::string_view fmt, Args... args)
     {
-        const auto msg = std::vformat(fmt, std::make_format_args(args...));
+        std::string msg{};
+        if constexpr (sizeof...(Args) > 0)
+        {
+            msg = std::vformat(fmt, std::make_format_args(args...));
+        }
+        else
+        {
+            msg = fmt;
+        }
+
         get_message_callback()(msgType, msg);
     }
 
