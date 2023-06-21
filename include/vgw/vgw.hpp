@@ -244,6 +244,13 @@ namespace vgw
         vk::PipelineStageFlags2 dstStage{};
         vk::ImageSubresourceRange subresourceRange{};
     };
+    struct CopyBufferToImageInfo
+    {
+        vk::Buffer srcBuffer{};
+        vk::Image dstImage{};
+        vk::ImageLayout dstImageLayout{};
+        std::vector<vk::BufferImageCopy2> regions{};
+    };
 
     class CommandBuffer_T
     {
@@ -292,6 +299,8 @@ namespace vgw
         void dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY, std::uint32_t groupCountZ);
 
         void transition_image(const ImageTransitionInfo& transitionInfo);
+
+        void copy_buffer_to_image(const CopyBufferToImageInfo& copyInfo);
 
         operator vk::CommandBuffer() const noexcept { return m_commandBuffer; }
 

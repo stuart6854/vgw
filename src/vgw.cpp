@@ -308,6 +308,18 @@ namespace vgw
         m_pendingImageTransitions.push_back(transitionInfo);
     }
 
+    void CommandBuffer_T::copy_buffer_to_image(const CopyBufferToImageInfo& copyInfo)
+    {
+        flush_pending_barriers();
+
+        vk::CopyBufferToImageInfo2 copyBufferToImageInfo{};
+        copyBufferToImageInfo.setSrcBuffer(copyInfo.srcBuffer);
+        copyBufferToImageInfo.setDstImage(copyInfo.dstImage);
+        copyBufferToImageInfo.setDstImageLayout(copyInfo.dstImageLayout);
+        copyBufferToImageInfo.setRegions(copyInfo.regions);
+        m_commandBuffer.copyBufferToImage2(copyBufferToImageInfo);
+    }
+
     void CommandBuffer_T::flush_pending_barriers()
     {
         if (m_pendingImageTransitions.empty())
