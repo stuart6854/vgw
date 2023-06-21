@@ -1,5 +1,4 @@
 // #TODO: Upload to buffers
-// #TODO: Upload to images
 // #TODO: Binding images to sets
 // #TODO: Mip-mapping? Generating mip-levels.
 // #TODO: vgw::wait_device_idle() & vgw::wait_queue_idle(std::uint32_t)
